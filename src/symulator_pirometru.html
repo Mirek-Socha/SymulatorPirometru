@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symulator Toru Pirometrycznego</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.getElementById('docsBody'),{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false})"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   THEME VARIABLES
+═══════════════════════════════════════════════ */
+.theme-dark {
+  --bg:#07070a; --surf:#0f0f15; --card:#13131a; --card2:#1a1a24;
+  --border:#22222e; --border2:#2e2e3e;
+  --text:#e8e4de; --pale:#a0a0b8; --muted:#6b6b80;
+  --amber:#f59e0b; --amber-dim:rgba(245,158,11,.12);
+  --orange:#ea580c; --red:#ef4444; --red-dim:rgba(239,68,68,.12);
+  --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,.12);
+  --green:#22c55e; --violet:#a78bfa;
+  --shadow:rgba(0,0,0,.6);
+  --plot-grid:rgba(34,34,46,.9);
+  --plot-bg:#07070a;
+}
+.theme-light {
+  --bg:#f5f2ea; --surf:#ece8dd; --card:#ffffff; --card2:#f9f7f2;
+  --border:#d8d3c8; --border2:#c8c3b6;
+  --text:#1a1a22; --pale:#4a4860; --muted:#7a7888;
+  --amber:#b45309; --amber-dim:rgba(180,83,9,.1);
+  --orange:#c2410c; --red:#dc2626; --red-dim:rgba(220,38,38,.08);
+  --cyan:#0e7490; --cyan-dim:rgba(14,116,144,.1);
+  --green:#15803d; --violet:#7c3aed;
+  --shadow:rgba(0,0,0,.15);
+  --plot-grid:rgba(100,95,88,.35);
+  --plot-bg:#ece8dd;
+}
+
+/* ═══════════════════════════════════════════════
+   BASE / RESET
+═══════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+html{height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:13px;
+  min-height:100vh;overflow-x:hidden;
+  transition:background .25s,color .25s;
+}
+.theme-dark body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 40% at 50% -5%,rgba(245,158,11,.05),transparent);
+  z-index:0;
+}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ═══════════════════════════════════════════════
+   APP WRAPPER
+═══════════════════════════════════════════════ */
+#app{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;
+  min-height:100vh;
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════ */
+.hdr{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px;
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--surf);
+  position:sticky;top:0;z-index:200;
+}
+.hdr-brand{display:flex;align-items:baseline;gap:12px;flex:1;min-width:0}
+.hdr-title{
+  font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;
+  color:var(--amber);white-space:nowrap;
+}
+.hdr-sub{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  color:var(--muted);letter-spacing:.12em;text-transform:uppercase;
+  display:none;
+}
+@media(min-width:600px){.hdr-sub{display:inline}}
+.hdr-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.presets{display:flex;gap:4px;flex-wrap:wrap}
+.preset-btn,.icon-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.06em;
+  text-transform:uppercase;padding:5px 9px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.preset-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.icon-btn{font-size:.85rem;letter-spacing:0;text-transform:none;padding:5px 10px}
+.icon-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.icon-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+
+/* ═══════════════════════════════════════════════
+   CHAIN DIAGRAM
+═══════════════════════════════════════════════ */
+.chain-section{
+  background:var(--surf);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px 14px;
+  overflow-x:auto;
+}
+.chain-label{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:10px;
+}
+.chain{
+  display:flex;align-items:stretch;gap:0;
+  min-width:640px;
+}
+.chain-box{
+  flex:1;background:var(--card);
+  border:1px solid var(--border);
+  border-left:3px solid var(--amber);
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:3px;
+  position:relative;min-width:0;
+  transition:border-color .2s;
+}
+.chain-box.cb-atm{border-left-color:var(--red)}
+.chain-box.cb-det{border-left-color:var(--cyan)}
+.chain-box.cb-proc{border-left-color:var(--orange)}
+.chain-box.cb-res{border-left-color:var(--green)}
+.chain-box.cb-res.err-big{border-left-color:var(--red)}
+.chain-box.cb-res.err-med{border-left-color:var(--amber)}
+.cb-name{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:2px;
+}
+.cb-val{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  color:var(--text);line-height:1.4;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;
+}
+.cb-val .hi{color:var(--amber)}
+.cb-val .cy{color:var(--cyan)}
+.cb-val .gr{color:var(--green)}
+.cb-val .re{color:var(--red)}
+
+.chain-arrow{
+  display:flex;align-items:center;justify-content:center;
+  width:38px;flex-shrink:0;color:var(--border2);
+  filter:drop-shadow(0 0 2px currentColor);
+}
+.chain-arrow svg{width:28px;height:18px;overflow:visible}
+
+/* ═══════════════════════════════════════════════
+   MAIN LAYOUT  (3-col → 2-col → 1-col)
+═══════════════════════════════════════════════ */
+.main-layout{
+  flex:1;display:grid;
+  grid-template-columns:270px 1fr 210px;
+  grid-template-areas:"ctrl plots res";
+  align-items:start;
+  min-height:0;
+}
+@media(max-width:1099px){
+  .main-layout{
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto auto;
+    grid-template-areas:
+      "ctrl res"
+      "plots plots";
+  }
+}
+@media(max-width:699px){
+  .main-layout{
+    grid-template-columns:1fr;
+    grid-template-areas:
+      "ctrl"
+      "plots"
+      "res";
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   CONTROLS COLUMN
+═══════════════════════════════════════════════ */
+.ctrl-col{
+  grid-area:ctrl;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100%;
+}
+@media(max-width:1099px){
+  .ctrl-col{border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+}
+@media(max-width:699px){
+  .ctrl-col{border-right:none;border-bottom:1px solid var(--border)}
+}
+.ctrl-panel{border-bottom:1px solid var(--border);padding:12px 14px 14px}
+.ctrl-panel:last-child{border-bottom:none}
+.panel-hdr{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--amber);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.panel-hdr.cy{color:var(--cyan)}
+.panel-hdr.re{color:var(--red)}
+.panel-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.sl-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sl-name{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;
+  color:var(--pale);flex-shrink:0;width:76px;
+}
+.sl-name.w90{width:90px}
+input[type=range]{
+  flex:1;-webkit-appearance:none;height:3px;
+  background:linear-gradient(90deg,var(--amber) var(--pct,50%),var(--border2) var(--pct,50%));
+  outline:none;cursor:pointer;min-width:0;
+  transition:background .05s;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:var(--amber);box-shadow:0 0 5px rgba(245,158,11,.35);
+  cursor:pointer;
+}
+.sl-val{
+  font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+  color:var(--amber);width:68px;text-align:right;flex-shrink:0;
+}
+.sl-val.cy{color:var(--cyan)}
+select{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+  padding:6px 8px;outline:none;cursor:pointer;margin-bottom:8px;
+  transition:border-color .15s;
+}
+select:focus{border-color:var(--cyan)}
+.sel-lbl{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+  color:var(--pale);margin-bottom:3px;
+}
+
+/* ═══════════════════════════════════════════════
+   PLOTS COLUMN
+═══════════════════════════════════════════════ */
+.plots-col{
+  grid-area:plots;
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+}
+@media(max-width:699px){.plots-col{border-right:none}}
+.plot-hdr{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--amber);
+  padding:8px 14px 4px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);
+}
+.plot-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+canvas{width:100%;display:block;cursor:crosshair}
+.legend{
+  display:flex;gap:12px;flex-wrap:wrap;
+  padding:5px 14px 7px;border-bottom:1px solid var(--border);
+}
+.leg{display:flex;align-items:center;gap:5px;font-size:.67rem;color:var(--muted)}
+.leg-line{width:18px;height:2px;border-radius:1px}
+.leg-fill{width:12px;height:8px;border-radius:1px;opacity:.5}
+.tau-hdr{color:var(--cyan)}
+
+/* ═══════════════════════════════════════════════
+   RESULTS COLUMN
+═══════════════════════════════════════════════ */
+.res-col{
+  grid-area:res;
+  padding:12px;display:flex;flex-direction:column;gap:10px;
+}
+@media(max-width:1099px){
+  .res-col{
+    border-left:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+  }
+}
+@media(max-width:699px){
+  .res-col{
+    border-left:none;border-top:1px solid var(--border);
+    display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px;
+  }
+}
+.rb{
+  background:var(--card);border:1px solid var(--border);
+  padding:10px 12px;position:relative;overflow:hidden;
+}
+.rb::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.rb.a::before{background:var(--amber)}
+.rb.c::before{background:var(--cyan)}
+.rb.g::before{background:var(--green)}
+.rb.r::before{background:var(--red)}
+.rb.o::before{background:var(--orange)}
+.rb-lbl{
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:3px;
+}
+.rb-val{
+  font-family:'IBM Plex Mono',monospace;font-size:1.3rem;
+  font-weight:600;line-height:1;
+}
+.rb-val.a{color:var(--amber)}
+.rb-val.c{color:var(--cyan)}
+.rb-val.g{color:var(--green)}
+.rb-val.r{color:var(--red)}
+.rb-sub{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  color:var(--muted);margin-top:3px;
+}
+.err-tbl{width:100%;margin-top:2px}
+.err-tbl td{
+  font-family:'IBM Plex Mono',monospace;font-size:.67rem;
+  padding:3px 0;border-bottom:1px solid var(--border);
+}
+.err-tbl tr:last-child td{border-bottom:none}
+.err-tbl .en{color:var(--pale)}
+.err-tbl .ev{text-align:right}
+.ev.pos{color:var(--red)} .ev.neg{color:var(--cyan)} .ev.ok{color:var(--green)}
+
+/* ═══════════════════════════════════════════════
+   TOOLTIP
+═══════════════════════════════════════════════ */
+#tooltip{
+  position:fixed;background:var(--card);border:1px solid var(--border);
+  padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+  pointer-events:none;display:none;z-index:500;
+  box-shadow:0 4px 16px var(--shadow);line-height:1.7;min-width:160px;
+  color:var(--text);
+}
+.tt-h{color:var(--amber);margin-bottom:3px;font-weight:600}
+.tt-r{display:flex;justify-content:space-between;gap:10px}
+.tt-l{color:var(--muted)}
+
+/* ═══════════════════════════════════════════════
+   DOCS PANEL (drawer)
+═══════════════════════════════════════════════ */
+.docs-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:900;opacity:0;pointer-events:none;
+  transition:opacity .25s;
+}
+.docs-overlay.open{opacity:1;pointer-events:all}
+.docs-panel{
+  position:absolute;right:0;top:0;bottom:0;
+  width:min(680px,100vw);
+  background:var(--surf);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow:-4px 0 24px var(--shadow);
+}
+.docs-overlay.open .docs-panel{transform:translateX(0)}
+@media(max-width:699px){
+  .docs-panel{
+    top:auto;right:0;left:0;bottom:0;width:100vw;
+    border-left:none;border-top:1px solid var(--border);
+    transform:translateY(100%);
+    max-height:90vh;
+  }
+  .docs-overlay.open .docs-panel{transform:translateY(0)}
+}
+.docs-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px 12px;border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.docs-title{
+  font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;
+  color:var(--amber);
+}
+.docs-close{
+  font-size:1.4rem;background:none;border:none;color:var(--muted);
+  cursor:pointer;padding:4px 8px;line-height:1;
+  transition:color .15s;
+}
+.docs-close:hover{color:var(--text)}
+.docs-body{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:24px}
+
+/* docs typography */
+.doc-sec h2{
+  font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;
+  color:var(--amber);margin-bottom:10px;padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.doc-sec h3{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--cyan);margin:12px 0 6px;
+}
+.doc-sec p{font-size:.82rem;color:var(--pale);line-height:1.7;margin-bottom:8px}
+.doc-sec p b{color:var(--text);font-weight:600}
+.doc-sec p i{color:var(--amber);font-style:normal}
+
+.fml{
+  background:var(--card);border:1px solid var(--border);
+  border-left:3px solid var(--amber);
+  padding:10px 14px;margin:8px 0;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;
+  color:var(--amber);line-height:1.65;
+  overflow-x:auto;white-space:pre;
+}
+.fml.cy{border-left-color:var(--cyan);color:var(--cyan)}
+.fml.gr{border-left-color:var(--green);color:var(--green)}
+.fml .co{color:var(--muted);font-size:.72rem}
+
+/* KaTeX rendered formula blocks */
+.fml-math{
+  background:var(--card);border:1px solid var(--border);
+  border-left:3px solid var(--amber);
+  padding:12px 18px;margin:10px 0;
+  overflow-x:auto;
+  color:var(--text);
+}
+.fml-math.cy{border-left-color:var(--cyan)}
+.fml-math.gr{border-left-color:var(--green)}
+/* make KaTeX text colours adapt to theme */
+.fml-math .katex{color:var(--amber);font-size:1rem}
+.fml-math.cy .katex{color:var(--cyan)}
+.fml-math.gr .katex{color:var(--green)}
+/* KaTeX display override for both themes */
+.theme-light .katex-display{color:var(--amber)}
+.katex-display{overflow-x:auto;overflow-y:hidden}
+
+/* lin/log toggle */
+.scale-toggle{
+  display:flex;gap:0;margin-left:auto;flex-shrink:0;
+}
+.st-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:4px 9px;
+  background:transparent;border:1px solid var(--border);color:var(--muted);
+  cursor:pointer;transition:all .15s;line-height:1.4;
+}
+.st-btn:first-child{border-radius:2px 0 0 2px}
+.st-btn:last-child{border-radius:0 2px 2px 0;border-left:none}
+.st-btn.active{background:var(--amber-dim);border-color:var(--amber);color:var(--amber)}
+
+.sym-tbl{width:100%;border-collapse:collapse;margin-top:8px}
+.sym-tbl th{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);
+  font-weight:400;
+}
+.sym-tbl td{
+  font-size:.77rem;padding:5px 8px;border-bottom:1px solid var(--border);color:var(--pale);
+}
+.sym-tbl td:first-child{
+  font-family:'IBM Plex Mono',monospace;color:var(--amber);white-space:nowrap;
+}
+.sym-tbl tr:last-child td{border-bottom:none}
+
+.warn-box{
+  background:var(--amber-dim);border:1px solid var(--amber);
+  padding:8px 12px;margin:8px 0;font-size:.78rem;color:var(--text);
+  line-height:1.6;border-left:3px solid var(--amber);
+}
+.info-box{
+  background:var(--cyan-dim);border:1px solid var(--cyan);
+  padding:8px 12px;margin:8px 0;font-size:.78rem;color:var(--text);
+  line-height:1.6;border-left:3px solid var(--cyan);
+}
+</style>
+</head>
+<body class="theme-dark">
+<div id="app">
+
+<!-- ═══ HEADER ═══════════════════════════════ -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <span class="hdr-title">Symulator Pirometryczny</span>
+    <span class="hdr-sub">Tor: Obiekt · Atmosfera · Detektor → T<sub>ind</sub></span>
+  </div>
+  <div class="hdr-actions">
+    <div class="presets">
+      <button class="preset-btn" onclick="loadPreset('ideal')">Idealny</button>
+      <button class="preset-btn" onclick="loadPreset('emissivity')">Błąd ε</button>
+      <button class="preset-btn" onclick="loadPreset('atmosphere')">Atmosfera</button>
+      <button class="preset-btn" onclick="loadPreset('lowtemp')">Niska T</button>
+      <button class="preset-btn" onclick="loadPreset('total')">Całkujący</button>
+    </div>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
+    <button class="icon-btn" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
+  </div>
+</header>
+
+<!-- ═══ CHAIN DIAGRAM ════════════════════════ -->
+<section class="chain-section">
+  <div class="chain-label">Schemat blokowy toru pomiarowego</div>
+  <div class="chain">
+
+    <div class="chain-box cb-obj" id="cb-obj">
+      <div class="cb-name">1 · Obiekt</div>
+      <div class="cb-val"><span class="hi" id="cv-T">T = 1200 °C</span></div>
+      <div class="cb-val">ε<sub>real</sub> = <span class="hi" id="cv-eps">0.70</span></div>
+      <div class="cb-val" id="cv-wien" style="font-size:.65rem;color:var(--muted)">λ<sub>max</sub> = — µm</div>
+    </div>
+
+    <div class="chain-arrow">
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" repeatCount="indefinite"/></svg>
+    </div>
+
+    <div class="chain-box cb-atm" id="cb-atm">
+      <div class="cb-name">2 · Atmosfera</div>
+      <div class="cb-val">L = <span class="re" id="cv-L">2 m</span> &nbsp; HR = <span id="cv-hr">50 %</span></div>
+      <div class="cb-val">CO₂ = <span id="cv-co2">400 ppm</span></div>
+      <div class="cb-val">τ̄ = <span class="cy" id="cv-tau">—</span></div>
+    </div>
+
+    <div class="chain-arrow">
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" repeatCount="indefinite"/></svg>
+    </div>
+
+    <div class="chain-box cb-atm" id="cb-atm">
+      <div class="cb-name">2 · Atmosfera</div>
+      <div class="cb-val">L = <span class="re" id="cv-L">2 m</span> &nbsp; HR = <span id="cv-hr">50 %</span></div>
+      <div class="cb-val">CO₂ = <span id="cv-co2">400 ppm</span></div>
+      <div class="cb-val">τ̄ = <span class="cy" id="cv-tau">—</span></div>
+    </div>
+
+    <div class="chain-arrow">
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="0.4s" repeatCount="indefinite"/></svg>
+    </div>
+
+    <div class="chain-box cb-det" id="cb-det">
+      <div class="cb-name">3 · Detektor</div>
+      <div class="cb-val cy" id="cv-det">0.65 µm – Si</div>
+      <div class="cb-val">S = <span class="cy" id="cv-sig">—</span></div>
+    </div>
+
+    <div class="chain-arrow">
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="0.8s" repeatCount="indefinite"/></svg>
+    </div>
+
+    <div class="chain-box cb-proc" id="cb-proc">
+      <div class="cb-name">4 · Procesor</div>
+      <div class="cb-val">ε<sub>zał.</sub> = <span style="color:var(--orange)" id="cv-epsA">0.70</span></div>
+      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">inwersja Plancka</div>
+      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">bisekcja 72 iter.</div>
+    </div>
+
+    <div class="chain-arrow">
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="1.2s" repeatCount="indefinite"/></svg>
+    </div>
+
+    <div class="chain-box cb-res" id="cb-res">
+      <div class="cb-name">5 · Wynik</div>
+      <div class="cb-val" style="font-size:.88rem;font-weight:600"><span id="cv-Tind">—</span></div>
+      <div class="cb-val">ΔT = <span id="cv-dT">—</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ MAIN LAYOUT ══════════════════════════ -->
+<div class="main-layout">
+
+  <!-- ─── CONTROLS ─── -->
+  <aside class="ctrl-col">
+
+    <!-- OBIEKT -->
+    <div class="ctrl-panel">
+      <div class="panel-hdr">📡 Obiekt mierzony</div>
+      <div class="sl-row">
+        <span class="sl-name">T<sub>obiekt</sub></span>
+        <input type="range" id="sl_Tobj" min="10" max="12000" step="10" value="1473" oninput="onSl(this,'Tobj')">
+        <span class="sl-val" id="val_Tobj">1473 K</span>
+      </div>
+      <div class="sl-row">
+        <span class="sl-name">ε<sub>rzeczyw.</sub></span>
+        <input type="range" id="sl_eps_real" min="0.02" max="1.00" step="0.01" value="0.70" oninput="onSl(this,'eps_real')">
+        <span class="sl-val" id="val_eps_real">0.70</span>
+      </div>
+    </div>
+
+    <!-- ATMOSFERA -->
+    <div class="ctrl-panel">
+      <div class="panel-hdr re">🌫 Atmosfera / tor opt.</div>
+      <div class="sl-row">
+        <span class="sl-name">Droga L</span>
+        <input type="range" id="sl_path" min="0" max="100" step="1" value="2" oninput="onSl(this,'path')">
+        <span class="sl-val" id="val_path">2 m</span>
+      </div>
+      <div class="sl-row">
+        <span class="sl-name">Wilg. wzgl.</span>
+        <input type="range" id="sl_rh" min="0" max="100" step="5" value="50" oninput="onSl(this,'rh')">
+        <span class="sl-val" id="val_rh">50 %</span>
+      </div>
+      <div class="sl-row">
+        <span class="sl-name">CO₂</span>
+        <input type="range" id="sl_co2" min="300" max="5000" step="50" value="400" oninput="onSl(this,'co2')">
+        <span class="sl-val" id="val_co2">400 ppm</span>
+      </div>
+      <div class="sl-row">
+        <span class="sl-name">T<sub>atmosf.</sub></span>
+        <input type="range" id="sl_Tatm" min="-20" max="60" step="5" value="20" oninput="onSl(this,'Tatm')">
+        <span class="sl-val" id="val_Tatm">20 °C</span>
+      </div>
+    </div>
+
+    <!-- DETEKTOR -->
+    <div class="ctrl-panel">
+      <div class="panel-hdr cy">🔬 Detektor / pirometr</div>
+      <div class="sel-lbl">Typ detektora / pirometru</div>
+      <select id="sel_det" onchange="onDetChange()">
+        <option value="band_065">Pasmowy 0.65 µm – Si (jasności)</option>
+        <option value="band_100">Pasmowy 1.0 µm – InGaAs</option>
+        <option value="band_160">Pasmowy 1.6 µm – InGaAs</option>
+        <option value="band_390">Pasmowy 3.9 µm – InSb</option>
+        <option value="window_35">Okienkowy 3–5 µm – InSb</option>
+        <option value="window_814">Okienkowy 8–14 µm – MCT/bolom.</option>
+        <option value="total">Całkujący 1–18 µm – termostos</option>
+      </select>
+      <div class="sl-row">
+        <span class="sl-name w90">ε<sub>zakładana</sub></span>
+        <input type="range" id="sl_eps_assumed" min="0.02" max="1.00" step="0.01" value="0.70" oninput="onSl(this,'eps_assumed')">
+        <span class="sl-val cy" id="val_eps_assumed">0.70</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ─── PLOTS ─── -->
+  <main class="plots-col">
+    <div class="plot-hdr">Widmo promieniowania w torze pomiarowym
+      <div class="scale-toggle">
+        <button class="st-btn" id="btnLog" onclick="setScale('log')">log λ</button>
+        <button class="st-btn active" id="btnLin" onclick="setScale('lin')">lin λ</button>
+      </div>
+    </div>
+    <canvas id="specCanvas" height="308"></canvas>
+    <div class="legend">
+      <div class="leg"><div class="leg-line" style="background:rgba(160,160,200,.3);border-top:1px dashed rgba(160,160,200,.4)"></div>CDC (wzorzec)</div>
+      <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
+      <div class="leg"><div class="leg-fill" style="background:var(--red)"></div>Emisja atm.</div>
+      <div class="leg"><div class="leg-line" style="background:var(--orange);height:3px"></div>Sygnał na det.</div>
+      <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:1px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
+      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.25"></div>Okno det.</div>
+    </div>
+    <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
+    <canvas id="tauCanvas" height="148"></canvas>
+  </main>
+
+  <!-- ─── RESULTS ─── -->
+  <div class="res-col">
+
+    <div class="rb a">
+      <div class="rb-lbl">T wskazana przez pirometr</div>
+      <div class="rb-val a" id="r_Tind">—</div>
+    </div>
+
+    <div class="rb c">
+      <div class="rb-lbl">T rzeczywista obiektu</div>
+      <div class="rb-val c" id="r_Tobj">—</div>
+    </div>
+
+    <div class="rb" id="rb_dT">
+      <div class="rb-lbl">Błąd ΔT = T<sub>ind</sub> − T<sub>obj</sub></div>
+      <div class="rb-val" id="r_dT">—</div>
+      <div class="rb-sub" id="r_dT_rel">—</div>
+    </div>
+
+    <div class="rb" style="border-color:var(--border)">
+      <div class="rb-lbl">Składowe błędu</div>
+      <table class="err-tbl" id="err_tbl">
+        <tr><td class="en">Δε-emisyjność</td><td class="ev" id="e_eps">—</td></tr>
+        <tr><td class="en">Atmosfera</td><td class="ev" id="e_atm">—</td></tr>
+        <tr><td class="en" style="color:var(--text)">Łącznie ΔT</td><td class="ev" id="e_tot">—</td></tr>
+      </table>
+    </div>
+
+    <div class="rb" style="border-color:var(--border)">
+      <div class="rb-lbl">Parametry spektralne</div>
+      <table class="err-tbl">
+        <tr><td class="en">τ̄ w oknie det.</td><td class="ev cy" id="r_tau">—</td></tr>
+        <tr><td class="en">λ<sub>max</sub> Wien</td><td class="ev" id="r_wien" style="color:var(--muted)">—</td></tr>
+        <tr><td class="en">Sygnał S</td><td class="ev" id="r_sig" style="color:var(--pale);font-size:.62rem">—</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div><!-- /main-layout -->
+
+</div><!-- /app -->
+
+<!-- ═══ TOOLTIP ══════════════════════════════ -->
+<div id="tooltip"></div>
+
+<!-- ═══ DOCS PANEL ═══════════════════════════ -->
+<div class="docs-overlay" id="docsOverlay" onclick="closeDocs(event)">
+<div class="docs-panel" id="docsPanel">
+  <div class="docs-top">
+    <div class="docs-title">Dokumentacja fizyczna i algorytmiczna</div>
+    <button class="docs-close" onclick="toggleDocs()">✕</button>
+  </div>
+  <div class="docs-body" id="docsBody">
+
+<!-- ──── 1. MODEL TORU ──────────────────────── -->
+<div class="doc-sec">
+<h2>1. Model toru pomiarowego</h2>
+<p>Pirometr mierzy temperaturę bez kontaktu z obiektem, analizując promieniowanie elektromagnetyczne. Rzeczywisty sygnał na wejściu detektora jest <b>sumą trzech składników</b> i opisany jest ogólnym równaniem transportu promieniowania:</p>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{obiekt tlumiony atmosfera}} + \underbrace{[1-\tau(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja wlasna atmosfery}} + \underbrace{\tau(\lambda)\cdot[1-\varepsilon]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{odbicia tla (pominiete)}}$$</div>
+<p style="font-size:.75rem;color:var(--muted);margin-top:2px">gdzie: „tłumiony" = τ·ε·L<sub>bb</sub>, emisja atmosfery = (1−τ)·L<sub>bb</sub>(T<sub>atm</sub>), odbicia tła – pominięte</p>
+<p>W symulatorze odbicia tła są pominięte (przyjmujemy T_tła = T_atm). Procesor pirometru zakłada, że detektor widzi wyłącznie ciało szare o emisyjności ε_zał., co prowadzi do błędów gdy τ ≠ 1 lub ε_real ≠ ε_zał.</p>
+</div>
+
+<!-- ──── 2. PRAWO PLANCKA ─────────────────── -->
+<div class="doc-sec">
+<h2>2. Prawo Plancka – ciało doskonale czarne</h2>
+<p>Spektralna luminancja energetyczna (radiance) ciała doskonale czarnego (CDC) w temperaturze T:</p>
+<div class="fml-math">$$L_{bb}(\lambda,\, T) = \frac{2\,h\,c^{2}}{\lambda^{5}} \cdot \frac{1}{\exp\!\left(\dfrac{h c}{\lambda\, k_{B}\, T}\right) - 1} \qquad \left[\mathrm{W \cdot m^{-2} \cdot sr^{-1} \cdot m^{-1}}\right]$$</div>
+<h3>Uproszczenie Wiena (λ → 0)</h3>
+<p>Dla krótkich fal (exp ≫ 1), tj. gdy hc/λk_BT &gt; 6, prawo Plancka przybliżamy:</p>
+<div class="fml-math">$$L_{bb} \approx \frac{2\,h\,c^{2}}{\lambda^{5}}\cdot e^{-c_{2}/\lambda T}, \qquad c_{2} = \frac{hc}{k_{B}} = 1{,}43878\times10^{-2}\ \mathrm{m{\cdot}K}$$</div>
+<div class="info-box">W kalkulatorze używane jest pełne prawo Plancka (bez przybliżenia Wiena). Stała c₂ pojawia się w równaniu korekcji temperatury.</div>
+
+<h3>Prawo przesunięć Wiena</h3>
+<p>Długość fali maksimum emisji maleje odwrotnie z temperaturą:</p>
+<div class="fml-math">$$\lambda_{\max}\cdot T = b = 2{,}8978\times10^{-3}\ \mathrm{m{\cdot}K}$$</div>
+<p>Przykład: dla T = 1200°C = 1473 K → λ_max = 1.97 µm (bliskie IR), dla T = 300 K → λ_max = 9.7 µm.</p>
+
+<h3>Prawo Stefana–Boltzmanna</h3>
+<p>Całkowity strumień promieniowania CDC (integral po wszystkich λ):</p>
+<div class="fml-math">$$M = \sigma\, T^{4}, \qquad \sigma = 5{,}6704\times10^{-8}\ \mathrm{W{\cdot}m^{-2}{\cdot}K^{-4}}$$</div>
+</div>
+
+<!-- ──── 3. EMISYJNOŚĆ ────────────────────── -->
+<div class="doc-sec">
+<h2>3. Emisyjność i prawo Kirchhoffa</h2>
+<p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze:</p>
+<div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
+<p>Zgodnie z prawem Kirchhoffa: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
+<div class="warn-box">Symulator przyjmuje model ciała szarego (ε = const w całym zakresie λ). Dla metali rzeczywistość jest bardziej złożona – ε zależy silnie od λ i T.</div>
+<h3>Korekcja temperatury (pirometr monochromatyczny)</h3>
+<p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi:</p>
+<div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
+<p>Błąd przy założonej złej emisyjności (ε_real ≠ ε_zał):</p>
+<div class="fml-math cy">$$\Delta T \approx -\frac{T^{2}\lambda}{c_{2}}\ln\frac{\varepsilon_{\mathrm{real}}}{\varepsilon_{\mathrm{zal}}} \qquad \text{(przyblizenie Wiena)}$$</div>
+</div>
+
+<!-- ──── 4. MODEL ATMOSFERY ───────────────── -->
+<div class="doc-sec">
+<h2>4. Model transmitancji atmosferycznej</h2>
+<p>Transmitancja atmosferyczna τ(λ) opisuje jaki ułamek promieniowania przechodzi przez warstwę atmosfery grubości L. Bazuje na prawie Beer-Lamberta:</p>
+<div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_{i} k_{i}(\lambda)\cdot c_{i}\cdot L\right), \qquad k_i\text{ -- wsp. absorpcji},\quad c_i\text{ -- stezenie}$$</div>
+<p>W symulatorze stosujemy uproszczony model pasmowy oparty na danych HITRAN:</p>
+<h3>Absorpcja H₂O (para wodna, 12 pasm)</h3>
+<table class="sym-tbl">
+  <tr><th>λ_centrum [µm]</th><th>Szerokość [µm]</th><th>Siła pasma</th></tr>
+  <tr><td>0.725, 0.820, 0.940</td><td>0.06–0.09</td><td>słabe</td></tr>
+  <tr><td>1.14, 1.38, 1.88</td><td>0.10–0.22</td><td>umiarkowane</td></tr>
+  <tr><td>2.68, 3.17, 5.35, 6.30</td><td>0.24–1.60</td><td>silne</td></tr>
+  <tr><td>11.7, 13.4</td><td>0.9–1.5</td><td>umiarkowane</td></tr>
+</table>
+<h3>Absorpcja CO₂ (7 pasm)</h3>
+<table class="sym-tbl">
+  <tr><th>λ_centrum [µm]</th><th>Opis</th></tr>
+  <tr><td>2.01, 2.69</td><td>kombinacyjne</td></tr>
+  <tr><td>4.26</td><td><b>dominujące pasmo fundamentalne (asymetryczne rozciąganie)</b></td></tr>
+  <tr><td>4.82, 9.40, 10.4</td><td>słabsze</td></tr>
+  <tr><td>14.9</td><td>pasmo zginania (ważne w IR dalekiej)</td></tr>
+</table>
+<div class="warn-box">Pasmo CO₂ przy 4.26 µm jest tak silne, że pirometry okienkowe 3–5 µm często unikają tego obszaru lub stosują specjalne filtry. Pirometry "flame" pracują właśnie przy 3.9 µm między pasmami CO₂.</div>
+<h3>Emisja własna atmosfery</h3>
+<p>Atmosfera pochłaniając promieniowanie, sama emituje (prawo Kirchhoffa). Emisja atmosfery jest opisana luminancją:</p>
+<div class="fml-math">$$L_{\mathrm{atm}}(\lambda) = \bigl[1-\tau(\lambda)\bigr]\cdot L_{bb}(\lambda,\,T_{\mathrm{atm}}) \qquad \bigl(T_{\mathrm{atm}} = \text{const wzdluz toru}\bigr)$$</div>
+<p>Ta emisja jest <b>dodawana</b> do sygnału obiektu. Powoduje to przeszacowanie temperatury (pirometr "widzi" cieplejszą atmosferę).</p>
+</div>
+
+<!-- ──── 5. DETEKTOR ──────────────────────── -->
+<div class="doc-sec">
+<h2>5. Modele funkcji odpowiedzi detektora R(λ)</h2>
+
+<h3>Pirometr pasmowy (gauss)</h3>
+<div class="fml-math">$$R(\lambda) = R_p\cdot\exp\!\left[-\frac{1}{2}\left(\frac{\lambda-\lambda_c}{\sigma}\right)^{\!2}\right], \qquad \sigma = \frac{\Delta\lambda}{2{,}355}$$</div>
+<p>Stosowany: Si (0.65 µm), InGaAs (1.0, 1.6 µm), InSb (3.9 µm). Wąskie pasmo minimalizuje wpływ absorpcji atmosferycznej.</p>
+
+<h3>Pirometr okienkowy (prostokąt ze złagodzonymi krawędziami)</h3>
+<div class="fml-math">$$R(\lambda) = \begin{cases} R_p & |\lambda-\lambda_c| < 0{,}88\,\tfrac{\Delta\lambda}{2} \\ 0 & |\lambda-\lambda_c| > \tfrac{\Delta\lambda}{2} \end{cases}$$</div>
+<p>Stosowany: InSb (3–5 µm), MCT/bolometr (8–14 µm).</p>
+
+<h3>Pirometr całkujący (szerokopasmowy)</h3>
+<div class="fml-math cy">$$R(\lambda) \approx R_p = \mathrm{const}, \qquad \lambda \in [1{,}0\;\mu\text{m},\;17\;\mu\text{m}] \quad \text{(termostos, termopilek, bolometr)}$$</div>
+<p>Mierzy moc całkowitą. Bardzo czuły na emisyjność, bo nie ma możliwości wyboru "dobrego" okna spektralnego. Zgodny z prawem Stefana–Boltzmanna: M = ε·σ·T⁴.</p>
+<div class="warn-box">Pirometr całkujący: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{zal}}\,\sigma}\right)^{1/4}\). Błąd emisyjności proporcjonalny do \(T^4\) — bardzo wrażliwy!</div>
+</div>
+
+<!-- ──── 6. SYGNAŁ I INWERSJA ─────────────── -->
+<div class="doc-sec">
+<h2>6. Całkowanie sygnału i inwersja temperatury</h2>
+<h3>Sygnał detektora</h3>
+<p>Całkowity sygnał elektryczny (proporcjonalny do mocy) detektora z toru optycznego:</p>
+<div class="fml-math">$$S = \int_{0}^{\infty} R(\lambda)\cdot L_{\mathrm{det}}(\lambda)\,\mathrm{d}\lambda$$</div>
+<p>W symulatorze: grid N=480 punktów, λ ∈ [0.4, 16] µm, całkowanie metodą prostokątów.</p>
+
+<h3>Inwersja temperatury (algorytm bisekcji)</h3>
+<p>Pirometr szuka T_ind taką, że model uproszczony (tylko ε_zał, τ=1) daje ten sam sygnał S:</p>
+<div class="fml-math">$$\text{znajdz } T_{\mathrm{ind}}:\quad \int_{0}^{\infty} R(\lambda)\cdot\varepsilon_{\mathrm{zal}}\cdot L_{bb}(\lambda,\,T_{\mathrm{ind}})\,\mathrm{d}\lambda \;=\; S$$</div>
+<p>Algorytm: <b>bisekcja 64 iteracje</b>, zakres T ∈ [200, 6500] K, zbieżność &lt; 0.01 K.</p>
+<div class="fml-math gr">$$\mathcal{O}(72\times N_{\mathrm{grid}}) \approx 50\,400 \ \text{ewaluacji Plancka na kazde przesuniecie suwaka}$$</div>
+
+<h3>Dekompozycja błędu</h3>
+<p>Błąd całkowity rozkładamy na dwie niezależne składowe:</p>
+<div class="fml-math">$$\Delta T_{\varepsilon} = T_{\mathrm{ind}}(\varepsilon_{\mathrm{real}},\;\tau\!=\!1) - T_{\mathrm{obj}} \qquad \text{(tylko emisyjnosc)}$$
+$$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}(\text{pelny model}) - T_{\mathrm{ind}}(\varepsilon_{\mathrm{real}},\;\tau\!=\!1) \qquad \text{(tylko atmosfera)}$$
+$$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
+</div>
+
+<!-- ──── 7. SŁOWNIK ───────────────────────── -->
+<div class="doc-sec">
+<h2>7. Słownik symboli</h2>
+<table class="sym-tbl">
+  <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
+  <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — polski skrót; odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε&nbsp;=&nbsp;1</td><td>—</td></tr>
+  <tr><td>L_bb(λ,T)</td><td>Luminancja spektralna ciała doskonale czarnego (CDC) — prawo Plancka</td><td>W·m⁻²·sr⁻¹·m⁻¹</td></tr>
+  <tr><td>ε, ε_real</td><td>Emisyjność rzeczywista obiektu</td><td>—</td></tr>
+  <tr><td>ε_zał</td><td>Emisyjność zakładana przez procesor pirometru</td><td>—</td></tr>
+  <tr><td>τ(λ)</td><td>Transmitancja spektralna atmosfery</td><td>—</td></tr>
+  <tr><td>τ̄</td><td>Śr. ważona transmitancja w oknie detektora</td><td>—</td></tr>
+  <tr><td>R(λ)</td><td>Spektralna funkcja odpowiedzi detektora</td><td>A·W⁻¹ lub V·W⁻¹</td></tr>
+  <tr><td>S</td><td>Sygnał (moc) na wyjściu detektora</td><td>W·m⁻²·sr⁻¹</td></tr>
+  <tr><td>T_obj</td><td>Temperatura termodynamiczna obiektu</td><td>°C lub K</td></tr>
+  <tr><td>T_ind</td><td>Temperatura wskazana przez pirometr</td><td>°C</td></tr>
+  <tr><td>T_J</td><td>Temperatura jasności (monochromatyczna)</td><td>°C</td></tr>
+  <tr><td>T_atm</td><td>Temperatura atmosfery wzdłuż toru</td><td>°C</td></tr>
+  <tr><td>ΔT</td><td>Błąd pomiaru: T_ind − T_obj</td><td>°C lub K</td></tr>
+  <tr><td>λ_max</td><td>Długość fali maksimum emisji (Wien)</td><td>µm</td></tr>
+  <tr><td>λ_c</td><td>Centralna długość fali detektora</td><td>µm</td></tr>
+  <tr><td>c₂ = hc/k_B</td><td>Druga stała promieniowania</td><td>1.43878×10⁻² m·K</td></tr>
+  <tr><td>σ</td><td>Stała Stefana–Boltzmanna</td><td>5.6704×10⁻⁸ W·m⁻²·K⁻⁴</td></tr>
+  <tr><td>b</td><td>Stała przesunięć Wiena</td><td>2.8978×10⁻³ m·K</td></tr>
+  <tr><td>h</td><td>Stała Plancka</td><td>6.626×10⁻³⁴ J·s</td></tr>
+  <tr><td>k_B</td><td>Stała Boltzmanna</td><td>1.381×10⁻²³ J·K⁻¹</td></tr>
+  <tr><td>c</td><td>Prędkość światła w próżni</td><td>2.998×10⁸ m·s⁻¹</td></tr>
+</table>
+</div>
+
+  </div><!-- /docs-body -->
+</div><!-- /docs-panel -->
+</div><!-- /docs-overlay -->
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────────
+   PHYSICS CONSTANTS & ENGINE
+───────────────────────────────────────────── */
+const h_  = 6.626e-34, cL = 2.998e8, kB = 1.381e-23;
+const c2  = h_*cL/kB;   // 1.43878e-2 m·K
+const LAM_MIN = 0.10e-6, LAM_MAX = 16e-6, N = 700;
+const DL = (LAM_MAX - LAM_MIN) / N;
+const lams = Array.from({length:N+1}, (_,i) => LAM_MIN + i*DL);
+
+function planck(lam, T_K){
+  if(T_K < 5) return 0;
+  const x = c2 / (lam * T_K);
+  if(x > 700) return 0;
+  return (2*h_*cL*cL) / (Math.pow(lam,5) * (Math.exp(x) - 1));
+}
+
+function atmTau(lam_m, pathLen, rh_pct, co2_ppm){
+  if(pathLen <= 0) return 1.0;
+  const u = lam_m * 1e6; // µm
+  let tau = 1.0;
+
+  // Rayleigh
+  tau *= Math.exp(-2e-5 * Math.pow(0.55/Math.max(u,0.4), 4) * pathLen);
+
+  // H2O (12 bands)
+  const pw = (rh_pct/100) * pathLen * 0.01;
+  const h2o = [
+    {c:.725,w:.06,s:.8},{c:.820,w:.045,s:.6},{c:.940,w:.09,s:2.0},
+    {c:1.14,w:.10,s:2.5},{c:1.38,w:.18,s:7.0},{c:1.88,w:.22,s:9.0},
+    {c:2.68,w:.30,s:11.0},{c:3.17,w:.24,s:4.5},{c:5.35,w:.65,s:5.0},
+    {c:6.30,w:1.60,s:18.0},{c:11.7,w:1.50,s:3.5},{c:13.4,w:.9,s:2.5}
+  ];
+  h2o.forEach(b=>{
+    const od = b.s * pw * Math.exp(-Math.pow((u-b.c)/(b.w/2.2), 2));
+    tau *= Math.exp(-Math.max(0, od));
+  });
+
+  // CO2 (7 bands)
+  const cp = (co2_ppm/400) * pathLen * 0.0012;
+  const co2 = [
+    {c:2.01,w:.09,s:1.2},{c:2.69,w:.16,s:3.5},{c:4.26,w:.30,s:28.0},
+    {c:4.82,w:.14,s:2.5},{c:9.40,w:.28,s:2.2},{c:10.4,w:.26,s:1.8},
+    {c:14.9,w:4.0,s:9.0}
+  ];
+  co2.forEach(b=>{
+    const od = b.s * cp * Math.exp(-Math.pow((u-b.c)/(b.w/2.2), 2));
+    tau *= Math.exp(-Math.max(0, od));
+  });
+
+  // O3
+  tau *= Math.exp(-0.5*pathLen*0.0001*Math.exp(-Math.pow((u-9.6)/0.6, 2)));
+
+  return Math.max(0, Math.min(1, tau));
+}
+
+const DETS = {
+  band_065: {label:'0.65 µm – Si',lc:.65,bw:.045,mode:'gauss',Rp:1.0,range:[.45,1.0]},
+  band_100: {label:'1.0 µm – InGaAs',lc:1.00,bw:.07,mode:'gauss',Rp:1.0,range:[.7,1.4]},
+  band_160: {label:'1.6 µm – InGaAs',lc:1.60,bw:.10,mode:'gauss',Rp:.9,range:[1.2,2.1]},
+  band_390: {label:'3.9 µm – InSb',lc:3.90,bw:.35,mode:'gauss',Rp:.85,range:[3.0,5.0]},
+  window_35:{label:'3–5 µm – InSb',lc:4.00,bw:2.0,mode:'window',Rp:.75,range:[2.8,5.4]},
+  window_814:{label:'8–14 µm – MCT',lc:11.0,bw:6.0,mode:'window',Rp:.65,range:[7.5,15.0]},
+  total:    {label:'1–18 µm – termostos',lc:9.5,bw:17.0,mode:'total',Rp:.4,range:[0.8,16.5]},
+};
+
+function detResp(lam_m, det){
+  const u = lam_m * 1e6;
+  const {lc,bw,mode,Rp} = det;
+  if(mode==='gauss'){
+    const sg = bw/2.355;
+    return Rp * Math.exp(-.5*Math.pow((u-lc)/sg, 2));
+  }
+  if(mode==='window'){
+    const h2 = bw/2, d = Math.abs(u-lc);
+    if(d < h2*.88) return Rp;
+    if(d < h2)     return Rp*(1-(d-h2*.88)/(h2*.12));
+    return 0;
+  }
+  if(mode==='total'){
+    if(u<0.8)  return Rp*(u/0.8);
+    if(u>16.0) return Rp*Math.max(0,1-(u-16)/2);
+    return Rp;
+  }
+  return 0;
+}
+
+function invertTemp(target, det, eps_a){
+  if(target<=0) return 1;
+  let lo=1, hi=15000;
+  for(let it=0;it<72;it++){
+    const Tm=(lo+hi)/2;
+    let s=0;
+    for(let i=0;i<=N;i++) s += detResp(lams[i],det)*eps_a*planck(lams[i],Tm)*DL;
+    if(s<target) lo=Tm; else hi=Tm;
+  }
+  return (lo+hi)/2;
+}
+
+function compute(p){
+  const Tobj_K = p.Tobj;                  // slider is now in Kelvin
+  const Tatm_K = p.Tatm + 273.15;
+  const det = DETS[p.detKey];
+
+  const Lbb=[], Lemit=[], tau=[], Latm=[], Ldet=[], R=[];
+  let signal=0, tw=0, ts=0;
+
+  for(let i=0;i<=N;i++){
+    const lam=lams[i];
+    const bb = planck(lam,Tobj_K);
+    const em = p.eps_real * bb;
+    const ta = atmTau(lam, p.path, p.rh, p.co2);
+    const la = (1-ta)*planck(lam,Tatm_K);
+    const ld = ta*em + la;
+    const r  = detResp(lam,det);
+    Lbb.push(bb); Lemit.push(em); tau.push(ta);
+    Latm.push(la); Ldet.push(ld); R.push(r);
+    signal += r*ld*DL;
+    if(r>0.01){ tw+=r; ts+=ta*r; }
+  }
+
+  const T_ind_K = invertTemp(signal, det, p.eps_assumed);
+
+  // error decomposition: eps only (no atm)
+  let sig_eo=0;
+  for(let i=0;i<=N;i++) sig_eo += detResp(lams[i],det)*p.eps_real*planck(lams[i],Tobj_K)*DL;
+  const T_eps_K = invertTemp(sig_eo, det, p.eps_assumed);
+
+  const tau_avg = tw>0 ? ts/tw : 1;
+  const wien_um = (2.898e-3/Tobj_K)*1e6;
+  const Tind_arr = lams.map(lam => p.eps_assumed * planck(lam, T_ind_K));
+
+  const T_ind_C = T_ind_K - 273.15;
+  const Tobj_C  = Tobj_K  - 273.15;
+
+  return {
+    Lbb, Lemit, tau, Latm, Ldet, R,
+    lam_um: lams.map(x=>x*1e6),
+    T_ind: T_ind_C, T_ind_K,
+    Tobj_C, Tobj_K,
+    dT: T_ind_K - Tobj_K,               // K difference = °C difference
+    dT_eps: T_eps_K - Tobj_K,
+    dT_atm: T_ind_K - T_eps_K,
+    signal, tau_avg, wien_um, Tind_arr, det
+  };
+}
+
+/* ─────────────────────────────────────────────
+   CANVAS RENDERING (theme-aware)
+───────────────────────────────────────────── */
+const specCanvas = document.getElementById('specCanvas');
+const tauCanvas  = document.getElementById('tauCanvas');
+const specCtx = specCanvas.getContext('2d');
+const tauCtx  = tauCanvas.getContext('2d');
+
+let hoverFrac = null;
+
+// Read CSS variable (theme-aware) – must read from body where .theme-* classes live
+function tv(name){ return getComputedStyle(document.body).getPropertyValue(name).trim(); }
+
+function resizeCanvas(c){
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.offsetWidth;
+  const h = parseInt(c.getAttribute('height'));
+  const needW = Math.round(w * dpr);
+  const needH = Math.round(h * dpr);
+  if(c.width !== needW || c.height !== needH){
+    c.width  = needW;
+    c.height = needH;
+    c.getContext('2d').scale(dpr, dpr);
+  }
+}
+
+function setupCanvas(){
+  resizeCanvas(specCanvas);
+  resizeCanvas(tauCanvas);
+}
+
+function drawGrid(ctx, W, H, pL, pR, pT, pB, xN, yN){
+  const W2=W-pL-pR, H2=H-pT-pB;
+  ctx.strokeStyle = tv('--plot-grid');
+  ctx.lineWidth=1;
+  for(let i=0;i<=yN;i++){
+    const y=pT+H2*i/yN;
+    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
+  }
+  for(let i=0;i<=xN;i++){
+    const x=pL+W2*i/xN;
+    ctx.beginPath(); ctx.moveTo(x,pT); ctx.lineTo(x,pT+H2); ctx.stroke();
+  }
+}
+
+/* ─────────────────────────────────────────────
+   VISIBLE + UV SPECTRUM BAR
+───────────────────────────────────────────── */
+function drawVisibleBar(ctx, lx, pL, W2, pT, H2, barY, barH){
+  // ── UV strip (100–380 nm) ──────────────────
+  const xUV1 = Math.max(pL,    lx(0.10));
+  const xUV2 = Math.min(pL+W2, lx(0.380));
+  if(xUV2 > xUV1){
+    const gUV = ctx.createLinearGradient(xUV1,0,xUV2,0);
+    gUV.addColorStop(0,   'rgba(40,  0,  80, 0)');
+    gUV.addColorStop(0.6, 'rgba(80,  0, 140, 0.55)');
+    gUV.addColorStop(1.0, 'rgba(110, 0, 200, 0.85)');
+    ctx.save();
+    ctx.beginPath(); ctx.rect(xUV1,barY,xUV2-xUV1,barH); ctx.clip();
+    ctx.fillStyle=gUV; ctx.fillRect(xUV1,barY,xUV2-xUV1,barH);
+    ctx.restore();
+    // "UV" label centred if wide enough
+    if(xUV2-xUV1 > 20){
+      ctx.fillStyle=tv('--pale'); ctx.font='bold 7px IBM Plex Mono,monospace';
+      ctx.textAlign='center';
+      ctx.fillText('UV', (xUV1+xUV2)/2, barY+barH-1);
+    }
+  }
+
+  // ── Visible strip (380–700 nm) ─────────────
+  const x1 = Math.max(pL,    lx(0.380));
+  const x2 = Math.min(pL+W2, lx(0.700));
+  if(x2 > x1){
+    const g = ctx.createLinearGradient(x1,0,x2,0);
+    g.addColorStop(0.00,'rgb(100,  0,180)');  // 380 violet
+    g.addColorStop(0.09,'rgb( 75,  0,255)');  // 400 violet
+    g.addColorStop(0.20,'rgb(  0,  0,255)');  // 440 blue
+    g.addColorStop(0.29,'rgb(  0,100,255)');  // 465 blue
+    g.addColorStop(0.35,'rgb(  0,200,255)');  // 485 cyan
+    g.addColorStop(0.42,'rgb(  0,255,160)');  // 505 cyan-green
+    g.addColorStop(0.50,'rgb(  0,255, 30)');  // 530 green
+    g.addColorStop(0.58,'rgb(160,255,  0)');  // 555 yellow-green
+    g.addColorStop(0.65,'rgb(255,230,  0)');  // 575 yellow
+    g.addColorStop(0.72,'rgb(255,130,  0)');  // 600 orange
+    g.addColorStop(0.84,'rgb(255, 20,  0)');  // 640 red
+    g.addColorStop(1.00,'rgb(140,  0,  0)');  // 700 deep red
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x1,barY,x2-x1,barH); ctx.clip();
+    ctx.fillStyle=g; ctx.fillRect(x1,barY,x2-x1,barH);
+    ctx.restore();
+    // border
+    ctx.globalAlpha=0.3; ctx.strokeStyle=tv('--border2');
+    ctx.lineWidth=0.5; ctx.strokeRect(x1,barY,x2-x1,barH);
+    ctx.globalAlpha=1;
+    // "VIS" label
+    if(x2-x1>14){
+      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.font='bold 7px IBM Plex Mono,monospace';
+      ctx.textAlign='center'; ctx.fillText('VIS',(x1+x2)/2,barY+barH-1);
+    }
+  }
+
+  // ── IR indicator label after 700 nm ────────
+  const xIR = lx(0.700);
+  if(xIR > pL && xIR < pL+W2-24){
+    ctx.fillStyle=tv('--muted'); ctx.font='7px IBM Plex Mono,monospace';
+    ctx.textAlign='left'; ctx.fillText('IR →', xIR+3, barY+barH-1);
+  }
+
+  // ── Dashed vertical at 700 nm inside plot ──
+  if(xIR > pL && xIR < pL+W2){
+    ctx.globalAlpha=0.18; ctx.strokeStyle=tv('--text');
+    ctx.lineWidth=1; ctx.setLineDash([2,4]);
+    ctx.beginPath(); ctx.moveTo(xIR,pT); ctx.lineTo(xIR,pT+H2);
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  }
+
+  // ── Tick labels at key UV/VIS boundaries ───
+  ctx.fillStyle=tv('--muted'); ctx.font='7px IBM Plex Mono,monospace';
+  ctx.textAlign='center';
+  [[0.38,'0.38'],[0.70,'0.70 µm']].forEach(([lm,label])=>{
+    const xp=lx(lm);
+    if(xp>=pL && xp<=pL+W2) ctx.fillText(label,xp,barY+barH+8);
+  });
+}
+
+/* ─────────────────────────────────────────────
+   DRAW GRID (horizontal y-lines only; x-lines
+   drawn per chart at custom log positions)
+───────────────────────────────────────────── */
+function drawGrid(ctx, pL, pR, pT, pB, W, H, yN){
+  const W2=W-pL-pR, H2=H-pT-pB;
+  ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
+  for(let i=0;i<=yN;i++){
+    const y=pT+H2*i/yN;
+    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
+  }
+}
+
+/* ─────────────────────────────────────────────
+   DRAW SPECTRAL PLOT
+───────────────────────────────────────────── */
+function drawSpec(res, p){
+  const ctx = specCtx;
+  const W = specCanvas.offsetWidth, H = parseInt(specCanvas.getAttribute('height'));
+  ctx.clearRect(0,0,W,H);
+
+  const pL=48,pR=14,pT=14,pB=40;
+  const W2=W-pL-pR, H2=H-pT-pB;
+  if(W2<10||H2<10) return;
+
+  ctx.fillStyle=tv('--bg');   ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=tv('--surf'); ctx.fillRect(pL,pT,W2,H2);
+
+  const lamArr = res.lam_um;
+  const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
+
+  // ── X mapping: log or linear ─────────────
+  const lx = logScale
+    ? u => pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
+    : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
+
+  const gMax = Math.max(...res.Lbb, 1e-30);
+  const ly   = v => pT + H2*(1 - Math.min(v/gMax, 1.05));
+
+  // y-grid (horizontal lines)
+  drawGrid(ctx,pL,pR,pT,pB,W,H,4);
+
+  // x-grid: log or linear ticks
+  ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
+  const xTicksMu = logScale
+    ? [0.2, 0.4, 0.7, 1, 2, 3, 5, 8, 12]
+    : [1, 2, 3, 4, 5, 6, 8, 10, 12, 14];
+  xTicksMu.forEach(v=>{
+    const x=lx(v); if(x>=pL&&x<=pL+W2){
+      ctx.beginPath(); ctx.moveTo(x,pT); ctx.lineTo(x,pT+H2); ctx.stroke();
+    }
+  });
+
+  // y-axis labels
+  ctx.fillStyle=tv('--muted'); ctx.font='10px IBM Plex Mono,monospace';
+  ctx.textAlign='right';
+  ['100','75','50','25','0'].forEach((v,i)=> ctx.fillText(v+'%',pL-4,pT+H2*i/4+4));
+
+  // visible + UV spectrum bar
+  const barY=pT+H2+3, barH=7;
+  drawVisibleBar(ctx,lx,pL,W2,pT,H2,barY,barH);
+
+  // x-axis µm labels
+  ctx.fillStyle=tv('--muted'); ctx.font='10px IBM Plex Mono,monospace';
+  ctx.textAlign='center';
+  const xLblsMu = logScale
+    ? [[0.2,'0.2'],[0.4,'0.4'],[1,'1'],[2,'2'],[3,'3'],[5,'5'],[8,'8'],[12,'12 µm']]
+    : [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[12,'12'],[14,'14 µm']];
+  xLblsMu.forEach(([v,l])=>{
+    const x=lx(v); if(x>pL+4&&x<pL+W2-4) ctx.fillText(l,x,pT+H2+28);
+  });
+  ctx.textAlign='left'; ctx.fillText('λ [µm]',pL+W2+3,pT+H2+28);
+
+  // detector window shading
+  const [dmin,dmax]=res.det.range;
+  const xd1=lx(dmin), xd2=lx(dmax);
+  ctx.globalAlpha=0.18; ctx.fillStyle=tv('--cyan');
+  ctx.fillRect(Math.max(pL,xd1),pT,Math.min(pL+W2,xd2)-Math.max(pL,xd1),H2);
+  ctx.globalAlpha=1;
+
+  // helper curve
+  function curve(arr, color, lw, dashes){
+    ctx.beginPath(); ctx.setLineDash(dashes||[]);
+    arr.forEach((v,i)=>{ const x=lx(lamArr[i]); i===0?ctx.moveTo(x,ly(v)):ctx.lineTo(x,ly(v)); });
+    ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  // atmosphere fill
+  ctx.beginPath();
+  ctx.moveTo(lx(lamArr[0]),pT+H2);
+  res.Latm.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
+  ctx.lineTo(lx(lamArr[res.Latm.length-1]),pT+H2); ctx.closePath();
+  ctx.globalAlpha=0.35; ctx.fillStyle=tv('--red'); ctx.fill(); ctx.globalAlpha=1;
+
+  curve(res.Lbb,   tv('--muted'),  1, [4,4]);
+  curve(res.Latm,  tv('--red'),    1);
+  curve(res.Lemit, tv('--amber'),  1.8);
+  curve(res.Ldet,  tv('--orange'), 2.5);
+  curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4]);
+
+  // Wien λ_max marker
+  const wienX = lx(res.wien_um);
+  if(wienX>pL&&wienX<pL+W2){
+    ctx.globalAlpha=0.3; ctx.strokeStyle=tv('--text'); ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(wienX,pT); ctx.lineTo(wienX,pT+H2); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha=0.65;
+    ctx.fillStyle=tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
+    ctx.textAlign='center'; ctx.fillText('λ_max',wienX,pT+9);
+    ctx.globalAlpha=1;
+  }
+
+  // detector window borders
+  ctx.globalAlpha=0.55; ctx.strokeStyle=tv('--cyan');
+  ctx.lineWidth=1; ctx.setLineDash([3,4]);
+  if(xd1>pL&&xd1<pL+W2){ ctx.beginPath(); ctx.moveTo(xd1,pT); ctx.lineTo(xd1,pT+H2); ctx.stroke(); }
+  if(xd2>pL&&xd2<pL+W2){ ctx.beginPath(); ctx.moveTo(xd2,pT); ctx.lineTo(xd2,pT+H2); ctx.stroke(); }
+  ctx.setLineDash([]); ctx.globalAlpha=1;
+
+  // hover crosshair
+  if(hoverFrac!==null){
+    // hoverFrac is linear in screen x; convert back via log
+    const lamHov = lamMin * Math.pow(lamMax/lamMin, hoverFrac);
+    const hx = lx(lamHov);
+    ctx.globalAlpha=0.4; ctx.strokeStyle=tv('--text'); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(hx,pT); ctx.lineTo(hx,pT+H2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+
+  ctx.strokeStyle=tv('--border'); ctx.lineWidth=1;
+  ctx.strokeRect(pL,pT,W2,H2);
+}
+
+function drawTau(res){
+  const ctx = tauCtx;
+  const W = tauCanvas.offsetWidth, H = parseInt(tauCanvas.getAttribute('height'));
+  ctx.clearRect(0,0,W,H);
+
+  const pL=48,pR=14,pT=10,pB=40;
+  const W2=W-pL-pR, H2=H-pT-pB;
+  if(W2<10||H2<10) return;
+
+  ctx.fillStyle=tv('--bg');   ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=tv('--surf'); ctx.fillRect(pL,pT,W2,H2);
+
+  const lamArr = res.lam_um;
+  const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
+  // ── X mapping: log or linear (matches specCanvas) ─────
+  const lx = logScale
+    ? u => pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
+    : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
+  const ly = v => pT + H2*(1-v);
+
+  // y-grid
+  drawGrid(ctx,pL,pR,pT,pB,W,H,4);
+
+  // x-grid
+  ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
+  const xTicksMu = logScale
+    ? [0.2,0.4,0.7,1,2,3,5,8,12]
+    : [1,2,3,4,5,6,8,10,12,14];
+  xTicksMu.forEach(v=>{
+    const x=lx(v); if(x>=pL&&x<=pL+W2){
+      ctx.beginPath(); ctx.moveTo(x,pT); ctx.lineTo(x,pT+H2); ctx.stroke();
+    }
+  });
+
+  ctx.fillStyle=tv('--muted'); ctx.font='9px IBM Plex Mono,monospace';
+  ctx.textAlign='right';
+  ['100','75','50','25','0'].forEach((v,i)=> ctx.fillText(v+'%',pL-4,pT+H2*i/4+4));
+
+  // visible + UV spectrum bar
+  const barY=pT+H2+3, barH=7;
+  drawVisibleBar(ctx,lx,pL,W2,pT,H2,barY,barH);
+
+  // x-axis labels
+  ctx.fillStyle=tv('--muted'); ctx.font='9px IBM Plex Mono,monospace';
+  ctx.textAlign='center';
+  const xLblsMu = logScale
+    ? [[0.2,'0.2'],[0.4,'0.4'],[1,'1'],[2,'2'],[3,'3'],[5,'5'],[8,'8'],[12,'12 µm']]
+    : [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[12,'12'],[14,'14 µm']];
+  xLblsMu.forEach(([v,l])=>{
+    const x=lx(v); if(x>pL+4&&x<pL+W2-4) ctx.fillText(l,x,pT+H2+28);
+  });
+
+  // det window
+  const [dmin,dmax]=res.det.range;
+  const x1=lx(dmin), x2=lx(dmax);
+  ctx.globalAlpha=0.18; ctx.fillStyle=tv('--cyan');
+  ctx.fillRect(Math.max(pL,x1),pT,Math.min(pL+W2,x2)-Math.max(pL,x1),H2);
+  ctx.globalAlpha=1;
+
+  // τ fill
+  ctx.beginPath();
+  ctx.moveTo(lx(lamArr[0]),pT+H2);
+  res.tau.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
+  ctx.lineTo(lx(lamArr[res.tau.length-1]),pT+H2); ctx.closePath();
+  ctx.globalAlpha=0.22; ctx.fillStyle=tv('--cyan'); ctx.fill(); ctx.globalAlpha=1;
+
+  // τ line
+  ctx.beginPath();
+  res.tau.forEach((v,i)=>{ const x=lx(lamArr[i]); i===0?ctx.moveTo(x,ly(v)):ctx.lineTo(x,ly(v)); });
+  ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1.5; ctx.stroke();
+
+  // τ_avg label
+  ctx.globalAlpha=0.8; ctx.fillStyle=tv('--cyan'); ctx.font='10px IBM Plex Mono,monospace';
+  ctx.textAlign='left';
+  ctx.fillText('τ̄_det = '+res.tau_avg.toFixed(3), pL+6, pT+H2-5);
+  ctx.globalAlpha=1;
+
+  // window labels
+  const wins=[{c:1.75,l:'1–2.5 µm'},{c:4.0,l:'3–5 µm'},{c:11.0,l:'8–14 µm'}];
+  ctx.globalAlpha=0.55; ctx.fillStyle=tv('--cyan'); ctx.font='8px IBM Plex Mono,monospace';
+  ctx.textAlign='center';
+  wins.forEach(w=>{
+    const xw=lx(w.c); if(xw>pL&&xw<pL+W2) ctx.fillText(w.l,xw,pT+9);
+  });
+  ctx.globalAlpha=1;
+
+  ctx.strokeStyle=tv('--border'); ctx.lineWidth=1;
+  ctx.strokeRect(pL,pT,W2,H2);
+}
+
+/* ─────────────────────────────────────────────
+   UI STATE & UPDATE
+───────────────────────────────────────────── */
+const state = {
+  Tobj:1473, eps_real:.70, path:2, rh:50, co2:400, Tatm:20,
+  detKey:'band_065', eps_assumed:.70
+};
+
+let lastResult = null;
+let rafId = null;
+let logScale = false;   // false = linear (default matches "kształt z podręcznika")
+
+function setScale(mode){
+  logScale = (mode==='log');
+  document.getElementById('btnLog').classList.toggle('active', logScale);
+  document.getElementById('btnLin').classList.toggle('active', !logScale);
+  scheduleUpdate();
+}
+
+function scheduleUpdate(){
+  if(rafId) return;
+  rafId = requestAnimationFrame(()=>{ rafId=null; doUpdate(); });
+}
+
+function doUpdate(){
+  setupCanvas();
+  const p = {...state};
+  const res = compute(p);
+  lastResult = res;
+  drawSpec(res, p);
+  drawTau(res);
+  updateChain(res, p);
+  updateResults(res, p);
+}
+
+function updateChain(res, p){
+  // obj — slider now in K
+  document.getElementById('cv-T').textContent  = `T = ${p.Tobj} K (${(p.Tobj-273.15).toFixed(0)} °C)`;
+  document.getElementById('cv-eps').textContent = p.eps_real.toFixed(2);
+  document.getElementById('cv-wien').textContent= `λ_max = ${res.wien_um.toFixed(2)} µm`;
+  // atm
+  document.getElementById('cv-L').textContent   = `${p.path} m`;
+  document.getElementById('cv-hr').textContent  = `${p.rh} %`;
+  document.getElementById('cv-co2').textContent = `${p.co2} ppm`;
+  document.getElementById('cv-tau').textContent = res.tau_avg.toFixed(3);
+  // det
+  document.getElementById('cv-det').textContent = res.det.label;
+  document.getElementById('cv-sig').textContent = res.signal.toExponential(2);
+  // proc
+  document.getElementById('cv-epsA').textContent= p.eps_assumed.toFixed(2);
+  // result
+  const dT = res.dT;
+  const dTStr = (dT>=0?'+':'')+dT.toFixed(1)+' K';
+  const Tstr  = res.T_ind_K.toFixed(0)+' K ('+(res.T_ind).toFixed(0)+' °C)';
+  document.getElementById('cv-Tind').textContent= Tstr;
+  const dTEl = document.getElementById('cv-dT');
+  dTEl.textContent = dTStr;
+  dTEl.style.color = Math.abs(res.dT)<2 ? 'var(--green)' : res.dT>0 ? 'var(--red)' : 'var(--cyan)';
+  // res box class
+  const cb = document.getElementById('cb-res');
+  cb.className = 'chain-box cb-res '+(Math.abs(res.dT)<2 ? '' : Math.abs(res.dT)<20 ? 'err-med' : 'err-big');
+}
+
+function updateResults(res, p){
+  document.getElementById('r_Tind').textContent = res.T_ind_K.toFixed(0)+' K ('+res.T_ind.toFixed(0)+' °C)';
+  document.getElementById('r_Tobj').textContent = p.Tobj+' K ('+(p.Tobj-273.15).toFixed(0)+' °C)';
+
+  const dT = res.dT;
+  const dTstr = (dT>=0?'+':'')+dT.toFixed(1)+' K';
+  const dTel = document.getElementById('r_dT');
+  dTel.textContent = dTstr;
+  dTel.className = 'rb-val '+(Math.abs(dT)<2?'g':dT>0?'r':'c');
+  document.getElementById('rb_dT').className = 'rb '+(Math.abs(dT)<2?'g':Math.abs(dT)<20?'a':'r');
+  document.getElementById('r_dT_rel').textContent = 'wzgl: '+(dT/p.Tobj*100).toFixed(2)+'%';
+
+  const fmt = v => (v>=0?'+':'')+v.toFixed(1)+' K';
+  const cls = v => Math.abs(v)<0.3?'ev ok':v>0?'ev pos':'ev neg';
+  document.getElementById('e_eps').textContent = fmt(res.dT_eps);
+  document.getElementById('e_eps').className = cls(res.dT_eps);
+  document.getElementById('e_atm').textContent = fmt(res.dT_atm);
+  document.getElementById('e_atm').className = cls(res.dT_atm);
+  document.getElementById('e_tot').textContent = fmt(dT);
+  document.getElementById('e_tot').className = cls(dT);
+
+  document.getElementById('r_tau').textContent = res.tau_avg.toFixed(3);
+  document.getElementById('r_wien').textContent= res.wien_um.toFixed(3)+' µm';
+  document.getElementById('r_sig').textContent = res.signal.toExponential(3);
+}
+
+/* ─────────────────────────────────────────────
+   SLIDER HELPERS
+───────────────────────────────────────────── */
+function onSl(el, key){
+  const v = parseFloat(el.value);
+  state[key] = v;
+  slPct(el);
+  const labels = {
+    Tobj: v+' K',
+    eps_real:v.toFixed(2), path:v+' m',
+    rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
+    eps_assumed:v.toFixed(2)
+  };
+  const ve = document.getElementById('val_'+key);
+  if(ve) ve.textContent = labels[key]||v;
+  scheduleUpdate();
+}
+
+function slPct(el){
+  const lo=parseFloat(el.min), hi=parseFloat(el.max), v=parseFloat(el.value);
+  const pct = ((v-lo)/(hi-lo)*100).toFixed(1)+'%';
+  el.style.setProperty('--pct', pct);
+}
+
+function onDetChange(){
+  state.detKey = document.getElementById('sel_det').value;
+  scheduleUpdate();
+}
+
+function initSliders(){
+  const map=[
+    ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
+    ['sl_rh','rh'],['sl_co2','co2'],['sl_Tatm','Tatm'],['sl_eps_assumed','eps_assumed']
+  ];
+  map.forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.value=state[key]; slPct(el);
+    const ve=document.getElementById('val_'+key);
+    if(ve){
+      const v=state[key];
+      const labels={Tobj:v+' K',eps_real:v.toFixed(2),path:v+' m',
+        rh:v+' %',co2:v+' ppm',Tatm:v+' °C',eps_assumed:v.toFixed(2)};
+      ve.textContent=labels[key]||v;
+    }
+  });
+}
+
+/* ─────────────────────────────────────────────
+   PRESETS  (all Tobj in Kelvin)
+───────────────────────────────────────────── */
+const PRESETS={
+  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00},
+  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90},
+  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85},
+  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92},
+  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',eps_assumed:1.00},
+};
+
+function loadPreset(name){
+  const p=PRESETS[name]; if(!p) return;
+  Object.assign(state,p);
+  document.getElementById('sel_det').value=state.detKey;
+  initSliders();
+  scheduleUpdate();
+}
+
+/* ─────────────────────────────────────────────
+   THEME TOGGLE
+───────────────────────────────────────────── */
+let isDark = true;
+function toggleTheme(){
+  isDark = !isDark;
+  document.body.className = isDark ? 'theme-dark' : 'theme-light';
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  scheduleUpdate();
+}
+
+/* ─────────────────────────────────────────────
+   DOCS PANEL
+───────────────────────────────────────────── */
+function toggleDocs(){
+  const ov=document.getElementById('docsOverlay');
+  const btn=document.getElementById('docsBtn');
+  ov.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+function closeDocs(e){
+  if(e.target===document.getElementById('docsOverlay')) toggleDocs();
+}
+
+/* ─────────────────────────────────────────────
+   HOVER TOOLTIP
+───────────────────────────────────────────── */
+specCanvas.addEventListener('mousemove', e=>{
+  const rect=specCanvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left;
+  const pL=48,pR=14;
+  const W2=specCanvas.offsetWidth-pL-pR;
+  const frac=(mx-pL)/W2;
+  if(frac<0||frac>1){ hideTT(); hoverFrac=null; scheduleUpdate(); return; }
+  hoverFrac=frac;
+
+  const res=lastResult; if(!res) return;
+  // Convert screen fraction → wavelength via current scale
+  const lamMin=res.lam_um[0], lamMax=res.lam_um[res.lam_um.length-1];
+  const lamHov = logScale
+    ? lamMin * Math.pow(lamMax/lamMin, frac)
+    : lamMin + (lamMax-lamMin)*frac;
+  const idx=Math.min(Math.round((lamHov-lamMin)/(lamMax-lamMin)*N), N);
+
+  const gMax=Math.max(...res.Lbb,1e-30);
+  const pct=v=>(v/gMax*100).toFixed(1)+'%';
+  const tt=document.getElementById('tooltip');
+  tt.style.display='block';
+  tt.style.left=(e.clientX+14)+'px';
+  tt.style.top=(e.clientY-55)+'px';
+  tt.innerHTML=`<div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
+    <div class="tt-r"><span class="tt-l">CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
+    <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber)">${pct(res.Lemit[idx])}</span></div>
+    <div class="tt-r"><span class="tt-l">τ(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(3)}</span></div>
+    <div class="tt-r"><span class="tt-l">Sygnał:</span><span style="color:var(--orange)">${pct(res.Ldet[idx])}</span></div>
+    <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)}%</span></div>`;
+  scheduleUpdate();
+});
+specCanvas.addEventListener('mouseleave',()=>{ hideTT(); hoverFrac=null; scheduleUpdate(); });
+function hideTT(){ document.getElementById('tooltip').style.display='none'; }
+
+/* ─────────────────────────────────────────────
+   INIT
+───────────────────────────────────────────── */
+window.addEventListener('resize', ()=>scheduleUpdate());
+window.addEventListener('load', ()=>{
+  setupCanvas();
+  initSliders();
+  scheduleUpdate();
+});
+</script>
+</body>
+</html>
