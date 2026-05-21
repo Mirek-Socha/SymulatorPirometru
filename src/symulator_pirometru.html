@@ -155,6 +155,8 @@ body{
   filter:drop-shadow(0 0 2px currentColor);
 }
 .chain-arrow svg{width:28px;height:18px;overflow:visible}
+.chain-box.cb-win{border-left-color:#10b981}
+.panel-hdr.gr{color:#10b981}
 
 /* ═══════════════════════════════════════════════
    MAIN LAYOUT  (3-col → 2-col → 1-col)
@@ -232,6 +234,18 @@ input[type=range]::-webkit-slider-thumb{
   color:var(--amber);width:68px;text-align:right;flex-shrink:0;
 }
 .sl-val.cy{color:var(--cyan)}
+/* numeric text input for direct value entry */
+.sl-num{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  width:68px;flex-shrink:0;text-align:right;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--amber);padding:2px 5px;
+  outline:none;transition:border-color .15s;
+}
+.sl-num:focus{border-color:var(--amber);background:var(--card2)}
+.sl-num.cy{color:var(--cyan)}
+.sl-num::-webkit-outer-spin-button,.sl-num::-webkit-inner-spin-button{-webkit-appearance:none}
+.sl-num[type=number]{-moz-appearance:textfield}
 select{
   width:100%;background:var(--card);border:1px solid var(--border);
   color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.7rem;
@@ -477,7 +491,7 @@ canvas{width:100%;display:block;cursor:crosshair}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Symulator Pirometryczny</span>
-    <span class="hdr-sub">Tor: Obiekt · Atmosfera · Detektor → T<sub>ind</sub></span>
+    <span class="hdr-sub">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
   </div>
   <div class="hdr-actions">
     <div class="presets">
@@ -486,6 +500,7 @@ canvas{width:100%;display:block;cursor:crosshair}
       <button class="preset-btn" onclick="loadPreset('atmosphere')">Atmosfera</button>
       <button class="preset-btn" onclick="loadPreset('lowtemp')">Niska T</button>
       <button class="preset-btn" onclick="loadPreset('total')">Całkujący</button>
+      <button class="preset-btn" onclick="loadPreset('plexiglas')">🪟 Plexiglas</button>
     </div>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     <button class="icon-btn" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
@@ -516,32 +531,31 @@ canvas{width:100%;display:block;cursor:crosshair}
     </div>
 
     <div class="chain-arrow">
-      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" repeatCount="indefinite"/></svg>
-    </div>
-
-    <div class="chain-box cb-atm" id="cb-atm">
-      <div class="cb-name">2 · Atmosfera</div>
-      <div class="cb-val">L = <span class="re" id="cv-L">2 m</span> &nbsp; HR = <span id="cv-hr">50 %</span></div>
-      <div class="cb-val">CO₂ = <span id="cv-co2">400 ppm</span></div>
-      <div class="cb-val">τ̄ = <span class="cy" id="cv-tau">—</span></div>
-    </div>
-
-    <div class="chain-arrow">
       <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="0.4s" repeatCount="indefinite"/></svg>
     </div>
 
+    <div class="chain-box cb-win" id="cb-win">
+      <div class="cb-name">3 · Przesłona</div>
+      <div class="cb-val" id="cv-win-lbl" style="font-size:.68rem">Brak</div>
+      <div class="cb-val">τ̄<sub>win</sub> = <span id="cv-win-tau" class="cy">1.000</span></div>
+    </div>
+
+    <div class="chain-arrow">
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="0.6s" repeatCount="indefinite"/></svg>
+    </div>
+
     <div class="chain-box cb-det" id="cb-det">
-      <div class="cb-name">3 · Detektor</div>
+      <div class="cb-name">4 · Detektor</div>
       <div class="cb-val cy" id="cv-det">0.65 µm – Si</div>
       <div class="cb-val">S = <span class="cy" id="cv-sig">—</span></div>
     </div>
 
     <div class="chain-arrow">
-      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="0.8s" repeatCount="indefinite"/></svg>
+      <svg viewBox="0 0 38 20" width="38" height="20" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="10" x2="24" y2="10" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/><polygon points="22,3 38,10 22,17" fill="currentColor"/><animateTransform attributeName="transform" type="translate" values="0,0;3,0;0,0" dur="1.8s" begin="0.9s" repeatCount="indefinite"/></svg>
     </div>
 
     <div class="chain-box cb-proc" id="cb-proc">
-      <div class="cb-name">4 · Procesor</div>
+      <div class="cb-name">5 · Procesor</div>
       <div class="cb-val">ε<sub>zał.</sub> = <span style="color:var(--orange)" id="cv-epsA">0.70</span></div>
       <div class="cb-val" style="font-size:.65rem;color:var(--muted)">inwersja Plancka</div>
       <div class="cb-val" style="font-size:.65rem;color:var(--muted)">bisekcja 72 iter.</div>
@@ -552,7 +566,7 @@ canvas{width:100%;display:block;cursor:crosshair}
     </div>
 
     <div class="chain-box cb-res" id="cb-res">
-      <div class="cb-name">5 · Wynik</div>
+      <div class="cb-name">6 · Wynik</div>
       <div class="cb-val" style="font-size:.88rem;font-weight:600"><span id="cv-Tind">—</span></div>
       <div class="cb-val">ΔT = <span id="cv-dT">—</span></div>
     </div>
@@ -571,8 +585,14 @@ canvas{width:100%;display:block;cursor:crosshair}
       <div class="panel-hdr">📡 Obiekt mierzony</div>
       <div class="sl-row">
         <span class="sl-name">T<sub>obiekt</sub></span>
-        <input type="range" id="sl_Tobj" min="10" max="12000" step="10" value="1473" oninput="onSl(this,'Tobj')">
-        <span class="sl-val" id="val_Tobj">1473 K</span>
+        <input type="range" id="sl_Tobj" min="10" max="12000" step="10" value="1473"
+               oninput="onSl(this,'Tobj')">
+        <input type="number" id="num_Tobj" class="sl-num" min="10" max="12000" step="10" value="1473"
+               title="Wpisz temperaturę w K i naciśnij Enter"
+               onchange="onNumTobj(this)" onkeydown="if(event.key==='Enter')onNumTobj(this)">
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:-4px;margin-bottom:6px">
+        <span id="val_Tobj_c" style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted)">= 1200 °C</span>
       </div>
       <div class="sl-row">
         <span class="sl-name">ε<sub>rzeczyw.</sub></span>
@@ -604,6 +624,22 @@ canvas{width:100%;display:block;cursor:crosshair}
         <input type="range" id="sl_Tatm" min="-20" max="60" step="5" value="20" oninput="onSl(this,'Tatm')">
         <span class="sl-val" id="val_Tatm">20 °C</span>
       </div>
+    </div>
+
+    <!-- PRZESŁONA OPTYCZNA -->
+    <div class="ctrl-panel">
+      <div class="panel-hdr gr">🪟 Przesłona optyczna</div>
+      <div class="sel-lbl">Materiał przesłony / okna</div>
+      <select id="sel_win" onchange="onWinChange()">
+        <option value="none">Brak przesłony (τ = 1)</option>
+        <option value="float_glass">Szyba float (szkło okienne) · 0.32–2.7 µm</option>
+        <option value="pmma">Plexiglas (PMMA) · 0.35–2.8 µm</option>
+        <option value="quartz">Kwarc topiony (SiO₂) · 0.15–4.5 µm</option>
+        <option value="caf2">Fluoryt (CaF₂) · 0.13–9.5 µm</option>
+        <option value="znse">Selenek cynku (ZnSe) · 0.55–16 µm</option>
+        <option value="ge">German (Ge) · 1.8–16 µm, blokuje VIS</option>
+      </select>
+      <div class="rb-sub" id="win-desc" style="font-size:.7rem;color:var(--muted);margin-top:2px">τ = 1 w całym zakresie</div>
     </div>
 
     <!-- DETEKTOR -->
@@ -643,6 +679,7 @@ canvas{width:100%;display:block;cursor:crosshair}
       <div class="leg"><div class="leg-fill" style="background:var(--red)"></div>Emisja atm.</div>
       <div class="leg"><div class="leg-line" style="background:var(--orange);height:3px"></div>Sygnał na det.</div>
       <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:1px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
+      <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
       <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.25"></div>Okno det.</div>
     </div>
     <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
@@ -673,6 +710,7 @@ canvas{width:100%;display:block;cursor:crosshair}
       <table class="err-tbl" id="err_tbl">
         <tr><td class="en">Δε-emisyjność</td><td class="ev" id="e_eps">—</td></tr>
         <tr><td class="en">Atmosfera</td><td class="ev" id="e_atm">—</td></tr>
+        <tr><td class="en">Przesłona</td><td class="ev" id="e_win">—</td></tr>
         <tr><td class="en" style="color:var(--text)">Łącznie ΔT</td><td class="ev" id="e_tot">—</td></tr>
       </table>
     </div>
@@ -843,6 +881,55 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </table>
 </div>
 
+
+<!-- ──── 8. PRZESŁONA OPTYCZNA ────────────────── -->
+<div class="doc-sec">
+<h2>8. Przesłona optyczna — model transmitancji okna</h2>
+<p>W praktycznych pomiarach pirometrycznych obiekt często obserwowany jest przez <b>okno optyczne</b>: wziernik w ścianie pieca, szybę ochronną, okno kriostatu lub filtr spektralny. Każdy taki element wprowadza dodatkowe tłumienie opisane transmitancją spektralną τ<sub>win</sub>(λ).</p>
+
+<h3>Model matematyczny</h3>
+<p>Sygnał na wejściu detektora po uwzględnieniu przesłony:</p>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda) \cdot \Bigl[\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})\Bigr]$$</div>
+<p>Przesłona nie emituje promieniowania (założenie: T<sub>win</sub> ≪ T<sub>obj</sub>, typowe dla pomiarów wysokotemperaturowych). Całkowity sygnał detektora:</p>
+<div class="fml-math">$$S = \int_0^\infty R(\lambda)\cdot\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{det,bez\,okna}}(\lambda)\,\mathrm{d}\lambda$$</div>
+
+<h3>Implementacja — model pasmowy z wygładzaniem</h3>
+<p>Transmitancja każdego materiału modelowana jest funkcją złożoną z <b>płynnych schodków</b> (Hermite smoothstep) definiujących odcięcie UV i IR, oraz <b>gaussowskich pasm absorpcji</b>:</p>
+<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda) = S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)\cdot\tau_{\mathrm{peak}}\cdot\prod_k\!\left(1 - A_k\cdot e^{-(\lambda-\lambda_k)^2/2\sigma_k^2}\right)$$</div>
+<p>Funkcja schodkowa Hermite'a zapewnia ciągłe pierwsze pochodne na krawędziach odcięcia (brak artefaktów numerycznych). τ<sub>peak</sub> uwzględnia straty Fresnela na powierzchniach okna.</p>
+
+<h3>Zaimplementowane materiały okien optycznych</h3>
+<table class="sym-tbl">
+  <tr><th>Materiał</th><th>Zakres [µm]</th><th>τ<sub>peak</sub></th><th>Charakterystyczne pasma absorpcji</th></tr>
+  <tr><td>Szyba float (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
+  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
+  <tr><td>Kwarc topiony (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>Słabe pasmo OH przy 2.72 µm (domieszka wody)</td></tr>
+  <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>Brak istotnych pasm absorpcji</td></tr>
+  <tr><td>Selenek cynku (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>Słabe pasmo przy 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
+  <tr><td>German (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>Blokuje cały UV/VIS (przerwa energetyczna 0.67 eV); n ≈ 4 → straty Fresnela ~36%</td></tr>
+</table>
+
+<div class="warn-box">Pirometr <b>nie koryguje</b> wpływu przesłony — zakłada τ<sub>win</sub> = 1. Skutkuje to zaniżeniem T<sub>ind</sub> (mniej promieniowania dociera do detektora). Poprawna kalibracja wymaga znajomości τ<sub>win</sub>(λ) dla konkretnego okna.</div>
+<div class="info-box">Praktyczna wskazówka: pomiar przez szybę piekarniczą (float glass) pirometrem 0.65 µm (Si) działa poprawnie — szyba przepuszcza tę falę. Pirometr 8–14 µm (MCT/bolometr) wskaże zerowy sygnał, bo float glass jest w tym zakresie <b>całkowicie nieprzezroczysty</b>.</div>
+</div>
+
+<!-- ──── 9. AUTOR I WERSJA ─────────────────── -->
+<div class="doc-sec">
+<h2>9. Informacje o aplikacji</h2>
+<table class="sym-tbl">
+  <tr><th>Pole</th><th>Wartość</th></tr>
+  <tr><td>Autor</td><td><b>Mirosław Socha</b></td></tr>
+  <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
+  <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
+  <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
+  <tr><td>Wersja</td><td><b>v1.7.0</b></td></tr>
+  <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
+  <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
+  <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
+</table>
+<div class="info-box">Aplikacja jest samodzielnym plikiem HTML bez zależności lokalnych. Zewnętrzne zasoby ładowane przez CDN: Google Fonts (typografia) i KaTeX (renderowanie wzorów matematycznych).</div>
+</div>
+
   </div><!-- /docs-body -->
 </div><!-- /docs-panel -->
 </div><!-- /docs-overlay -->
@@ -906,6 +993,86 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm){
   return Math.max(0, Math.min(1, tau));
 }
 
+const WINDOWS = {
+  none:        {label:'Brak przesłony',          desc:'τ = 1',                   color:'#555'},
+  float_glass: {label:'Szyba float (szkło okienne)', desc:'0.32–2.7 µm',         color:'#60a5fa'},
+  pmma:        {label:'Plexiglas (PMMA)',          desc:'0.35–2.8 µm, pasma C-H', color:'#a78bfa'},
+  quartz:      {label:'Kwarc topiony (SiO₂)',      desc:'0.15–4.5 µm',           color:'#34d399'},
+  caf2:        {label:'Fluoryt (CaF₂)',            desc:'0.13–9.5 µm',           color:'#fbbf24'},
+  ge:          {label:'German (Ge)',               desc:'1.8–16 µm, blokuje VIS', color:'#f87171'},
+  znse:        {label:'Selenek cynku (ZnSe)',       desc:'0.55–16 µm',            color:'#fb923c'},
+};
+
+// smooth step helper
+function ss(x, e0, e1){ const t=Math.max(0,Math.min(1,(x-e0)/(e1-e0))); return t*t*(3-2*t); }
+
+function windowTau(lam_m, type){
+  if(type==='none') return 1.0;
+  const u = lam_m * 1e6; // µm
+
+  if(type==='float_glass'){
+    // Szyba float (szkło sodowo-wapniowe)
+    // UV odcięcie ok. 320 nm, IR odcięcie ok. 2.7 µm (fundamentalne drgania Si-O)
+    const uvPass = ss(u, 0.28, 0.34);
+    const irCut  = 1 - ss(u, 2.50, 2.90);
+    // Pasma nadtonów OH przy 1.4 i 1.9 µm (typowe w szkle)
+    const a1 = 0.06 * Math.exp(-Math.pow((u-1.40)/0.05,2));
+    const a2 = 0.09 * Math.exp(-Math.pow((u-1.90)/0.06,2));
+    return Math.max(0, uvPass * irCut * 0.91 * (1-a1-a2));
+  }
+
+  if(type==='pmma'){
+    // PMMA / Plexiglas — polimetakrylan metylu
+    // Przepuszcza VIS i bliskie IR do ~2.8 µm
+    const uvPass = ss(u, 0.32, 0.38);
+    const irCut  = 1 - ss(u, 2.65, 3.05);
+    // Charakterystyczne pasma C-H (drgania harmoniczne)
+    const a1 = 0.13 * Math.exp(-Math.pow((u-1.69)/0.04,2)); // 1. nadton C-H
+    const a2 = 0.16 * Math.exp(-Math.pow((u-2.18)/0.05,2)); // 2. nadton C-H
+    const a3 = 0.10 * Math.exp(-Math.pow((u-1.41)/0.03,2)); // kombinacyjne
+    const a4 = 0.07 * Math.exp(-Math.pow((u-1.15)/0.02,2)); // 2. nadton
+    return Math.max(0, uvPass * irCut * 0.92 * (1-a1-a2-a3-a4));
+  }
+
+  if(type==='quartz'){
+    // Kwarc topiony (fused silica) — szeroki zakres UV-IR
+    const uvPass = ss(u, 0.13, 0.17);
+    const irCut  = 1 - ss(u, 3.80, 4.80);
+    // Słabe pasmo OH przy 2.72 µm (domieszka wody)
+    const a1 = 0.04 * Math.exp(-Math.pow((u-2.72)/0.09,2));
+    return Math.max(0, uvPass * irCut * 0.945 * (1-a1));
+  }
+
+  if(type==='caf2'){
+    // CaF₂ — fluoryt wapnia, doskonałe okno IR/UV
+    const uvPass = ss(u, 0.11, 0.15);
+    const irCut  = 1 - ss(u, 8.50, 10.20);
+    // Bardzo czyste widmo, bez istotnych pasm absorpcji
+    return Math.max(0, uvPass * irCut * 0.944);
+  }
+
+  if(type==='ge'){
+    // German (Ge) — okno IR, przerwa energetyczna ~0.67 eV → odcięcie ok. 1.8 µm
+    const visBlock = ss(u, 1.70, 2.05); // blokuje całe UV/VIS
+    const irCut    = 1 - ss(u, 15.5, 17.5);
+    // Wysoki współczynnik refrakcji n≈4 → straty Fresnela ~36% bez powłoki AR
+    // Przyjmujemy brak powłoki AR: τ_peak ≈ 0.46
+    return Math.max(0, visBlock * irCut * 0.46);
+  }
+
+  if(type==='znse'){
+    // ZnSe — selenek cynku, szerokopasmowe okno IR
+    const visPass = ss(u, 0.49, 0.62);
+    const irCut   = 1 - ss(u, 15.0, 17.5);
+    // n≈2.4 → straty Fresnela ~17% → τ_peak ≈ 0.70 (bez AR)
+    // Słabe pasmo przy 6.5 µm
+    const a1 = 0.04 * Math.exp(-Math.pow((u-6.5)/0.4,2));
+    return Math.max(0, visPass * irCut * 0.70 * (1-a1));
+  }
+
+  return 1.0;
+}
+
 const DETS = {
   band_065: {label:'0.65 µm – Si',lc:.65,bw:.045,mode:'gauss',Rp:1.0,range:[.45,1.0]},
   band_100: {label:'1.0 µm – InGaAs',lc:1.00,bw:.07,mode:'gauss',Rp:1.0,range:[.7,1.4]},
@@ -950,12 +1117,12 @@ function invertTemp(target, det, eps_a){
 }
 
 function compute(p){
-  const Tobj_K = p.Tobj;                  // slider is now in Kelvin
+  const Tobj_K = p.Tobj;
   const Tatm_K = p.Tatm + 273.15;
   const det = DETS[p.detKey];
 
-  const Lbb=[], Lemit=[], tau=[], Latm=[], Ldet=[], R=[];
-  let signal=0, tw=0, ts=0;
+  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Ldet=[], R=[];
+  let signal=0, tw=0, ts=0, tww=0, twww=0;
 
   for(let i=0;i<=N;i++){
     const lam=lams[i];
@@ -963,22 +1130,36 @@ function compute(p){
     const em = p.eps_real * bb;
     const ta = atmTau(lam, p.path, p.rh, p.co2);
     const la = (1-ta)*planck(lam,Tatm_K);
-    const ld = ta*em + la;
+    const lAfterAtm = ta*em + la;          // sygnał po atmosferze
+    const tw_win = windowTau(lam, p.windowKey); // transmitancja przesłony
+    const ld = tw_win * lAfterAtm;         // sygnał po przesłonie
     const r  = detResp(lam,det);
     Lbb.push(bb); Lemit.push(em); tau.push(ta);
-    Latm.push(la); Ldet.push(ld); R.push(r);
+    Latm.push(la); Lwin.push(tw_win); Ldet.push(ld); R.push(r);
     signal += r*ld*DL;
-    if(r>0.01){ tw+=r; ts+=ta*r; }
+    if(r>0.01){ tw+=r; ts+=ta*r; twww+=tw_win*r; }
   }
 
   const T_ind_K = invertTemp(signal, det, p.eps_assumed);
 
-  // error decomposition: eps only (no atm)
-  let sig_eo=0;
-  for(let i=0;i<=N;i++) sig_eo += detResp(lams[i],det)*p.eps_real*planck(lams[i],Tobj_K)*DL;
-  const T_eps_K = invertTemp(sig_eo, det, p.eps_assumed);
+  // ── Dekompozycja błędu: 3 niezależne składowe ──
+  // 1. Tylko błąd emisyjności (τ_atm=1, τ_win=1)
+  let sig_eps=0;
+  for(let i=0;i<=N;i++)
+    sig_eps += detResp(lams[i],det)*p.eps_real*planck(lams[i],Tobj_K)*DL;
+  const T_eps_K = invertTemp(sig_eps, det, p.eps_assumed);
 
-  const tau_avg = tw>0 ? ts/tw : 1;
+  // 2. Emisyjność + atmosfera (τ_win=1)
+  let sig_atm=0;
+  for(let i=0;i<=N;i++){
+    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2);
+    const la=(1-ta)*planck(lam,p.Tatm+273.15);
+    sig_atm += detResp(lam,det)*(ta*p.eps_real*planck(lam,Tobj_K)+la)*DL;
+  }
+  const T_atm_K = invertTemp(sig_atm, det, p.eps_assumed);
+
+  const tau_avg = tw>0 ? ts/tw   : 1;
+  const win_avg = tw>0 ? twww/tw : 1;
   const wien_um = (2.898e-3/Tobj_K)*1e6;
   const Tind_arr = lams.map(lam => p.eps_assumed * planck(lam, T_ind_K));
 
@@ -986,14 +1167,16 @@ function compute(p){
   const Tobj_C  = Tobj_K  - 273.15;
 
   return {
-    Lbb, Lemit, tau, Latm, Ldet, R,
+    Lbb, Lemit, tau, Latm, Lwin, Ldet, R,
     lam_um: lams.map(x=>x*1e6),
     T_ind: T_ind_C, T_ind_K,
     Tobj_C, Tobj_K,
-    dT: T_ind_K - Tobj_K,               // K difference = °C difference
-    dT_eps: T_eps_K - Tobj_K,
-    dT_atm: T_ind_K - T_eps_K,
-    signal, tau_avg, wien_um, Tind_arr, det
+    dT:     T_ind_K - Tobj_K,
+    dT_eps: T_eps_K - Tobj_K,          // tylko emisyjność
+    dT_atm: T_atm_K - T_eps_K,         // tylko atmosfera (przyrost)
+    dT_win: T_ind_K - T_atm_K,         // tylko przesłona (przyrost)
+    signal, tau_avg, win_avg, wien_um, Tind_arr, det,
+    winKey: p.windowKey
   };
 }
 
@@ -1222,6 +1405,23 @@ function drawSpec(res, p){
   curve(res.Ldet,  tv('--orange'), 2.5);
   curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4]);
 
+  // Window transmission overlay (right Y axis: 0–1 scaled to plot height)
+  if(res.winKey && res.winKey !== 'none'){
+    const winColor = WINDOWS[res.winKey]?.color || '#10b981';
+    ctx.beginPath(); ctx.setLineDash([2,3]);
+    res.Lwin.forEach((v,i)=>{
+      const x=lx(lamArr[i]);
+      const y=pT+H2*(1-v);   // τ mapped to full plot height
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle=winColor; ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
+    // Label at right edge
+    ctx.globalAlpha=0.75; ctx.fillStyle=winColor;
+    ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText('τ_win', pL+W2-4, pT+12);
+    ctx.globalAlpha=1;
+  }
+
   // Wien λ_max marker
   const wienX = lx(res.wien_um);
   if(wienX>pL&&wienX<pL+W2){
@@ -1240,10 +1440,11 @@ function drawSpec(res, p){
   if(xd2>pL&&xd2<pL+W2){ ctx.beginPath(); ctx.moveTo(xd2,pT); ctx.lineTo(xd2,pT+H2); ctx.stroke(); }
   ctx.setLineDash([]); ctx.globalAlpha=1;
 
-  // hover crosshair
+  // hover crosshair — uses same lx() already defined above
   if(hoverFrac!==null){
-    // hoverFrac is linear in screen x; convert back via log
-    const lamHov = lamMin * Math.pow(lamMax/lamMin, hoverFrac);
+    const lamHov = logScale
+      ? lamMin * Math.pow(lamMax/lamMin, hoverFrac)
+      : lamMin + (lamMax-lamMin)*hoverFrac;
     const hx = lx(lamHov);
     ctx.globalAlpha=0.4; ctx.strokeStyle=tv('--text'); ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(hx,pT); ctx.lineTo(hx,pT+H2); ctx.stroke();
@@ -1349,7 +1550,7 @@ function drawTau(res){
 ───────────────────────────────────────────── */
 const state = {
   Tobj:1473, eps_real:.70, path:2, rh:50, co2:400, Tatm:20,
-  detKey:'band_065', eps_assumed:.70
+  detKey:'band_065', eps_assumed:.70, windowKey:'none'
 };
 
 let lastResult = null;
@@ -1380,7 +1581,7 @@ function doUpdate(){
 }
 
 function updateChain(res, p){
-  // obj — slider now in K
+  // obj
   document.getElementById('cv-T').textContent  = `T = ${p.Tobj} K (${(p.Tobj-273.15).toFixed(0)} °C)`;
   document.getElementById('cv-eps').textContent = p.eps_real.toFixed(2);
   document.getElementById('cv-wien').textContent= `λ_max = ${res.wien_um.toFixed(2)} µm`;
@@ -1389,6 +1590,12 @@ function updateChain(res, p){
   document.getElementById('cv-hr').textContent  = `${p.rh} %`;
   document.getElementById('cv-co2').textContent = `${p.co2} ppm`;
   document.getElementById('cv-tau').textContent = res.tau_avg.toFixed(3);
+  // window
+  const win = WINDOWS[p.windowKey]||WINDOWS.none;
+  document.getElementById('cv-win-lbl').textContent = win.label;
+  document.getElementById('cv-win-tau').textContent  = res.win_avg.toFixed(3);
+  const cb_win = document.getElementById('cb-win');
+  cb_win.style.borderLeftColor = res.win_avg < 0.5 ? 'var(--red)' : res.win_avg < 0.9 ? 'var(--amber)' : '#10b981';
   // det
   document.getElementById('cv-det').textContent = res.det.label;
   document.getElementById('cv-sig').textContent = res.signal.toExponential(2);
@@ -1425,6 +1632,9 @@ function updateResults(res, p){
   document.getElementById('e_eps').className = cls(res.dT_eps);
   document.getElementById('e_atm').textContent = fmt(res.dT_atm);
   document.getElementById('e_atm').className = cls(res.dT_atm);
+  const eWinEl = document.getElementById('e_win');
+  eWinEl.textContent = fmt(res.dT_win);
+  eWinEl.className = cls(res.dT_win);
   document.getElementById('e_tot').textContent = fmt(dT);
   document.getElementById('e_tot').className = cls(dT);
 
@@ -1448,6 +1658,26 @@ function onSl(el, key){
   };
   const ve = document.getElementById('val_'+key);
   if(ve) ve.textContent = labels[key]||v;
+  // sync numeric input and °C for Tobj
+  if(key==='Tobj'){
+    const num=document.getElementById('num_Tobj');
+    if(num) num.value=v;
+    const sec=document.getElementById('val_Tobj_c');
+    if(sec) sec.textContent='= '+(v-273.15).toFixed(0)+' °C';
+  }
+  scheduleUpdate();
+}
+
+function onNumTobj(el){
+  let v = parseFloat(el.value);
+  if(isNaN(v)) return;
+  v = Math.max(10, Math.min(12000, Math.round(v/10)*10)); // clamp + snap to step
+  el.value = v;
+  state.Tobj = v;
+  const sl = document.getElementById('sl_Tobj');
+  if(sl){ sl.value=v; slPct(sl); }
+  const sec = document.getElementById('val_Tobj_c');
+  if(sec) sec.textContent='= '+(v-273.15).toFixed(0)+' °C';
   scheduleUpdate();
 }
 
@@ -1462,6 +1692,13 @@ function onDetChange(){
   scheduleUpdate();
 }
 
+function onWinChange(){
+  state.windowKey = document.getElementById('sel_win').value;
+  const win = WINDOWS[state.windowKey]||WINDOWS.none;
+  document.getElementById('win-desc').textContent = win.desc;
+  scheduleUpdate();
+}
+
 function initSliders(){
   const map=[
     ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
@@ -1471,31 +1708,49 @@ function initSliders(){
     const el=document.getElementById(id);
     if(!el) return;
     el.value=state[key]; slPct(el);
+    // Tobj uses numeric input instead of sl-val span
+    if(key==='Tobj'){
+      const num=document.getElementById('num_Tobj');
+      if(num) num.value=state[key];
+      const sec=document.getElementById('val_Tobj_c');
+      if(sec) sec.textContent='= '+(state[key]-273.15).toFixed(0)+' °C';
+      return;
+    }
     const ve=document.getElementById('val_'+key);
     if(ve){
       const v=state[key];
-      const labels={Tobj:v+' K',eps_real:v.toFixed(2),path:v+' m',
+      const labels={eps_real:v.toFixed(2),path:v+' m',
         rh:v+' %',co2:v+' ppm',Tatm:v+' °C',eps_assumed:v.toFixed(2)};
       ve.textContent=labels[key]||v;
     }
   });
+  const sw=document.getElementById('sel_win');
+  if(sw){ sw.value=state.windowKey;
+    const win=WINDOWS[state.windowKey]||WINDOWS.none;
+    const wd=document.getElementById('win-desc');
+    if(wd) wd.textContent=win.desc; }
 }
 
 /* ─────────────────────────────────────────────
    PRESETS  (all Tobj in Kelvin)
 ───────────────────────────────────────────── */
 const PRESETS={
-  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00},
-  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90},
-  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85},
-  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92},
-  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',eps_assumed:1.00},
+  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00,windowKey:'none'},
+  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90,windowKey:'none'},
+  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85,windowKey:'none'},
+  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92,windowKey:'none'},
+  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',    eps_assumed:1.00,windowKey:'none'},
+  // Pomiar przez wziernik z szybą plexiglas — typowa sytuacja w piecu laboratoryjnym
+  // Pirometr 1 µm (InGaAs) — PMMA przepuszcza do 2.8 µm, więc sygnał dociera
+  // ale pasma absorpcji C-H przy 1.69 µm zakłócają odczyt
+  plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma'},
 };
 
 function loadPreset(name){
   const p=PRESETS[name]; if(!p) return;
   Object.assign(state,p);
   document.getElementById('sel_det').value=state.detKey;
+  document.getElementById('sel_win').value=state.windowKey;
   initSliders();
   scheduleUpdate();
 }
@@ -1553,7 +1808,8 @@ specCanvas.addEventListener('mousemove', e=>{
   tt.innerHTML=`<div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
     <div class="tt-r"><span class="tt-l">CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber)">${pct(res.Lemit[idx])}</span></div>
-    <div class="tt-r"><span class="tt-l">τ(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(3)}</span></div>
+    <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(3)}</span></div>
+    <div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:#10b981">${res.Lwin[idx].toFixed(3)}</span></div>
     <div class="tt-r"><span class="tt-l">Sygnał:</span><span style="color:var(--orange)">${pct(res.Ldet[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)}%</span></div>`;
   scheduleUpdate();
