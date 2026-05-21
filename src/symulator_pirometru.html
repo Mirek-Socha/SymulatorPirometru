@@ -274,7 +274,7 @@ select:focus{border-color:var(--cyan)}
   border-bottom:1px solid var(--border);
 }
 .plot-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
-canvas{width:100%;display:block;cursor:crosshair}
+canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 .legend{
   display:flex;gap:12px;flex-wrap:wrap;
   padding:5px 14px 7px;border-bottom:1px solid var(--border);
@@ -672,7 +672,7 @@ canvas{width:100%;display:block;cursor:crosshair}
         <button class="st-btn active" id="btnLin" onclick="setScale('lin')">lin λ</button>
       </div>
     </div>
-    <canvas id="specCanvas" height="308"></canvas>
+    <canvas id="specCanvas" height="308" style="height:308px"></canvas>
     <div class="legend">
       <div class="leg"><div class="leg-line" style="background:rgba(160,160,200,.3);border-top:1px dashed rgba(160,160,200,.4)"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
@@ -683,7 +683,7 @@ canvas{width:100%;display:block;cursor:crosshair}
       <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.25"></div>Okno det.</div>
     </div>
     <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
-    <canvas id="tauCanvas" height="148"></canvas>
+    <canvas id="tauCanvas" height="148" style="height:148px"></canvas>
   </main>
 
   <!-- ─── RESULTS ─── -->
@@ -1195,8 +1195,8 @@ function tv(name){ return getComputedStyle(document.body).getPropertyValue(name)
 
 function resizeCanvas(c){
   const dpr = window.devicePixelRatio || 1;
-  const w = c.offsetWidth;
-  const h = parseInt(c.getAttribute('height'));
+  const w = c.offsetWidth  || parseInt(c.getAttribute('width'))  || 600;
+  const h = c.offsetHeight || parseInt(c.getAttribute('height')) || 300;
   const needW = Math.round(w * dpr);
   const needH = Math.round(h * dpr);
   if(c.width !== needW || c.height !== needH){
