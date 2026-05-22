@@ -2,6 +2,18 @@
 
 Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)
 
+## [v1.8.0] — 2026-05-22 ✅ bieżąca
+
+### Dodano — model fizyczny przesłony
+- **Grubość przesłony** (suwak 0.5–30 mm): absorpcja objętościowa skaluje się
+  prawem Beer-Lamberta osobno od strat Fresnela (d_ref per materiał)
+- **Temperatura przesłony** (suwak 0–700 °C): emisja własna okna
+  L_win_emit(λ) = (1−τ_win)·L_bb(λ,T_win) zgodnie z prawem Kirchhoffa
+- Refaktoring `windowTau()`: rozdzielenie τ_Fresnel (stały) / τ_bandpass / τ_bulk(d)
+- Krzywa emisji własnej okna widoczna na wykresie widmowym (wypełnienie)
+- Schemat blokowy bloku 3: wyświetla d i T_win
+- Dokumentacja sekcja 8: pełna teoria (Beer-Lambert, emisja własna, τ_Fresnel)
+
 ---
 
 ## [v1.7.0] — 2026-05-21 ✅ bieżąca

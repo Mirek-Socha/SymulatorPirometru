@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pyrometric Measurement Chain Simulator</title>
+<title>Symulator Toru Pirometrycznego</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -490,30 +490,30 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <!-- ═══ HEADER ═══════════════════════════════ -->
 <header class="hdr">
   <div class="hdr-brand">
-    <span class="hdr-title">Pyrometric Simulator</span>
-    <span class="hdr-sub">Chain: Object · Atmosphere · Window · Detector → T<sub>ind</sub></span>
+    <span class="hdr-title">Symulator Pirometryczny</span>
+    <span class="hdr-sub">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
   </div>
   <div class="hdr-actions">
     <div class="presets">
-      <button class="preset-btn" onclick="loadPreset('ideal')">Ideal</button>
-      <button class="preset-btn" onclick="loadPreset('emissivity')">ε Error</button>
-      <button class="preset-btn" onclick="loadPreset('atmosphere')">Atmosphere</button>
-      <button class="preset-btn" onclick="loadPreset('lowtemp')">Low T</button>
-      <button class="preset-btn" onclick="loadPreset('total')">Integrating</button>
+      <button class="preset-btn" onclick="loadPreset('ideal')">Idealny</button>
+      <button class="preset-btn" onclick="loadPreset('emissivity')">Błąd ε</button>
+      <button class="preset-btn" onclick="loadPreset('atmosphere')">Atmosfera</button>
+      <button class="preset-btn" onclick="loadPreset('lowtemp')">Niska T</button>
+      <button class="preset-btn" onclick="loadPreset('total')">Całkujący</button>
       <button class="preset-btn" onclick="loadPreset('plexiglas')">🪟 Plexiglas</button>
     </div>
-    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-    <button class="icon-btn" id="docsBtn" onclick="toggleDocs()" title="Documentation">📖 Documentation</button>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
+    <button class="icon-btn" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
   </div>
 </header>
 
 <!-- ═══ CHAIN DIAGRAM ════════════════════════ -->
 <section class="chain-section">
-  <div class="chain-label">Block diagram of the measurement chain</div>
+  <div class="chain-label">Schemat blokowy toru pomiarowego</div>
   <div class="chain">
 
     <div class="chain-box cb-obj" id="cb-obj">
-      <div class="cb-name">1 · Object</div>
+      <div class="cb-name">1 · Obiekt</div>
       <div class="cb-val"><span class="hi" id="cv-T">T = 1200 °C</span></div>
       <div class="cb-val">ε<sub>real</sub> = <span class="hi" id="cv-eps">0.70</span></div>
       <div class="cb-val" id="cv-wien" style="font-size:.65rem;color:var(--muted)">λ<sub>max</sub> = — µm</div>
@@ -524,7 +524,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
     <div class="chain-box cb-atm" id="cb-atm">
-      <div class="cb-name">2 · Atmosphere</div>
+      <div class="cb-name">2 · Atmosfera</div>
       <div class="cb-val">L = <span class="re" id="cv-L">2 m</span> &nbsp; HR = <span id="cv-hr">50 %</span></div>
       <div class="cb-val">CO₂ = <span id="cv-co2">400 ppm</span></div>
       <div class="cb-val">τ̄ = <span class="cy" id="cv-tau">—</span></div>
@@ -535,8 +535,9 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
     <div class="chain-box cb-win" id="cb-win">
-      <div class="cb-name">3 · Window</div>
+      <div class="cb-name">3 · Przesłona</div>
       <div class="cb-val" id="cv-win-lbl" style="font-size:.68rem">Brak</div>
+      <div class="cb-val">d = <span id="cv-win-d" class="hi">—</span> &nbsp; T = <span id="cv-win-T">—</span></div>
       <div class="cb-val">τ̄<sub>win</sub> = <span id="cv-win-tau" class="cy">1.000</span></div>
     </div>
 
@@ -545,7 +546,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
     <div class="chain-box cb-det" id="cb-det">
-      <div class="cb-name">4 · Detector</div>
+      <div class="cb-name">4 · Detektor</div>
       <div class="cb-val cy" id="cv-det">0.65 µm – Si</div>
       <div class="cb-val">S = <span class="cy" id="cv-sig">—</span></div>
     </div>
@@ -555,10 +556,10 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
     <div class="chain-box cb-proc" id="cb-proc">
-      <div class="cb-name">5 · Processor</div>
+      <div class="cb-name">5 · Procesor</div>
       <div class="cb-val">ε<sub>zał.</sub> = <span style="color:var(--orange)" id="cv-epsA">0.70</span></div>
-      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">Planck inversion</div>
-      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">bisection 72 iter.</div>
+      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">inwersja Plancka</div>
+      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">bisekcja 72 iter.</div>
     </div>
 
     <div class="chain-arrow">
@@ -566,7 +567,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
     <div class="chain-box cb-res" id="cb-res">
-      <div class="cb-name">6 · Result</div>
+      <div class="cb-name">6 · Wynik</div>
       <div class="cb-val" style="font-size:.88rem;font-weight:600"><span id="cv-Tind">—</span></div>
       <div class="cb-val">ΔT = <span id="cv-dT">—</span></div>
     </div>
@@ -582,20 +583,20 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <!-- OBIEKT -->
     <div class="ctrl-panel">
-      <div class="panel-hdr">📡 Measured Object</div>
+      <div class="panel-hdr">📡 Obiekt mierzony</div>
       <div class="sl-row">
-        <span class="sl-name">T<sub>object</sub></span>
+        <span class="sl-name">T<sub>obiekt</sub></span>
         <input type="range" id="sl_Tobj" min="10" max="12000" step="10" value="1473"
                oninput="onSl(this,'Tobj')">
         <input type="number" id="num_Tobj" class="sl-num" min="10" max="12000" step="10" value="1473"
-               title="Enter temperature in K and press Enter"
+               title="Wpisz temperaturę w K i naciśnij Enter"
                onchange="onNumTobj(this)" onkeydown="if(event.key==='Enter')onNumTobj(this)">
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:-4px;margin-bottom:6px">
         <span id="val_Tobj_c" style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted)">= 1200 °C</span>
       </div>
       <div class="sl-row">
-        <span class="sl-name">ε<sub>real</sub></span>
+        <span class="sl-name">ε<sub>rzeczyw.</sub></span>
         <input type="range" id="sl_eps_real" min="0.02" max="1.00" step="0.01" value="0.70" oninput="onSl(this,'eps_real')">
         <span class="sl-val" id="val_eps_real">0.70</span>
       </div>
@@ -603,14 +604,14 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <!-- ATMOSFERA -->
     <div class="ctrl-panel">
-      <div class="panel-hdr re">🌫 Atmosphere / optical path</div>
+      <div class="panel-hdr re">🌫 Atmosfera / tor opt.</div>
       <div class="sl-row">
-        <span class="sl-name">Path L</span>
+        <span class="sl-name">Droga L</span>
         <input type="range" id="sl_path" min="0" max="100" step="1" value="2" oninput="onSl(this,'path')">
         <span class="sl-val" id="val_path">2 m</span>
       </div>
       <div class="sl-row">
-        <span class="sl-name">Rel. humid.</span>
+        <span class="sl-name">Wilg. wzgl.</span>
         <input type="range" id="sl_rh" min="0" max="100" step="5" value="50" oninput="onSl(this,'rh')">
         <span class="sl-val" id="val_rh">50 %</span>
       </div>
@@ -620,7 +621,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <span class="sl-val" id="val_co2">400 ppm</span>
       </div>
       <div class="sl-row">
-        <span class="sl-name">T<sub>atm</sub></span>
+        <span class="sl-name">T<sub>atmosf.</sub></span>
         <input type="range" id="sl_Tatm" min="-20" max="60" step="5" value="20" oninput="onSl(this,'Tatm')">
         <span class="sl-val" id="val_Tatm">20 °C</span>
       </div>
@@ -628,35 +629,46 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <!-- PRZESŁONA OPTYCZNA -->
     <div class="ctrl-panel">
-      <div class="panel-hdr gr">🪟 Optical Window</div>
-      <div class="sel-lbl">Window / filter material</div>
+      <div class="panel-hdr gr">🪟 Przesłona optyczna</div>
+      <div class="sel-lbl">Materiał przesłony / okna</div>
       <select id="sel_win" onchange="onWinChange()">
-        <option value="none">No window (τ = 1)</option>
-        <option value="float_glass">Float glass (window glass) · 0.32–2.7 µm</option>
+        <option value="none">Brak przesłony (τ = 1)</option>
+        <option value="float_glass">Szyba float (szkło okienne) · 0.32–2.7 µm</option>
         <option value="pmma">Plexiglas (PMMA) · 0.35–2.8 µm</option>
-        <option value="quartz">Fused quartz (SiO₂) · 0.15–4.5 µm</option>
-        <option value="caf2">Calcium fluoride (CaF₂) · 0.13–9.5 µm</option>
-        <option value="znse">Zinc selenide (ZnSe) · 0.55–16 µm</option>
-        <option value="ge">Germanium (Ge) · 1.8–16 µm, blocks VIS</option>
+        <option value="quartz">Kwarc topiony (SiO₂) · 0.15–4.5 µm</option>
+        <option value="caf2">Fluoryt (CaF₂) · 0.13–9.5 µm</option>
+        <option value="znse">Selenek cynku (ZnSe) · 0.55–16 µm</option>
+        <option value="ge">German (Ge) · 1.8–16 µm, blokuje VIS</option>
       </select>
-      <div class="rb-sub" id="win-desc" style="font-size:.7rem;color:var(--muted);margin-top:2px">τ = 1 across full range</div>
-    </div>
+      <div class="rb-sub" id="win-desc" style="font-size:.7rem;color:var(--muted);margin-top:2px">τ = 1 w całym zakresie</div>
+      <div class="sl-row" style="margin-top:8px">
+        <span class="sl-name">Grubość d</span>
+        <input type="range" id="sl_windowThick" min="0.5" max="30" step="0.5" value="5"
+               oninput="onSl(this,'windowThick')">
+        <span class="sl-val" id="val_windowThick">5 mm</span>
+      </div>
+      <div class="sl-row">
+        <span class="sl-name">T<sub>przesłony</sub></span>
+        <input type="range" id="sl_windowTemp" min="0" max="700" step="10" value="25"
+               oninput="onSl(this,'windowTemp')">
+        <span class="sl-val" id="val_windowTemp">25 °C</span>
+      </div>
 
     <!-- DETEKTOR -->
     <div class="ctrl-panel">
-      <div class="panel-hdr cy">🔬 Detector / pyrometer</div>
-      <div class="sel-lbl">Detector / pyrometer type</div>
+      <div class="panel-hdr cy">🔬 Detektor / pirometr</div>
+      <div class="sel-lbl">Typ detektora / pirometru</div>
       <select id="sel_det" onchange="onDetChange()">
-        <option value="band_065">Spectral 0.65 µm – Si (brightness)</option>
-        <option value="band_100">Spectral 1.0 µm – InGaAs</option>
-        <option value="band_160">Spectral 1.6 µm – InGaAs</option>
-        <option value="band_390">Spectral 3.9 µm – InSb</option>
-        <option value="window_35">Window 3–5 µm – InSb</option>
-        <option value="window_814">Window 8–14 µm – MCT/bolom.</option>
-        <option value="total">Total-radiation 1–18 µm – thermopile</option>
+        <option value="band_065">Pasmowy 0.65 µm – Si (jasności)</option>
+        <option value="band_100">Pasmowy 1.0 µm – InGaAs</option>
+        <option value="band_160">Pasmowy 1.6 µm – InGaAs</option>
+        <option value="band_390">Pasmowy 3.9 µm – InSb</option>
+        <option value="window_35">Okienkowy 3–5 µm – InSb</option>
+        <option value="window_814">Okienkowy 8–14 µm – MCT/bolom.</option>
+        <option value="total">Całkujący 1–18 µm – termostos</option>
       </select>
       <div class="sl-row">
-        <span class="sl-name w90">ε<sub>assumed</sub></span>
+        <span class="sl-name w90">ε<sub>zakładana</sub></span>
         <input type="range" id="sl_eps_assumed" min="0.02" max="1.00" step="0.01" value="0.70" oninput="onSl(this,'eps_assumed')">
         <span class="sl-val cy" id="val_eps_assumed">0.70</span>
       </div>
@@ -666,7 +678,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
   <!-- ─── PLOTS ─── -->
   <main class="plots-col">
-    <div class="plot-hdr">Radiation spectrum in the measurement chain
+    <div class="plot-hdr">Widmo promieniowania w torze pomiarowym
       <div class="scale-toggle">
         <button class="st-btn" id="btnLog" onclick="setScale('log')">log λ</button>
         <button class="st-btn active" id="btnLin" onclick="setScale('lin')">lin λ</button>
@@ -674,15 +686,15 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
     <canvas id="specCanvas" height="308" style="height:308px"></canvas>
     <div class="legend">
-      <div class="leg"><div class="leg-line" style="background:rgba(160,160,200,.3);border-top:1px dashed rgba(160,160,200,.4)"></div>BB (reference)</div>
+      <div class="leg"><div class="leg-line" style="background:rgba(160,160,200,.3);border-top:1px dashed rgba(160,160,200,.4)"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
-      <div class="leg"><div class="leg-fill" style="background:var(--red)"></div>Atm. emission</div>
-      <div class="leg"><div class="leg-line" style="background:var(--orange);height:3px"></div>Signal at det.</div>
-      <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:1px dashed var(--cyan)"></div>Reading T<sub>ind</sub></div>
-      <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ window</div>
-      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.25"></div>Det. window</div>
+      <div class="leg"><div class="leg-fill" style="background:var(--red)"></div>Emisja atm.</div>
+      <div class="leg"><div class="leg-line" style="background:var(--orange);height:3px"></div>Sygnał na det.</div>
+      <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:1px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
+      <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
+      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.25"></div>Okno det.</div>
     </div>
-    <div class="plot-hdr tau-hdr">Atmospheric transmittance τ(λ)</div>
+    <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
     <canvas id="tauCanvas" height="148" style="height:148px"></canvas>
   </main>
 
@@ -690,37 +702,37 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   <div class="res-col">
 
     <div class="rb a">
-      <div class="rb-lbl">Pyrometer reading T<sub>ind</sub></div>
+      <div class="rb-lbl">T wskazana przez pirometr</div>
       <div class="rb-val a" id="r_Tind">—</div>
     </div>
 
     <div class="rb c">
-      <div class="rb-lbl">True object temperature</div>
+      <div class="rb-lbl">T rzeczywista obiektu</div>
       <div class="rb-val c" id="r_Tobj">—</div>
     </div>
 
     <div class="rb" id="rb_dT">
-      <div class="rb-lbl">Error ΔT = T<sub>ind</sub> − T<sub>obj</sub></div>
+      <div class="rb-lbl">Błąd ΔT = T<sub>ind</sub> − T<sub>obj</sub></div>
       <div class="rb-val" id="r_dT">—</div>
       <div class="rb-sub" id="r_dT_rel">—</div>
     </div>
 
     <div class="rb" style="border-color:var(--border)">
-      <div class="rb-lbl">Error budget</div>
+      <div class="rb-lbl">Składowe błędu</div>
       <table class="err-tbl" id="err_tbl">
-        <tr><td class="en">Δε-emissivity</td><td class="ev" id="e_eps">—</td></tr>
-        <tr><td class="en">Atmosphere</td><td class="ev" id="e_atm">—</td></tr>
-        <tr><td class="en">Window</td><td class="ev" id="e_win">—</td></tr>
-        <tr><td class="en" style="color:var(--text)">Total ΔT</td><td class="ev" id="e_tot">—</td></tr>
+        <tr><td class="en">Δε-emisyjność</td><td class="ev" id="e_eps">—</td></tr>
+        <tr><td class="en">Atmosfera</td><td class="ev" id="e_atm">—</td></tr>
+        <tr><td class="en">Przesłona</td><td class="ev" id="e_win">—</td></tr>
+        <tr><td class="en" style="color:var(--text)">Łącznie ΔT</td><td class="ev" id="e_tot">—</td></tr>
       </table>
     </div>
 
     <div class="rb" style="border-color:var(--border)">
-      <div class="rb-lbl">Spectral parameters</div>
+      <div class="rb-lbl">Parametry spektralne</div>
       <table class="err-tbl">
-        <tr><td class="en">τ̄ in det. window</td><td class="ev cy" id="r_tau">—</td></tr>
+        <tr><td class="en">τ̄ w oknie det.</td><td class="ev cy" id="r_tau">—</td></tr>
         <tr><td class="en">λ<sub>max</sub> Wien</td><td class="ev" id="r_wien" style="color:var(--muted)">—</td></tr>
-        <tr><td class="en">Signal S</td><td class="ev" id="r_sig" style="color:var(--pale);font-size:.62rem">—</td></tr>
+        <tr><td class="en">Sygnał S</td><td class="ev" id="r_sig" style="color:var(--pale);font-size:.62rem">—</td></tr>
       </table>
     </div>
 
@@ -736,117 +748,117 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <div class="docs-overlay" id="docsOverlay" onclick="closeDocs(event)">
 <div class="docs-panel" id="docsPanel">
   <div class="docs-top">
-    <div class="docs-title">Physics and Algorithm Documentation</div>
+    <div class="docs-title">Dokumentacja fizyczna i algorytmiczna</div>
     <button class="docs-close" onclick="toggleDocs()">✕</button>
   </div>
   <div class="docs-body" id="docsBody">
 
 <!-- ──── 1. MODEL TORU ──────────────────────── -->
 <div class="doc-sec">
-<h2>1. Measurement chain model</h2>
-<p>A pyrometer measures temperature without contact by analysing electromagnetic radiation. The actual signal at the detector input is the <b>sum of three components</b>, described by the general radiation transport equation:</p>
+<h2>1. Model toru pomiarowego</h2>
+<p>Pirometr mierzy temperaturę bez kontaktu z obiektem, analizując promieniowanie elektromagnetyczne. Rzeczywisty sygnał na wejściu detektora jest <b>sumą trzech składników</b> i opisany jest ogólnym równaniem transportu promieniowania:</p>
 <div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{obiekt tlumiony atmosfera}} + \underbrace{[1-\tau(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja wlasna atmosfery}} + \underbrace{\tau(\lambda)\cdot[1-\varepsilon]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{odbicia tla (pominiete)}}$$</div>
 <p style="font-size:.75rem;color:var(--muted);margin-top:2px">gdzie: „tłumiony" = τ·ε·L<sub>bb</sub>, emisja atmosfery = (1−τ)·L<sub>bb</sub>(T<sub>atm</sub>), odbicia tła – pominięte</p>
-<p>Background reflections are neglected in the simulator (T_background = T_atm assumed). The pyrometer processor assumes the detector sees only a grey body with emissivity ε_ass., leading to errors when τ ≠ 1 or ε_real ≠ ε_ass.</p>
+<p>W symulatorze odbicia tła są pominięte (przyjmujemy T_tła = T_atm). Procesor pirometru zakłada, że detektor widzi wyłącznie ciało szare o emisyjności ε_zał., co prowadzi do błędów gdy τ ≠ 1 lub ε_real ≠ ε_zał.</p>
 </div>
 
 <!-- ──── 2. PRAWO PLANCKA ─────────────────── -->
 <div class="doc-sec">
-<h2>2. Planck's Law – blackbody radiation</h2>
-<p>Spectral radiance of a blackbody (BB) at temperature T:</p>
+<h2>2. Prawo Plancka – ciało doskonale czarne</h2>
+<p>Spektralna luminancja energetyczna (radiance) ciała doskonale czarnego (CDC) w temperaturze T:</p>
 <div class="fml-math">$$L_{bb}(\lambda,\, T) = \frac{2\,h\,c^{2}}{\lambda^{5}} \cdot \frac{1}{\exp\!\left(\dfrac{h c}{\lambda\, k_{B}\, T}\right) - 1} \qquad \left[\mathrm{W \cdot m^{-2} \cdot sr^{-1} \cdot m^{-1}}\right]$$</div>
-<h3>Wien approximation (λ → 0)</h3>
-<p>For short wavelengths (exp ≫ 1), i.e. when hc/λk_BT > 6, Planck's law is approximated by:</p>
+<h3>Uproszczenie Wiena (λ → 0)</h3>
+<p>Dla krótkich fal (exp ≫ 1), tj. gdy hc/λk_BT &gt; 6, prawo Plancka przybliżamy:</p>
 <div class="fml-math">$$L_{bb} \approx \frac{2\,h\,c^{2}}{\lambda^{5}}\cdot e^{-c_{2}/\lambda T}, \qquad c_{2} = \frac{hc}{k_{B}} = 1{,}43878\times10^{-2}\ \mathrm{m{\cdot}K}$$</div>
-<div class="info-box">The simulator uses the full Planck law (no Wien approximation). The constant c₂ appears in the temperature correction equation.</div>
+<div class="info-box">W kalkulatorze używane jest pełne prawo Plancka (bez przybliżenia Wiena). Stała c₂ pojawia się w równaniu korekcji temperatury.</div>
 
-<h3>Wien displacement law</h3>
-<p>The wavelength of peak emission decreases inversely with temperature:</p>
+<h3>Prawo przesunięć Wiena</h3>
+<p>Długość fali maksimum emisji maleje odwrotnie z temperaturą:</p>
 <div class="fml-math">$$\lambda_{\max}\cdot T = b = 2{,}8978\times10^{-3}\ \mathrm{m{\cdot}K}$$</div>
-<p>Example: T = 1200°C = 1473 K → λ_max = 1.97 µm (near IR); T = 300 K → λ_max = 9.7 µm.</p>
+<p>Przykład: dla T = 1200°C = 1473 K → λ_max = 1.97 µm (bliskie IR), dla T = 300 K → λ_max = 9.7 µm.</p>
 
-<h3>Stefan–Boltzmann law</h3>
+<h3>Prawo Stefana–Boltzmanna</h3>
 <p>Całkowity strumień promieniowania CDC (integral po wszystkich λ):</p>
 <div class="fml-math">$$M = \sigma\, T^{4}, \qquad \sigma = 5{,}6704\times10^{-8}\ \mathrm{W{\cdot}m^{-2}{\cdot}K^{-4}}$$</div>
 </div>
 
 <!-- ──── 3. EMISYJNOŚĆ ────────────────────── -->
 <div class="doc-sec">
-<h2>3. Emissivity and Kirchhoff's Law</h2>
-<p>Emissivity ε(λ,T) is the ratio of radiation emitted by a real body to that of a blackbody (BB) at the same temperature:</p>
+<h2>3. Emisyjność i prawo Kirchhoffa</h2>
+<p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze:</p>
 <div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
-<p>Kirchhoff's law states: <b>ε(λ,T) = α(λ,T)</b>, where α is absorptivity. Blackbody: ε = 1; grey body: ε = const(λ); selective radiator: ε(λ) ≠ const.</p>
-<div class="warn-box">The simulator assumes a grey body model (ε = const over all λ). For real metals this is a simplification — ε depends strongly on λ and T.</div>
-<h3>Temperature correction (single-wavelength pyrometer)</h3>
-<p>If the pyrometer reads T_J (brightness temperature), the true temperature T_obj at emissivity ε is:</p>
+<p>Zgodnie z prawem Kirchhoffa: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
+<div class="warn-box">Symulator przyjmuje model ciała szarego (ε = const w całym zakresie λ). Dla metali rzeczywistość jest bardziej złożona – ε zależy silnie od λ i T.</div>
+<h3>Korekcja temperatury (pirometr monochromatyczny)</h3>
+<p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi:</p>
 <div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
-<p>Error due to incorrect assumed emissivity (ε_real ≠ ε_ass):</p>
+<p>Błąd przy założonej złej emisyjności (ε_real ≠ ε_zał):</p>
 <div class="fml-math cy">$$\Delta T \approx -\frac{T^{2}\lambda}{c_{2}}\ln\frac{\varepsilon_{\mathrm{real}}}{\varepsilon_{\mathrm{zal}}} \qquad \text{(przyblizenie Wiena)}$$</div>
 </div>
 
 <!-- ──── 4. MODEL ATMOSFERY ───────────────── -->
 <div class="doc-sec">
-<h2>4. Atmospheric transmittance model</h2>
-<p>Atmospheric transmittance τ(λ) opisuje jaki ułamek promieniowania przechodzi przez warstwę atmosfery grubości L. Bazuje na prawie Beer-Lamberta:</p>
+<h2>4. Model transmitancji atmosferycznej</h2>
+<p>Transmitancja atmosferyczna τ(λ) opisuje jaki ułamek promieniowania przechodzi przez warstwę atmosfery grubości L. Bazuje na prawie Beer-Lamberta:</p>
 <div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_{i} k_{i}(\lambda)\cdot c_{i}\cdot L\right), \qquad k_i\text{ -- wsp. absorpcji},\quad c_i\text{ -- stezenie}$$</div>
-<p>The simulator uses a simplified band model based on HITRAN data:</p>
-<h3>H₂O absorption (water vapour, 12 bands)</h3>
+<p>W symulatorze stosujemy uproszczony model pasmowy oparty na danych HITRAN:</p>
+<h3>Absorpcja H₂O (para wodna, 12 pasm)</h3>
 <table class="sym-tbl">
-  <tr><th>λ_centre [µm]</th><th>Width [µm]</th><th>Band strength</th></tr>
-  <tr><td>0.725, 0.820, 0.940</td><td>0.06–0.09</td><td>weak</td></tr>
-  <tr><td>1.14, 1.38, 1.88</td><td>0.10–0.22</td><td>moderate</td></tr>
-  <tr><td>2.68, 3.17, 5.35, 6.30</td><td>0.24–1.60</td><td>strong</td></tr>
-  <tr><td>11.7, 13.4</td><td>0.9–1.5</td><td>moderate</td></tr>
+  <tr><th>λ_centrum [µm]</th><th>Szerokość [µm]</th><th>Siła pasma</th></tr>
+  <tr><td>0.725, 0.820, 0.940</td><td>0.06–0.09</td><td>słabe</td></tr>
+  <tr><td>1.14, 1.38, 1.88</td><td>0.10–0.22</td><td>umiarkowane</td></tr>
+  <tr><td>2.68, 3.17, 5.35, 6.30</td><td>0.24–1.60</td><td>silne</td></tr>
+  <tr><td>11.7, 13.4</td><td>0.9–1.5</td><td>umiarkowane</td></tr>
 </table>
-<h3>CO₂ absorption (7 bands)</h3>
+<h3>Absorpcja CO₂ (7 pasm)</h3>
 <table class="sym-tbl">
-  <tr><th>λ_centre [µm]</th><th>Description</th></tr>
-  <tr><td>2.01, 2.69</td><td>combination</td></tr>
-  <tr><td>4.26</td><td><b>dominant fundamental band (asymmetric stretching)</b></td></tr>
+  <tr><th>λ_centrum [µm]</th><th>Opis</th></tr>
+  <tr><td>2.01, 2.69</td><td>kombinacyjne</td></tr>
+  <tr><td>4.26</td><td><b>dominujące pasmo fundamentalne (asymetryczne rozciąganie)</b></td></tr>
   <tr><td>4.82, 9.40, 10.4</td><td>słabsze</td></tr>
-  <tr><td>14.9</td><td>bending band (significant in far-IR)</td></tr>
+  <tr><td>14.9</td><td>pasmo zginania (ważne w IR dalekiej)</td></tr>
 </table>
-<div class="warn-box">The CO₂ band at 4.26 µm is so strong that 3–5 µm window pyrometers often avoid this region or use special filters. "Flame" pyrometers operate at 3.9 µm, between CO₂ bands.</div>
-<h3>Self-emission of the atmosphere</h3>
-<p>As the atmosphere absorbs radiation, it also emits (Kirchhoff's law). Atmospheric self-emission is described by:</p>
+<div class="warn-box">Pasmo CO₂ przy 4.26 µm jest tak silne, że pirometry okienkowe 3–5 µm często unikają tego obszaru lub stosują specjalne filtry. Pirometry "flame" pracują właśnie przy 3.9 µm między pasmami CO₂.</div>
+<h3>Emisja własna atmosfery</h3>
+<p>Atmosfera pochłaniając promieniowanie, sama emituje (prawo Kirchhoffa). Emisja atmosfery jest opisana luminancją:</p>
 <div class="fml-math">$$L_{\mathrm{atm}}(\lambda) = \bigl[1-\tau(\lambda)\bigr]\cdot L_{bb}(\lambda,\,T_{\mathrm{atm}}) \qquad \bigl(T_{\mathrm{atm}} = \text{const wzdluz toru}\bigr)$$</div>
-<p>This emission is <b>added</b> to the object signal, causing overestimation of temperature (the pyrometer "sees" a warmer atmosphere).</p>
+<p>Ta emisja jest <b>dodawana</b> do sygnału obiektu. Powoduje to przeszacowanie temperatury (pirometr "widzi" cieplejszą atmosferę).</p>
 </div>
 
 <!-- ──── 5. DETEKTOR ──────────────────────── -->
 <div class="doc-sec">
-<h2>5. Detector response function models R(λ)</h2>
+<h2>5. Modele funkcji odpowiedzi detektora R(λ)</h2>
 
-<h3>Spectral pyrometer (Gaussian response)</h3>
+<h3>Pirometr pasmowy (gauss)</h3>
 <div class="fml-math">$$R(\lambda) = R_p\cdot\exp\!\left[-\frac{1}{2}\left(\frac{\lambda-\lambda_c}{\sigma}\right)^{\!2}\right], \qquad \sigma = \frac{\Delta\lambda}{2{,}355}$$</div>
-<p>Used for: Si (0.65 µm), InGaAs (1.0, 1.6 µm), InSb (3.9 µm). Narrow band minimises atmospheric absorption effects.</p>
+<p>Stosowany: Si (0.65 µm), InGaAs (1.0, 1.6 µm), InSb (3.9 µm). Wąskie pasmo minimalizuje wpływ absorpcji atmosferycznej.</p>
 
-<h3>Band-pass pyrometer (softened rectangular response)</h3>
+<h3>Pirometr okienkowy (prostokąt ze złagodzonymi krawędziami)</h3>
 <div class="fml-math">$$R(\lambda) = \begin{cases} R_p & |\lambda-\lambda_c| < 0{,}88\,\tfrac{\Delta\lambda}{2} \\ 0 & |\lambda-\lambda_c| > \tfrac{\Delta\lambda}{2} \end{cases}$$</div>
-<p>Used for: InSb (3–5 µm), MCT/bolometer (8–14 µm).</p>
+<p>Stosowany: InSb (3–5 µm), MCT/bolometr (8–14 µm).</p>
 
-<h3>Total-radiation pyrometer (broadband)</h3>
+<h3>Pirometr całkujący (szerokopasmowy)</h3>
 <div class="fml-math cy">$$R(\lambda) \approx R_p = \mathrm{const}, \qquad \lambda \in [1{,}0\;\mu\text{m},\;17\;\mu\text{m}] \quad \text{(termostos, termopilek, bolometr)}$$</div>
-<p>Measures total radiated power. Highly sensitive to emissivity because no "good" spectral window can be selected. Consistent with Stefan–Boltzmann law: M = ε·σ·T⁴.</p>
-<div class="warn-box">Total-radiation pyrometer: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{zal}}\,\sigma}\right)^{1/4}\). Emissivity error proportional to \(T^4\) — very sensitive!</div>
+<p>Mierzy moc całkowitą. Bardzo czuły na emisyjność, bo nie ma możliwości wyboru "dobrego" okna spektralnego. Zgodny z prawem Stefana–Boltzmanna: M = ε·σ·T⁴.</p>
+<div class="warn-box">Pirometr całkujący: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{zal}}\,\sigma}\right)^{1/4}\). Błąd emisyjności proporcjonalny do \(T^4\) — bardzo wrażliwy!</div>
 </div>
 
 <!-- ──── 6. SYGNAŁ I INWERSJA ─────────────── -->
 <div class="doc-sec">
-<h2>6. Signal integration and temperature inversion</h2>
-<h3>Detector signal</h3>
-<p>Total electrical signal (proportional to power) from the optical path at the detector:</p>
+<h2>6. Całkowanie sygnału i inwersja temperatury</h2>
+<h3>Sygnał detektora</h3>
+<p>Całkowity sygnał elektryczny (proporcjonalny do mocy) detektora z toru optycznego:</p>
 <div class="fml-math">$$S = \int_{0}^{\infty} R(\lambda)\cdot L_{\mathrm{det}}(\lambda)\,\mathrm{d}\lambda$$</div>
-<p>In the simulator: grid N=700 points, λ ∈ [0.1, 16] µm, rectangle rule integration.</p>
+<p>W symulatorze: grid N=480 punktów, λ ∈ [0.4, 16] µm, całkowanie metodą prostokątów.</p>
 
-<h3>Temperature inversion (bisection algorithm)</h3>
-<p>The pyrometer finds T_ind such that the simplified model (ε_ass only, τ=1) yields the same signal S:</p>
+<h3>Inwersja temperatury (algorytm bisekcji)</h3>
+<p>Pirometr szuka T_ind taką, że model uproszczony (tylko ε_zał, τ=1) daje ten sam sygnał S:</p>
 <div class="fml-math">$$\text{znajdz } T_{\mathrm{ind}}:\quad \int_{0}^{\infty} R(\lambda)\cdot\varepsilon_{\mathrm{zal}}\cdot L_{bb}(\lambda,\,T_{\mathrm{ind}})\,\mathrm{d}\lambda \;=\; S$$</div>
-<p>Algorithm: <b>bisection 72 iterations</b>, range T ∈ [1, 15000] K, convergence < 0.01 K.</p>
+<p>Algorytm: <b>bisekcja 64 iteracje</b>, zakres T ∈ [200, 6500] K, zbieżność &lt; 0.01 K.</p>
 <div class="fml-math gr">$$\mathcal{O}(72\times N_{\mathrm{grid}}) \approx 50\,400 \ \text{ewaluacji Plancka na kazde przesuniecie suwaka}$$</div>
 
-<h3>Error decomposition</h3>
-<p>The total error is decomposed into three independent components:</p>
+<h3>Dekompozycja błędu</h3>
+<p>Błąd całkowity rozkładamy na dwie niezależne składowe:</p>
 <div class="fml-math">$$\Delta T_{\varepsilon} = T_{\mathrm{ind}}(\varepsilon_{\mathrm{real}},\;\tau\!=\!1) - T_{\mathrm{obj}} \qquad \text{(tylko emisyjnosc)}$$
 $$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}(\text{pelny model}) - T_{\mathrm{ind}}(\varepsilon_{\mathrm{real}},\;\tau\!=\!1) \qquad \text{(tylko atmosfera)}$$
 $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
@@ -854,80 +866,111 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 
 <!-- ──── 7. SŁOWNIK ───────────────────────── -->
 <div class="doc-sec">
-<h2>7. Symbol glossary</h2>
+<h2>7. Słownik symboli</h2>
 <table class="sym-tbl">
-  <tr><th>Symbol / abbr.</th><th>Meaning</th><th>Unit</th></tr>
-  <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — Polish abbreviation for blackbody (BB). An ideal thermal radiation source, ε&nbsp;=&nbsp;1</td><td>—</td></tr>
-  <tr><td>L_bb(λ,T)</td><td>Spectral radiance of a blackbody (BB) — Planck's law</td><td>W·m⁻²·sr⁻¹·m⁻¹</td></tr>
-  <tr><td>ε, ε_real</td><td>True emissivity of the object</td><td>—</td></tr>
-  <tr><td>ε_zał</td><td>Emissivity assumed by the pyrometer processor</td><td>—</td></tr>
-  <tr><td>τ(λ)</td><td>Spectral transmittance of the atmosphere</td><td>—</td></tr>
-  <tr><td>τ̄</td><td>Weighted-mean transmittance in detector window</td><td>—</td></tr>
-  <tr><td>R(λ)</td><td>Spectral response function of the detector</td><td>A·W⁻¹ lub V·W⁻¹</td></tr>
-  <tr><td>S</td><td>Signal (power) at the detector output</td><td>W·m⁻²·sr⁻¹</td></tr>
-  <tr><td>T_obj</td><td>Thermodynamic temperature of the object</td><td>°C lub K</td></tr>
-  <tr><td>T_ind</td><td>Temperature indicated by the pyrometer</td><td>°C</td></tr>
-  <tr><td>T_J</td><td>Brightness temperature (monochromatic)</td><td>°C</td></tr>
-  <tr><td>T_atm</td><td>Atmospheric temperature along the optical path</td><td>°C</td></tr>
-  <tr><td>ΔT</td><td>Measurement error: T_ind − T_obj</td><td>°C lub K</td></tr>
-  <tr><td>λ_max</td><td>Peak emission wavelength (Wien)</td><td>µm</td></tr>
-  <tr><td>λ_c</td><td>Central wavelength of the detector</td><td>µm</td></tr>
-  <tr><td>c₂ = hc/k_B</td><td>Second radiation constant</td><td>1.43878×10⁻² m·K</td></tr>
-  <tr><td>σ</td><td>Stefan–Boltzmann constant</td><td>5.6704×10⁻⁸ W·m⁻²·K⁻⁴</td></tr>
-  <tr><td>b</td><td>Wien displacement constant</td><td>2.8978×10⁻³ m·K</td></tr>
-  <tr><td>h</td><td>Planck constant</td><td>6.626×10⁻³⁴ J·s</td></tr>
-  <tr><td>k_B</td><td>Boltzmann constant</td><td>1.381×10⁻²³ J·K⁻¹</td></tr>
-  <tr><td>c</td><td>Speed of light in vacuum</td><td>2.998×10⁸ m·s⁻¹</td></tr>
+  <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
+  <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — polski skrót; odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε&nbsp;=&nbsp;1</td><td>—</td></tr>
+  <tr><td>L_bb(λ,T)</td><td>Luminancja spektralna ciała doskonale czarnego (CDC) — prawo Plancka</td><td>W·m⁻²·sr⁻¹·m⁻¹</td></tr>
+  <tr><td>ε, ε_real</td><td>Emisyjność rzeczywista obiektu</td><td>—</td></tr>
+  <tr><td>ε_zał</td><td>Emisyjność zakładana przez procesor pirometru</td><td>—</td></tr>
+  <tr><td>τ(λ)</td><td>Transmitancja spektralna atmosfery</td><td>—</td></tr>
+  <tr><td>τ̄</td><td>Śr. ważona transmitancja w oknie detektora</td><td>—</td></tr>
+  <tr><td>R(λ)</td><td>Spektralna funkcja odpowiedzi detektora</td><td>A·W⁻¹ lub V·W⁻¹</td></tr>
+  <tr><td>S</td><td>Sygnał (moc) na wyjściu detektora</td><td>W·m⁻²·sr⁻¹</td></tr>
+  <tr><td>T_obj</td><td>Temperatura termodynamiczna obiektu</td><td>°C lub K</td></tr>
+  <tr><td>T_ind</td><td>Temperatura wskazana przez pirometr</td><td>°C</td></tr>
+  <tr><td>T_J</td><td>Temperatura jasności (monochromatyczna)</td><td>°C</td></tr>
+  <tr><td>T_atm</td><td>Temperatura atmosfery wzdłuż toru</td><td>°C</td></tr>
+  <tr><td>ΔT</td><td>Błąd pomiaru: T_ind − T_obj</td><td>°C lub K</td></tr>
+  <tr><td>λ_max</td><td>Długość fali maksimum emisji (Wien)</td><td>µm</td></tr>
+  <tr><td>λ_c</td><td>Centralna długość fali detektora</td><td>µm</td></tr>
+  <tr><td>c₂ = hc/k_B</td><td>Druga stała promieniowania</td><td>1.43878×10⁻² m·K</td></tr>
+  <tr><td>σ</td><td>Stała Stefana–Boltzmanna</td><td>5.6704×10⁻⁸ W·m⁻²·K⁻⁴</td></tr>
+  <tr><td>b</td><td>Stała przesunięć Wiena</td><td>2.8978×10⁻³ m·K</td></tr>
+  <tr><td>h</td><td>Stała Plancka</td><td>6.626×10⁻³⁴ J·s</td></tr>
+  <tr><td>k_B</td><td>Stała Boltzmanna</td><td>1.381×10⁻²³ J·K⁻¹</td></tr>
+  <tr><td>c</td><td>Prędkość światła w próżni</td><td>2.998×10⁸ m·s⁻¹</td></tr>
 </table>
 </div>
 
 
 <!-- ──── 8. PRZESŁONA OPTYCZNA ────────────────── -->
 <div class="doc-sec">
-<h2>8. Optical window — transmittance model</h2>
-<p>In practical pyrometric measurements, the object is often observed through an <b>optical window</b>: a furnace sight port, a protective glass, a cryostat window, or a spectral filter. Each such element introduces additional attenuation described by its spectral transmittance τ<sub>win</sub>(λ).</p>
+<h2>8. Przesłona optyczna — model kompletny</h2>
+<p>Okno optyczne wprowadza trzy niezależne efekty fizyczne, które symulator modeluje łącznie:</p>
+<ol style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em;margin-bottom:8px">
+  <li><b>Tłumienie transmisyjne</b> τ_win(λ) — zależy od materiału i grubości</li>
+  <li><b>Emisja własna</b> — okno pochłaniające promieniowanie samo emituje (prawo Kirchhoffa)</li>
+  <li><b>Straty Fresnela</b> — odbicia na powierzchniach; uwzględnione w τ_Fresnel (stałe, niezależne od d)</li>
+</ol>
 
-<h3>Mathematical model</h3>
-<p>Signal at the detector input after accounting for the optical window:</p>
+<h3>Pełne równanie toru z oknem</h3>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{po\ atm}}(\lambda)}_{\text{sygnal obiektu przez okno}} + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja wlasna okna}}$$</div>
+<p>Emisja własna jest analogiczna do emisji atmosfery — okno gorące (np. 300–500°C w ścianie pieca) może <b>przekłamywać wskazanie pirometru in plus</b>, nawet gdy τ_win wydaje się wystarczające.</p>
+
+<h3>Model transmitancji — Beer–Lambert z podziałem na składowe</h3>
+<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda,\, d) = \underbrace{\tau_{\mathrm{Fresnel}}}_{\text{stale}} \cdot \underbrace{S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)}_{\text{odciecia pasmowe}} \cdot \underbrace{\tau_{\mathrm{bulk}}(\lambda,d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}}}_{\text{absorpcja objetosciowa (Beer-Lambert)}}$$</div>
+
+<h3>Skalowanie z grubością — prawo Beer–Lamberta</h3>
+<p>Absorpcja objętościowa skaluje się wykładniczo z grubością. Dla materiału o absorpcji τ_bulk(λ) przy grubości referencyjnej d_ref:</p>
+<div class="fml-math">$$\tau_{\mathrm{bulk}}(\lambda, d) = \tau_{\mathrm{bulk}}(\lambda, d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}} = e^{-\alpha(\lambda)\cdot d}$$</div>
+<p>Straty Fresnela <b>nie skalują się</b> z grubością — są stałą własnością powierzchni. Dlatego model rozdziela te dwa efekty: podwajając grubość wzmacniamy absorpcję pasm, ale nie zmieniamy strat na odbiciach.</p>
+
+<div class="warn-box">Przykład: szyba float 8 mm zamiast 4 mm. Pasmo OH przy 1.9 µm z absorpcją 9% przy 4 mm daje ~17% przy 8 mm (τ=0.83²≈0.69), ale straty Fresnela pozostają ~9%.</div>
+
+<h3>Emisja własna okna</h3>
+<p>Prawo Kirchhoffa: ciało pochłaniające promieniowanie musi je emitować. Emisyjność okna wynosi:</p>
+<div class="fml-math">$$\varepsilon_{\mathrm{win}}(\lambda) = \alpha_{\mathrm{win}}(\lambda) \approx 1 - \tau_{\mathrm{win}}(\lambda)$$</div>
+<p>(pomijamy odbicia, które są już w τ_Fresnel). Sygnał emitowany przez okno:</p>
+<div class="fml-math">$$L_{\mathrm{win,emit}}(\lambda) = [1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda, T_{\mathrm{win}})$$</div>
+<p>Dla zimnego okna (T_win ≈ T_atm) efekt jest pomijalny. Dla gorącego okna w ścianie pieca (T_win = 400°C) emisja własna może <b>dominować w zakresie 8–14 µm</b> i całkowicie fałszować pomiar pirometrem MCT.</p>
+
+<div class="info-box">Wskazówka do pracy ze studentami: zwiększ T_win do 400°C przy detektorze 8–14 µm i obserwuj jak wskazanie pirometru rośnie pomimo zerowej zmiany T_obj — to czysta emisja okna „udająca" gorący obiekt.</div>
+
+<h3>Parametry referencyjne materiałów</h3>
+<p>W praktycznych pomiarach pirometrycznych obiekt często obserwowany jest przez <b>okno optyczne</b>: wziernik w ścianie pieca, szybę ochronną, okno kriostatu lub filtr spektralny. Każdy taki element wprowadza dodatkowe tłumienie opisane transmitancją spektralną τ<sub>win</sub>(λ).</p>
+
+<h3>Model matematyczny</h3>
+<p>Sygnał na wejściu detektora po uwzględnieniu przesłony:</p>
 <div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda) \cdot \Bigl[\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})\Bigr]$$</div>
-<p>The window does not emit radiation (assumption: T<sub>win</sub> ≪ T<sub>obj</sub>, typical for high-temperature measurements). Total detector signal:</p>
+<p>Przesłona nie emituje promieniowania (założenie: T<sub>win</sub> ≪ T<sub>obj</sub>, typowe dla pomiarów wysokotemperaturowych). Całkowity sygnał detektora:</p>
 <div class="fml-math">$$S = \int_0^\infty R(\lambda)\cdot\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{det,bez\,okna}}(\lambda)\,\mathrm{d}\lambda$$</div>
 
-<h3>Implementation — band model with smooth edges</h3>
-<p>Transmittance of each material is modelled by a function composed of <b>smooth step functions</b> (Hermite smoothstep) defining UV and IR cut-offs, and <b>Gaussian absorption bands</b>:</p>
+<h3>Implementacja — model pasmowy z wygładzaniem</h3>
+<p>Transmitancja każdego materiału modelowana jest funkcją złożoną z <b>płynnych schodków</b> (Hermite smoothstep) definiujących odcięcie UV i IR, oraz <b>gaussowskich pasm absorpcji</b>:</p>
 <div class="fml-math">$$\tau_{\mathrm{win}}(\lambda) = S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)\cdot\tau_{\mathrm{peak}}\cdot\prod_k\!\left(1 - A_k\cdot e^{-(\lambda-\lambda_k)^2/2\sigma_k^2}\right)$$</div>
-<p>The Hermite smoothstep ensures continuous first derivatives at the cut-off edges (no numerical artefacts). τ<sub>peak</sub> accounts for Fresnel losses at the window surfaces.</p>
+<p>Funkcja schodkowa Hermite'a zapewnia ciągłe pierwsze pochodne na krawędziach odcięcia (brak artefaktów numerycznych). τ<sub>peak</sub> uwzględnia straty Fresnela na powierzchniach okna.</p>
 
-<h3>Implemented optical window materials</h3>
+<h3>Zaimplementowane materiały okien optycznych</h3>
 <table class="sym-tbl">
-  <tr><th>Material</th><th>Range [µm]</th><th>τ<sub>peak</sub></th><th>Characteristic absorption bands</th></tr>
-  <tr><td>Float glass (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
-  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (harmonic vibrations)</td></tr>
-  <tr><td>Fused quartz (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>Weak OH band at 2.72 µm (moisture impurity)</td></tr>
-  <tr><td>Calcium fluoride (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>No significant absorption bands</td></tr>
-  <tr><td>Zinc selenide (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>Weak band at 6.5 µm; n ≈ 2.4 → ~17% Fresnel losses</td></tr>
-  <tr><td>Germanium (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>Blocks all UV/VIS (bandgap 0.67 eV); n ≈ 4 → ~36% Fresnel losses</td></tr>
+  <tr><th>Materiał</th><th>Zakres [µm]</th><th>τ<sub>Fresnel</sub></th><th>d<sub>ref</sub> [mm]</th><th>Charakterystyczne pasma absorpcji</th></tr>
+  <tr><td>Szyba float (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
+  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>5</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
+  <tr><td>Kwarc topiony (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>5</td><td>Słabe pasmo OH przy 2.72 µm (domieszka wody)</td></tr>
+  <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>2</td><td>Brak istotnych pasm absorpcji</td></tr>
+  <tr><td>Selenek cynku (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>3</td><td>Słabe pasmo przy 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
+  <tr><td>German (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>3</td><td>Blokuje cały UV/VIS (przerwa energetyczna 0.67 eV); n ≈ 4 → straty Fresnela ~36%</td></tr>
 </table>
 
-<div class="warn-box">The pyrometer does <b>not correct</b> for the window — it assumes τ<sub>win</sub> = 1. This results in underestimation of T<sub>ind</sub> (less radiation reaches the detector). Correct calibration requires knowledge of τ<sub>win</sub>(λ) for the specific window.</div>
-<div class="info-box">Practical tip: measuring through float glass with a 0.65 µm (Si) pyrometer works correctly — the glass transmits at this wavelength. An 8–14 µm pyrometer (MCT/bolometer) will read zero signal because float glass is <b>completely opaque</b> in that range.</div>
+<div class="warn-box">Pirometr <b>nie koryguje</b> wpływu przesłony — zakłada τ<sub>win</sub> = 1. Skutkuje to zaniżeniem T<sub>ind</sub> (mniej promieniowania dociera do detektora). Poprawna kalibracja wymaga znajomości τ<sub>win</sub>(λ) dla konkretnego okna.</div>
+<div class="info-box">Praktyczna wskazówka: pomiar przez szybę piekarniczą (float glass) pirometrem 0.65 µm (Si) działa poprawnie — szyba przepuszcza tę falę. Pirometr 8–14 µm (MCT/bolometr) wskaże zerowy sygnał, bo float glass jest w tym zakresie <b>całkowicie nieprzezroczysty</b>.</div>
 </div>
 
 <!-- ──── 9. AUTOR I WERSJA ─────────────────── -->
 <div class="doc-sec">
-<h2>9. Application information</h2>
+<h2>9. Informacje o aplikacji</h2>
 <table class="sym-tbl">
-  <tr><th>Field</th><th>Value</th></tr>
-  <tr><td>Author</td><td><b>Mirosław Socha</b></td></tr>
-  <tr><td>Department</td><td>Department of Metrology and Electronics</td></tr>
-  <tr><td>Faculty</td><td>WEAIiIB — Faculty of Electrical Engineering, Automatics, Computer Science and Biomedical Engineering</td></tr>
-  <tr><td>University</td><td>AGH University of Krakow</td></tr>
-  <tr><td>Version</td><td><b>v1.7.0</b></td></tr>
-  <tr><td>Repository</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
-  <tr><td>Purpose</td><td>Educational material — laboratory exercises in temperature metrology</td></tr>
-  <tr><td>Licence</td><td>Educational use — AGH University of Krakow</td></tr>
+  <tr><th>Pole</th><th>Wartość</th></tr>
+  <tr><td>Autor</td><td><b>Mirosław Socha</b></td></tr>
+  <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
+  <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
+  <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
+  <tr><td>Wersja</td><td><b>v1.8.0</b></td></tr>
+  <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
+  <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
+  <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
 </table>
-<div class="info-box">The application is a standalone HTML file with no local dependencies. External resources loaded via CDN: Google Fonts (typography) and KaTeX (mathematical formula rendering).</div>
+<div class="info-box">Aplikacja jest samodzielnym plikiem HTML bez zależności lokalnych. Zewnętrzne zasoby ładowane przez CDN: Google Fonts (typografia) i KaTeX (renderowanie wzorów matematycznych).</div>
 </div>
 
   </div><!-- /docs-body -->
@@ -994,83 +1037,77 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm){
 }
 
 const WINDOWS = {
-  none:        {label:'No window',          desc:'τ = 1',                   color:'#555'},
-  float_glass: {label:'Float glass (window glass)', desc:'0.32–2.7 µm',         color:'#60a5fa'},
-  pmma:        {label:'Plexiglas (PMMA)',          desc:'0.35–2.8 µm, C-H absorption bands', color:'#a78bfa'},
-  quartz:      {label:'Fused quartz (SiO₂)',      desc:'0.15–4.5 µm',           color:'#34d399'},
-  caf2:        {label:'Calcium fluoride (CaF₂)',            desc:'0.13–9.5 µm',           color:'#fbbf24'},
-  ge:          {label:'Germanium (Ge)',               desc:'1.8–16 µm, blokuje VIS', color:'#f87171'},
-  znse:        {label:'Zinc selenide (ZnSe)',       desc:'0.55–16 µm',            color:'#fb923c'},
+  none:        {label:'Brak przesłony',              desc:'τ = 1',                       color:'#555',    d_ref:5,  defaultThick:5,  tau_fresnel:1.000},
+  float_glass: {label:'Szyba float (szkło okienne)', desc:'0.32–2.7 µm',                color:'#60a5fa', d_ref:4,  defaultThick:4,  tau_fresnel:0.910},
+  pmma:        {label:'Plexiglas (PMMA)',             desc:'0.35–2.8 µm, pasma C-H',     color:'#a78bfa', d_ref:5,  defaultThick:5,  tau_fresnel:0.920},
+  quartz:      {label:'Kwarc topiony (SiO₂)',        desc:'0.15–4.5 µm',                color:'#34d399', d_ref:5,  defaultThick:5,  tau_fresnel:0.945},
+  caf2:        {label:'Fluoryt (CaF₂)',              desc:'0.13–9.5 µm',                color:'#fbbf24', d_ref:2,  defaultThick:2,  tau_fresnel:0.944},
+  ge:          {label:'German (Ge)',                 desc:'1.8–16 µm, blokuje VIS',     color:'#f87171', d_ref:3,  defaultThick:3,  tau_fresnel:0.460},
+  znse:        {label:'Selenek cynku (ZnSe)',        desc:'0.55–16 µm',                 color:'#fb923c', d_ref:3,  defaultThick:3,  tau_fresnel:0.700},
 };
 
 // smooth step helper
 function ss(x, e0, e1){ const t=Math.max(0,Math.min(1,(x-e0)/(e1-e0))); return t*t*(3-2*t); }
 
-function windowTau(lam_m, type){
+/* windowTau(lam_m, type, thick_mm)
+ *
+ * Fizyczny model transmitancji okna optycznego:
+ *   τ_win(λ,d) = τ_Fresnel · τ_bandpass(λ) · τ_bulk(λ, d_ref)^(d/d_ref)
+ *
+ * τ_Fresnel  — straty na odbiciach (nie zależy od grubości)
+ * τ_bandpass — odcięcia UV i IR (smoothstep, nie zależy od grubości)
+ * τ_bulk     — absorpcja objętościowa skalowana prawem Beer-Lamberta
+ *              τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)
+ */
+function windowTau(lam_m, type, thick_mm){
   if(type==='none') return 1.0;
   const u = lam_m * 1e6; // µm
+  const win = WINDOWS[type];
+  if(!win) return 1.0;
+  const d     = (thick_mm != null) ? thick_mm : win.d_ref;
+  const tf    = win.tau_fresnel;   // Fresnel (stały)
+  const dref  = win.d_ref;
+
+  let bandpass = 1.0;   // odcięcia UV/IR
+  let tau_bulk_ref = 1.0; // absorpcja objętościowa przy d_ref
 
   if(type==='float_glass'){
-    // Szyba float (szkło sodowo-wapniowe)
-    // UV odcięcie ok. 320 nm, IR odcięcie ok. 2.7 µm (fundamentalne drgania Si-O)
-    const uvPass = ss(u, 0.28, 0.34);
-    const irCut  = 1 - ss(u, 2.50, 2.90);
-    // Pasma nadtonów OH przy 1.4 i 1.9 µm (typowe w szkle)
+    bandpass = ss(u, 0.28, 0.34) * (1 - ss(u, 2.50, 2.90));
     const a1 = 0.06 * Math.exp(-Math.pow((u-1.40)/0.05,2));
     const a2 = 0.09 * Math.exp(-Math.pow((u-1.90)/0.06,2));
-    return Math.max(0, uvPass * irCut * 0.91 * (1-a1-a2));
+    tau_bulk_ref = Math.max(1e-6, 1-a1-a2);
   }
-
-  if(type==='pmma'){
-    // PMMA / Plexiglas — polimetakrylan metylu
-    // Przepuszcza VIS i bliskie IR do ~2.8 µm
-    const uvPass = ss(u, 0.32, 0.38);
-    const irCut  = 1 - ss(u, 2.65, 3.05);
-    // Charakterystyczne pasma C-H (drgania harmoniczne)
-    const a1 = 0.13 * Math.exp(-Math.pow((u-1.69)/0.04,2)); // 1. nadton C-H
-    const a2 = 0.16 * Math.exp(-Math.pow((u-2.18)/0.05,2)); // 2. nadton C-H
-    const a3 = 0.10 * Math.exp(-Math.pow((u-1.41)/0.03,2)); // combination
-    const a4 = 0.07 * Math.exp(-Math.pow((u-1.15)/0.02,2)); // 2. nadton
-    return Math.max(0, uvPass * irCut * 0.92 * (1-a1-a2-a3-a4));
+  else if(type==='pmma'){
+    bandpass = ss(u, 0.32, 0.38) * (1 - ss(u, 2.65, 3.05));
+    const a1 = 0.13 * Math.exp(-Math.pow((u-1.69)/0.04,2));
+    const a2 = 0.16 * Math.exp(-Math.pow((u-2.18)/0.05,2));
+    const a3 = 0.10 * Math.exp(-Math.pow((u-1.41)/0.03,2));
+    const a4 = 0.07 * Math.exp(-Math.pow((u-1.15)/0.02,2));
+    tau_bulk_ref = Math.max(1e-6, 1-a1-a2-a3-a4);
   }
-
-  if(type==='quartz'){
-    // Kwarc topiony (fused silica) — szeroki zakres UV-IR
-    const uvPass = ss(u, 0.13, 0.17);
-    const irCut  = 1 - ss(u, 3.80, 4.80);
-    // Weak OH band at 2.72 µm (moisture impurity)
+  else if(type==='quartz'){
+    bandpass = ss(u, 0.13, 0.17) * (1 - ss(u, 3.80, 4.80));
     const a1 = 0.04 * Math.exp(-Math.pow((u-2.72)/0.09,2));
-    return Math.max(0, uvPass * irCut * 0.945 * (1-a1));
+    tau_bulk_ref = Math.max(1e-6, 1-a1);
   }
-
-  if(type==='caf2'){
-    // CaF₂ — fluoryt wapnia, doskonałe okno IR/UV
-    const uvPass = ss(u, 0.11, 0.15);
-    const irCut  = 1 - ss(u, 8.50, 10.20);
-    // Bardzo czyste widmo, bez istotnych pasm absorpcji
-    return Math.max(0, uvPass * irCut * 0.944);
+  else if(type==='caf2'){
+    bandpass = ss(u, 0.11, 0.15) * (1 - ss(u, 8.50, 10.20));
+    tau_bulk_ref = 0.9997; // bardzo mała absorpcja
   }
-
-  if(type==='ge'){
-    // German (Ge) — okno IR, przerwa energetyczna ~0.67 eV → odcięcie ok. 1.8 µm
-    const visBlock = ss(u, 1.70, 2.05); // blokuje całe UV/VIS
-    const irCut    = 1 - ss(u, 15.5, 17.5);
-    // Wysoki współczynnik refrakcji n≈4 → straty Fresnela ~36% bez powłoki AR
-    // Przyjmujemy brak powłoki AR: τ_peak ≈ 0.46
-    return Math.max(0, visBlock * irCut * 0.46);
+  else if(type==='ge'){
+    bandpass = ss(u, 1.70, 2.05) * (1 - ss(u, 15.5, 17.5));
+    tau_bulk_ref = 0.997;  // germanium — mała absorpcja własna
   }
-
-  if(type==='znse'){
-    // ZnSe — selenek cynku, szerokopasmowe okno IR
-    const visPass = ss(u, 0.49, 0.62);
-    const irCut   = 1 - ss(u, 15.0, 17.5);
-    // n≈2.4 → straty Fresnela ~17% → τ_peak ≈ 0.70 (bez AR)
-    // Słabe pasmo przy 6.5 µm
+  else if(type==='znse'){
+    bandpass = ss(u, 0.49, 0.62) * (1 - ss(u, 15.0, 17.5));
     const a1 = 0.04 * Math.exp(-Math.pow((u-6.5)/0.4,2));
-    return Math.max(0, visPass * irCut * 0.70 * (1-a1));
+    tau_bulk_ref = Math.max(1e-6, 1-a1);
   }
 
-  return 1.0;
+  // Beer-Lambert: τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)
+  const tau_bulk = Math.pow(tau_bulk_ref, d / dref);
+
+  return Math.max(0, bandpass * tf * tau_bulk);
 }
 
 const DETS = {
@@ -1080,7 +1117,7 @@ const DETS = {
   band_390: {label:'3.9 µm – InSb',lc:3.90,bw:.35,mode:'gauss',Rp:.85,range:[3.0,5.0]},
   window_35:{label:'3–5 µm – InSb',lc:4.00,bw:2.0,mode:'window',Rp:.75,range:[2.8,5.4]},
   window_814:{label:'8–14 µm – MCT',lc:11.0,bw:6.0,mode:'window',Rp:.65,range:[7.5,15.0]},
-  total:    {label:'1–18 µm – thermopile',lc:9.5,bw:17.0,mode:'total',Rp:.4,range:[0.8,16.5]},
+  total:    {label:'1–18 µm – termostos',lc:9.5,bw:17.0,mode:'total',Rp:.4,range:[0.8,16.5]},
 };
 
 function detResp(lam_m, det){
@@ -1119,23 +1156,27 @@ function invertTemp(target, det, eps_a){
 function compute(p){
   const Tobj_K = p.Tobj;
   const Tatm_K = p.Tatm + 273.15;
+  const Twin_K = (p.windowTemp ?? 25) + 273.15;   // temperatura przesłony
+  const thick  = p.windowThick ?? (WINDOWS[p.windowKey]?.defaultThick ?? 5);
   const det = DETS[p.detKey];
 
-  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Ldet=[], R=[];
-  let signal=0, tw=0, ts=0, tww=0, twww=0;
+  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[];
+  let signal=0, tw=0, ts=0, twww=0;
 
   for(let i=0;i<=N;i++){
     const lam=lams[i];
-    const bb = planck(lam,Tobj_K);
+    const bb = planck(lam, Tobj_K);
     const em = p.eps_real * bb;
     const ta = atmTau(lam, p.path, p.rh, p.co2);
-    const la = (1-ta)*planck(lam,Tatm_K);
-    const lAfterAtm = ta*em + la;          // signal after atmosphere
-    const tw_win = windowTau(lam, p.windowKey); // window transmittance
-    const ld = tw_win * lAfterAtm;         // signal after window
-    const r  = detResp(lam,det);
+    const la = (1-ta)*planck(lam, Tatm_K);
+    const lAfterAtm = ta*em + la;
+    const tw_win = windowTau(lam, p.windowKey, thick);
+    // Emisja własna przesłony (prawo Kirchhoffa): ε_win(λ)=α_win(λ)≈1−τ_win(λ)
+    const lwe = (1 - tw_win) * planck(lam, Twin_K);
+    const ld  = tw_win * lAfterAtm + lwe;
+    const r   = detResp(lam, det);
     Lbb.push(bb); Lemit.push(em); tau.push(ta);
-    Latm.push(la); Lwin.push(tw_win); Ldet.push(ld); R.push(r);
+    Latm.push(la); Lwin.push(tw_win); Lwin_emit.push(lwe); Ldet.push(ld); R.push(r);
     signal += r*ld*DL;
     if(r>0.01){ tw+=r; ts+=ta*r; twww+=tw_win*r; }
   }
@@ -1174,9 +1215,9 @@ function compute(p){
     dT:     T_ind_K - Tobj_K,
     dT_eps: T_eps_K - Tobj_K,          // tylko emisyjność
     dT_atm: T_atm_K - T_eps_K,         // tylko atmosfera (przyrost)
-    dT_win: T_ind_K - T_atm_K,         // tylko przesłona (przyrost)
+    dT_win: T_ind_K - T_atm_K,
     signal, tau_avg, win_avg, wien_um, Tind_arr, det,
-    winKey: p.windowKey
+    winKey: p.windowKey, Twin_K, thick
   };
 }
 
@@ -1405,13 +1446,13 @@ function drawSpec(res, p){
   curve(res.Ldet,  tv('--orange'), 2.5);
   curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4]);
 
-  // Window transmission overlay (right Y axis: 0–1 scaled to plot height)
+  // Window transmission overlay
   if(res.winKey && res.winKey !== 'none'){
     const winColor = WINDOWS[res.winKey]?.color || '#10b981';
     ctx.beginPath(); ctx.setLineDash([2,3]);
     res.Lwin.forEach((v,i)=>{
       const x=lx(lamArr[i]);
-      const y=pT+H2*(1-v);   // τ mapped to full plot height
+      const y=pT+H2*(1-v);
       i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     });
     ctx.strokeStyle=winColor; ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
@@ -1420,6 +1461,20 @@ function drawSpec(res, p){
     ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='right';
     ctx.fillText('τ_win', pL+W2-4, pT+12);
     ctx.globalAlpha=1;
+
+    // Window self-emission fill (only when T_win > ambient, visible amount)
+    const hasWinEmit = res.Twin_K > 320; // widoczna dopiero powyżej ~50°C
+    if(hasWinEmit){
+      const gWin = Math.max(...res.Lwin_emit, 1e-30);
+      if(gWin / gMax > 0.001){
+        ctx.beginPath();
+        ctx.moveTo(lx(lamArr[0]),pT+H2);
+        res.Lwin_emit.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
+        ctx.lineTo(lx(lamArr[res.Lwin_emit.length-1]),pT+H2);
+        ctx.closePath();
+        ctx.globalAlpha=0.28; ctx.fillStyle=winColor; ctx.fill(); ctx.globalAlpha=1;
+      }
+    }
   }
 
   // Wien λ_max marker
@@ -1550,7 +1605,8 @@ function drawTau(res){
 ───────────────────────────────────────────── */
 const state = {
   Tobj:1473, eps_real:.70, path:2, rh:50, co2:400, Tatm:20,
-  detKey:'band_065', eps_assumed:.70, windowKey:'none'
+  detKey:'band_065', eps_assumed:.70, windowKey:'none',
+  windowTemp:25, windowThick:5
 };
 
 let lastResult = null;
@@ -1593,7 +1649,9 @@ function updateChain(res, p){
   // window
   const win = WINDOWS[p.windowKey]||WINDOWS.none;
   document.getElementById('cv-win-lbl').textContent = win.label;
-  document.getElementById('cv-win-tau').textContent  = res.win_avg.toFixed(3);
+  document.getElementById('cv-win-tau').textContent = res.win_avg.toFixed(3);
+  document.getElementById('cv-win-d').textContent   = (p.windowKey==='none') ? '—' : res.thick.toFixed(1)+' mm';
+  document.getElementById('cv-win-T').textContent   = (p.windowKey==='none') ? '—' : (p.windowTemp??25)+' °C';
   const cb_win = document.getElementById('cb-win');
   cb_win.style.borderLeftColor = res.win_avg < 0.5 ? 'var(--red)' : res.win_avg < 0.9 ? 'var(--amber)' : '#10b981';
   // det
@@ -1624,7 +1682,7 @@ function updateResults(res, p){
   dTel.textContent = dTstr;
   dTel.className = 'rb-val '+(Math.abs(dT)<2?'g':dT>0?'r':'c');
   document.getElementById('rb_dT').className = 'rb '+(Math.abs(dT)<2?'g':Math.abs(dT)<20?'a':'r');
-  document.getElementById('r_dT_rel').textContent = 'rel.: '+(dT/p.Tobj*100).toFixed(2)+'%';
+  document.getElementById('r_dT_rel').textContent = 'wzgl: '+(dT/p.Tobj*100).toFixed(2)+'%';
 
   const fmt = v => (v>=0?'+':'')+v.toFixed(1)+' K';
   const cls = v => Math.abs(v)<0.3?'ev ok':v>0?'ev pos':'ev neg';
@@ -1654,7 +1712,9 @@ function onSl(el, key){
     Tobj: v+' K',
     eps_real:v.toFixed(2), path:v+' m',
     rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
-    eps_assumed:v.toFixed(2)
+    eps_assumed:v.toFixed(2),
+    windowThick: v.toFixed(1)+' mm',
+    windowTemp:  v.toFixed(0)+' °C',
   };
   const ve = document.getElementById('val_'+key);
   if(ve) ve.textContent = labels[key]||v;
@@ -1694,15 +1754,29 @@ function onDetChange(){
 
 function onWinChange(){
   state.windowKey = document.getElementById('sel_win').value;
-  const win = WINDOWS[state.windowKey]||WINDOWS.none;
+  const win = WINDOWS[state.windowKey] || WINDOWS.none;
   document.getElementById('win-desc').textContent = win.desc;
+  // Auto-set default thickness for selected material
+  const defThick = win.defaultThick || 5;
+  state.windowThick = defThick;
+  const slT = document.getElementById('sl_windowThick');
+  if(slT){ slT.value = defThick; slPct(slT); }
+  const vT = document.getElementById('val_windowThick');
+  if(vT) vT.textContent = defThick.toFixed(1)+' mm';
+  // Disable sliders when no window
+  const disabled = (state.windowKey === 'none');
+  ['sl_windowThick','sl_windowTemp'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.disabled=disabled; el.style.opacity=disabled?'0.35':'1'; }
+  });
   scheduleUpdate();
 }
 
 function initSliders(){
   const map=[
     ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
-    ['sl_rh','rh'],['sl_co2','co2'],['sl_Tatm','Tatm'],['sl_eps_assumed','eps_assumed']
+    ['sl_rh','rh'],['sl_co2','co2'],['sl_Tatm','Tatm'],['sl_eps_assumed','eps_assumed'],
+    ['sl_windowThick','windowThick'],['sl_windowTemp','windowTemp'],
   ];
   map.forEach(([id,key])=>{
     const el=document.getElementById(id);
@@ -1735,15 +1809,13 @@ function initSliders(){
    PRESETS  (all Tobj in Kelvin)
 ───────────────────────────────────────────── */
 const PRESETS={
-  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00,windowKey:'none'},
-  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90,windowKey:'none'},
-  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85,windowKey:'none'},
-  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92,windowKey:'none'},
-  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',    eps_assumed:1.00,windowKey:'none'},
-  // Measurement through a plexiglas sight window — typical in a laboratory furnace
-  // 1 µm pyrometer (InGaAs) — PMMA transmits to 2.8 µm, signal reaches detector
-  // but C-H absorption bands at 1.69 µm disturb the reading
-  plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma'},
+  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00,windowKey:'none',  windowTemp:25, windowThick:5},
+  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90,windowKey:'none',  windowTemp:25, windowThick:5},
+  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85,windowKey:'none', windowTemp:25, windowThick:5},
+  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92,windowKey:'none',windowTemp:25, windowThick:5},
+  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',    eps_assumed:1.00,windowKey:'none', windowTemp:25, windowThick:5},
+  // Pomiar przez wziernik z szybą plexiglas — typowa sytuacja w piecu laboratoryjnym
+  plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma', windowTemp:60,  windowThick:5},
 };
 
 function loadPreset(name){
@@ -1752,6 +1824,8 @@ function loadPreset(name){
   document.getElementById('sel_det').value=state.detKey;
   document.getElementById('sel_win').value=state.windowKey;
   initSliders();
+  // trigger onWinChange to update desc + disable state
+  onWinChange();
   scheduleUpdate();
 }
 
@@ -1805,11 +1879,14 @@ specCanvas.addEventListener('mousemove', e=>{
   tt.style.display='block';
   tt.style.left=(e.clientX+14)+'px';
   tt.style.top=(e.clientY-55)+'px';
+  const winRow = (res.winKey && res.winKey!=='none')
+    ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(3)}</span></div>`
+    : '';
   tt.innerHTML=`<div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
     <div class="tt-r"><span class="tt-l">CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber)">${pct(res.Lemit[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(3)}</span></div>
-    <div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:#10b981">${res.Lwin[idx].toFixed(3)}</span></div>
+    ${winRow}
     <div class="tt-r"><span class="tt-l">Sygnał:</span><span style="color:var(--orange)">${pct(res.Ldet[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)}%</span></div>`;
   scheduleUpdate();
