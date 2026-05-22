@@ -537,6 +537,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <div class="chain-box cb-win" id="cb-win">
       <div class="cb-name">3 · Przesłona</div>
       <div class="cb-val" id="cv-win-lbl" style="font-size:.68rem">Brak</div>
+      <div class="cb-val">d = <span id="cv-win-d" class="hi">—</span> &nbsp; T = <span id="cv-win-T">—</span></div>
       <div class="cb-val">τ̄<sub>win</sub> = <span id="cv-win-tau" class="cy">1.000</span></div>
     </div>
 
@@ -640,7 +641,18 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <option value="ge">German (Ge) · 1.8–16 µm, blokuje VIS</option>
       </select>
       <div class="rb-sub" id="win-desc" style="font-size:.7rem;color:var(--muted);margin-top:2px">τ = 1 w całym zakresie</div>
-    </div>
+      <div class="sl-row" style="margin-top:8px">
+        <span class="sl-name">Grubość d</span>
+        <input type="range" id="sl_windowThick" min="0.5" max="30" step="0.5" value="5"
+               oninput="onSl(this,'windowThick')">
+        <span class="sl-val" id="val_windowThick">5 mm</span>
+      </div>
+      <div class="sl-row">
+        <span class="sl-name">T<sub>przesłony</sub></span>
+        <input type="range" id="sl_windowTemp" min="0" max="700" step="10" value="25"
+               oninput="onSl(this,'windowTemp')">
+        <span class="sl-val" id="val_windowTemp">25 °C</span>
+      </div>
 
     <!-- DETEKTOR -->
     <div class="ctrl-panel">
@@ -884,7 +896,38 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 
 <!-- ──── 8. PRZESŁONA OPTYCZNA ────────────────── -->
 <div class="doc-sec">
-<h2>8. Przesłona optyczna — model transmitancji okna</h2>
+<h2>8. Przesłona optyczna — model kompletny</h2>
+<p>Okno optyczne wprowadza trzy niezależne efekty fizyczne, które symulator modeluje łącznie:</p>
+<ol style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em;margin-bottom:8px">
+  <li><b>Tłumienie transmisyjne</b> τ_win(λ) — zależy od materiału i grubości</li>
+  <li><b>Emisja własna</b> — okno pochłaniające promieniowanie samo emituje (prawo Kirchhoffa)</li>
+  <li><b>Straty Fresnela</b> — odbicia na powierzchniach; uwzględnione w τ_Fresnel (stałe, niezależne od d)</li>
+</ol>
+
+<h3>Pełne równanie toru z oknem</h3>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{po\ atm}}(\lambda)}_{\text{sygnal obiektu przez okno}} + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja wlasna okna}}$$</div>
+<p>Emisja własna jest analogiczna do emisji atmosfery — okno gorące (np. 300–500°C w ścianie pieca) może <b>przekłamywać wskazanie pirometru in plus</b>, nawet gdy τ_win wydaje się wystarczające.</p>
+
+<h3>Model transmitancji — Beer–Lambert z podziałem na składowe</h3>
+<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda,\, d) = \underbrace{\tau_{\mathrm{Fresnel}}}_{\text{stale}} \cdot \underbrace{S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)}_{\text{odciecia pasmowe}} \cdot \underbrace{\tau_{\mathrm{bulk}}(\lambda,d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}}}_{\text{absorpcja objetosciowa (Beer-Lambert)}}$$</div>
+
+<h3>Skalowanie z grubością — prawo Beer–Lamberta</h3>
+<p>Absorpcja objętościowa skaluje się wykładniczo z grubością. Dla materiału o absorpcji τ_bulk(λ) przy grubości referencyjnej d_ref:</p>
+<div class="fml-math">$$\tau_{\mathrm{bulk}}(\lambda, d) = \tau_{\mathrm{bulk}}(\lambda, d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}} = e^{-\alpha(\lambda)\cdot d}$$</div>
+<p>Straty Fresnela <b>nie skalują się</b> z grubością — są stałą własnością powierzchni. Dlatego model rozdziela te dwa efekty: podwajając grubość wzmacniamy absorpcję pasm, ale nie zmieniamy strat na odbiciach.</p>
+
+<div class="warn-box">Przykład: szyba float 8 mm zamiast 4 mm. Pasmo OH przy 1.9 µm z absorpcją 9% przy 4 mm daje ~17% przy 8 mm (τ=0.83²≈0.69), ale straty Fresnela pozostają ~9%.</div>
+
+<h3>Emisja własna okna</h3>
+<p>Prawo Kirchhoffa: ciało pochłaniające promieniowanie musi je emitować. Emisyjność okna wynosi:</p>
+<div class="fml-math">$$\varepsilon_{\mathrm{win}}(\lambda) = \alpha_{\mathrm{win}}(\lambda) \approx 1 - \tau_{\mathrm{win}}(\lambda)$$</div>
+<p>(pomijamy odbicia, które są już w τ_Fresnel). Sygnał emitowany przez okno:</p>
+<div class="fml-math">$$L_{\mathrm{win,emit}}(\lambda) = [1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda, T_{\mathrm{win}})$$</div>
+<p>Dla zimnego okna (T_win ≈ T_atm) efekt jest pomijalny. Dla gorącego okna w ścianie pieca (T_win = 400°C) emisja własna może <b>dominować w zakresie 8–14 µm</b> i całkowicie fałszować pomiar pirometrem MCT.</p>
+
+<div class="info-box">Wskazówka do pracy ze studentami: zwiększ T_win do 400°C przy detektorze 8–14 µm i obserwuj jak wskazanie pirometru rośnie pomimo zerowej zmiany T_obj — to czysta emisja okna „udająca" gorący obiekt.</div>
+
+<h3>Parametry referencyjne materiałów</h3>
 <p>W praktycznych pomiarach pirometrycznych obiekt często obserwowany jest przez <b>okno optyczne</b>: wziernik w ścianie pieca, szybę ochronną, okno kriostatu lub filtr spektralny. Każdy taki element wprowadza dodatkowe tłumienie opisane transmitancją spektralną τ<sub>win</sub>(λ).</p>
 
 <h3>Model matematyczny</h3>
@@ -900,13 +943,13 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 
 <h3>Zaimplementowane materiały okien optycznych</h3>
 <table class="sym-tbl">
-  <tr><th>Materiał</th><th>Zakres [µm]</th><th>τ<sub>peak</sub></th><th>Charakterystyczne pasma absorpcji</th></tr>
+  <tr><th>Materiał</th><th>Zakres [µm]</th><th>τ<sub>Fresnel</sub></th><th>d<sub>ref</sub> [mm]</th><th>Charakterystyczne pasma absorpcji</th></tr>
   <tr><td>Szyba float (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
-  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
-  <tr><td>Kwarc topiony (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>Słabe pasmo OH przy 2.72 µm (domieszka wody)</td></tr>
-  <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>Brak istotnych pasm absorpcji</td></tr>
-  <tr><td>Selenek cynku (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>Słabe pasmo przy 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
-  <tr><td>German (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>Blokuje cały UV/VIS (przerwa energetyczna 0.67 eV); n ≈ 4 → straty Fresnela ~36%</td></tr>
+  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>5</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
+  <tr><td>Kwarc topiony (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>5</td><td>Słabe pasmo OH przy 2.72 µm (domieszka wody)</td></tr>
+  <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>2</td><td>Brak istotnych pasm absorpcji</td></tr>
+  <tr><td>Selenek cynku (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>3</td><td>Słabe pasmo przy 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
+  <tr><td>German (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>3</td><td>Blokuje cały UV/VIS (przerwa energetyczna 0.67 eV); n ≈ 4 → straty Fresnela ~36%</td></tr>
 </table>
 
 <div class="warn-box">Pirometr <b>nie koryguje</b> wpływu przesłony — zakłada τ<sub>win</sub> = 1. Skutkuje to zaniżeniem T<sub>ind</sub> (mniej promieniowania dociera do detektora). Poprawna kalibracja wymaga znajomości τ<sub>win</sub>(λ) dla konkretnego okna.</div>
@@ -922,7 +965,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v1.7.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v1.8.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -994,83 +1037,77 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm){
 }
 
 const WINDOWS = {
-  none:        {label:'Brak przesłony',          desc:'τ = 1',                   color:'#555'},
-  float_glass: {label:'Szyba float (szkło okienne)', desc:'0.32–2.7 µm',         color:'#60a5fa'},
-  pmma:        {label:'Plexiglas (PMMA)',          desc:'0.35–2.8 µm, pasma C-H', color:'#a78bfa'},
-  quartz:      {label:'Kwarc topiony (SiO₂)',      desc:'0.15–4.5 µm',           color:'#34d399'},
-  caf2:        {label:'Fluoryt (CaF₂)',            desc:'0.13–9.5 µm',           color:'#fbbf24'},
-  ge:          {label:'German (Ge)',               desc:'1.8–16 µm, blokuje VIS', color:'#f87171'},
-  znse:        {label:'Selenek cynku (ZnSe)',       desc:'0.55–16 µm',            color:'#fb923c'},
+  none:        {label:'Brak przesłony',              desc:'τ = 1',                       color:'#555',    d_ref:5,  defaultThick:5,  tau_fresnel:1.000},
+  float_glass: {label:'Szyba float (szkło okienne)', desc:'0.32–2.7 µm',                color:'#60a5fa', d_ref:4,  defaultThick:4,  tau_fresnel:0.910},
+  pmma:        {label:'Plexiglas (PMMA)',             desc:'0.35–2.8 µm, pasma C-H',     color:'#a78bfa', d_ref:5,  defaultThick:5,  tau_fresnel:0.920},
+  quartz:      {label:'Kwarc topiony (SiO₂)',        desc:'0.15–4.5 µm',                color:'#34d399', d_ref:5,  defaultThick:5,  tau_fresnel:0.945},
+  caf2:        {label:'Fluoryt (CaF₂)',              desc:'0.13–9.5 µm',                color:'#fbbf24', d_ref:2,  defaultThick:2,  tau_fresnel:0.944},
+  ge:          {label:'German (Ge)',                 desc:'1.8–16 µm, blokuje VIS',     color:'#f87171', d_ref:3,  defaultThick:3,  tau_fresnel:0.460},
+  znse:        {label:'Selenek cynku (ZnSe)',        desc:'0.55–16 µm',                 color:'#fb923c', d_ref:3,  defaultThick:3,  tau_fresnel:0.700},
 };
 
 // smooth step helper
 function ss(x, e0, e1){ const t=Math.max(0,Math.min(1,(x-e0)/(e1-e0))); return t*t*(3-2*t); }
 
-function windowTau(lam_m, type){
+/* windowTau(lam_m, type, thick_mm)
+ *
+ * Fizyczny model transmitancji okna optycznego:
+ *   τ_win(λ,d) = τ_Fresnel · τ_bandpass(λ) · τ_bulk(λ, d_ref)^(d/d_ref)
+ *
+ * τ_Fresnel  — straty na odbiciach (nie zależy od grubości)
+ * τ_bandpass — odcięcia UV i IR (smoothstep, nie zależy od grubości)
+ * τ_bulk     — absorpcja objętościowa skalowana prawem Beer-Lamberta
+ *              τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)
+ */
+function windowTau(lam_m, type, thick_mm){
   if(type==='none') return 1.0;
   const u = lam_m * 1e6; // µm
+  const win = WINDOWS[type];
+  if(!win) return 1.0;
+  const d     = (thick_mm != null) ? thick_mm : win.d_ref;
+  const tf    = win.tau_fresnel;   // Fresnel (stały)
+  const dref  = win.d_ref;
+
+  let bandpass = 1.0;   // odcięcia UV/IR
+  let tau_bulk_ref = 1.0; // absorpcja objętościowa przy d_ref
 
   if(type==='float_glass'){
-    // Szyba float (szkło sodowo-wapniowe)
-    // UV odcięcie ok. 320 nm, IR odcięcie ok. 2.7 µm (fundamentalne drgania Si-O)
-    const uvPass = ss(u, 0.28, 0.34);
-    const irCut  = 1 - ss(u, 2.50, 2.90);
-    // Pasma nadtonów OH przy 1.4 i 1.9 µm (typowe w szkle)
+    bandpass = ss(u, 0.28, 0.34) * (1 - ss(u, 2.50, 2.90));
     const a1 = 0.06 * Math.exp(-Math.pow((u-1.40)/0.05,2));
     const a2 = 0.09 * Math.exp(-Math.pow((u-1.90)/0.06,2));
-    return Math.max(0, uvPass * irCut * 0.91 * (1-a1-a2));
+    tau_bulk_ref = Math.max(1e-6, 1-a1-a2);
   }
-
-  if(type==='pmma'){
-    // PMMA / Plexiglas — polimetakrylan metylu
-    // Przepuszcza VIS i bliskie IR do ~2.8 µm
-    const uvPass = ss(u, 0.32, 0.38);
-    const irCut  = 1 - ss(u, 2.65, 3.05);
-    // Charakterystyczne pasma C-H (drgania harmoniczne)
-    const a1 = 0.13 * Math.exp(-Math.pow((u-1.69)/0.04,2)); // 1. nadton C-H
-    const a2 = 0.16 * Math.exp(-Math.pow((u-2.18)/0.05,2)); // 2. nadton C-H
-    const a3 = 0.10 * Math.exp(-Math.pow((u-1.41)/0.03,2)); // kombinacyjne
-    const a4 = 0.07 * Math.exp(-Math.pow((u-1.15)/0.02,2)); // 2. nadton
-    return Math.max(0, uvPass * irCut * 0.92 * (1-a1-a2-a3-a4));
+  else if(type==='pmma'){
+    bandpass = ss(u, 0.32, 0.38) * (1 - ss(u, 2.65, 3.05));
+    const a1 = 0.13 * Math.exp(-Math.pow((u-1.69)/0.04,2));
+    const a2 = 0.16 * Math.exp(-Math.pow((u-2.18)/0.05,2));
+    const a3 = 0.10 * Math.exp(-Math.pow((u-1.41)/0.03,2));
+    const a4 = 0.07 * Math.exp(-Math.pow((u-1.15)/0.02,2));
+    tau_bulk_ref = Math.max(1e-6, 1-a1-a2-a3-a4);
   }
-
-  if(type==='quartz'){
-    // Kwarc topiony (fused silica) — szeroki zakres UV-IR
-    const uvPass = ss(u, 0.13, 0.17);
-    const irCut  = 1 - ss(u, 3.80, 4.80);
-    // Słabe pasmo OH przy 2.72 µm (domieszka wody)
+  else if(type==='quartz'){
+    bandpass = ss(u, 0.13, 0.17) * (1 - ss(u, 3.80, 4.80));
     const a1 = 0.04 * Math.exp(-Math.pow((u-2.72)/0.09,2));
-    return Math.max(0, uvPass * irCut * 0.945 * (1-a1));
+    tau_bulk_ref = Math.max(1e-6, 1-a1);
   }
-
-  if(type==='caf2'){
-    // CaF₂ — fluoryt wapnia, doskonałe okno IR/UV
-    const uvPass = ss(u, 0.11, 0.15);
-    const irCut  = 1 - ss(u, 8.50, 10.20);
-    // Bardzo czyste widmo, bez istotnych pasm absorpcji
-    return Math.max(0, uvPass * irCut * 0.944);
+  else if(type==='caf2'){
+    bandpass = ss(u, 0.11, 0.15) * (1 - ss(u, 8.50, 10.20));
+    tau_bulk_ref = 0.9997; // bardzo mała absorpcja
   }
-
-  if(type==='ge'){
-    // German (Ge) — okno IR, przerwa energetyczna ~0.67 eV → odcięcie ok. 1.8 µm
-    const visBlock = ss(u, 1.70, 2.05); // blokuje całe UV/VIS
-    const irCut    = 1 - ss(u, 15.5, 17.5);
-    // Wysoki współczynnik refrakcji n≈4 → straty Fresnela ~36% bez powłoki AR
-    // Przyjmujemy brak powłoki AR: τ_peak ≈ 0.46
-    return Math.max(0, visBlock * irCut * 0.46);
+  else if(type==='ge'){
+    bandpass = ss(u, 1.70, 2.05) * (1 - ss(u, 15.5, 17.5));
+    tau_bulk_ref = 0.997;  // germanium — mała absorpcja własna
   }
-
-  if(type==='znse'){
-    // ZnSe — selenek cynku, szerokopasmowe okno IR
-    const visPass = ss(u, 0.49, 0.62);
-    const irCut   = 1 - ss(u, 15.0, 17.5);
-    // n≈2.4 → straty Fresnela ~17% → τ_peak ≈ 0.70 (bez AR)
-    // Słabe pasmo przy 6.5 µm
+  else if(type==='znse'){
+    bandpass = ss(u, 0.49, 0.62) * (1 - ss(u, 15.0, 17.5));
     const a1 = 0.04 * Math.exp(-Math.pow((u-6.5)/0.4,2));
-    return Math.max(0, visPass * irCut * 0.70 * (1-a1));
+    tau_bulk_ref = Math.max(1e-6, 1-a1);
   }
 
-  return 1.0;
+  // Beer-Lambert: τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)
+  const tau_bulk = Math.pow(tau_bulk_ref, d / dref);
+
+  return Math.max(0, bandpass * tf * tau_bulk);
 }
 
 const DETS = {
@@ -1119,23 +1156,27 @@ function invertTemp(target, det, eps_a){
 function compute(p){
   const Tobj_K = p.Tobj;
   const Tatm_K = p.Tatm + 273.15;
+  const Twin_K = (p.windowTemp ?? 25) + 273.15;   // temperatura przesłony
+  const thick  = p.windowThick ?? (WINDOWS[p.windowKey]?.defaultThick ?? 5);
   const det = DETS[p.detKey];
 
-  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Ldet=[], R=[];
-  let signal=0, tw=0, ts=0, tww=0, twww=0;
+  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[];
+  let signal=0, tw=0, ts=0, twww=0;
 
   for(let i=0;i<=N;i++){
     const lam=lams[i];
-    const bb = planck(lam,Tobj_K);
+    const bb = planck(lam, Tobj_K);
     const em = p.eps_real * bb;
     const ta = atmTau(lam, p.path, p.rh, p.co2);
-    const la = (1-ta)*planck(lam,Tatm_K);
-    const lAfterAtm = ta*em + la;          // sygnał po atmosferze
-    const tw_win = windowTau(lam, p.windowKey); // transmitancja przesłony
-    const ld = tw_win * lAfterAtm;         // sygnał po przesłonie
-    const r  = detResp(lam,det);
+    const la = (1-ta)*planck(lam, Tatm_K);
+    const lAfterAtm = ta*em + la;
+    const tw_win = windowTau(lam, p.windowKey, thick);
+    // Emisja własna przesłony (prawo Kirchhoffa): ε_win(λ)=α_win(λ)≈1−τ_win(λ)
+    const lwe = (1 - tw_win) * planck(lam, Twin_K);
+    const ld  = tw_win * lAfterAtm + lwe;
+    const r   = detResp(lam, det);
     Lbb.push(bb); Lemit.push(em); tau.push(ta);
-    Latm.push(la); Lwin.push(tw_win); Ldet.push(ld); R.push(r);
+    Latm.push(la); Lwin.push(tw_win); Lwin_emit.push(lwe); Ldet.push(ld); R.push(r);
     signal += r*ld*DL;
     if(r>0.01){ tw+=r; ts+=ta*r; twww+=tw_win*r; }
   }
@@ -1174,9 +1215,9 @@ function compute(p){
     dT:     T_ind_K - Tobj_K,
     dT_eps: T_eps_K - Tobj_K,          // tylko emisyjność
     dT_atm: T_atm_K - T_eps_K,         // tylko atmosfera (przyrost)
-    dT_win: T_ind_K - T_atm_K,         // tylko przesłona (przyrost)
+    dT_win: T_ind_K - T_atm_K,
     signal, tau_avg, win_avg, wien_um, Tind_arr, det,
-    winKey: p.windowKey
+    winKey: p.windowKey, Twin_K, thick
   };
 }
 
@@ -1405,13 +1446,13 @@ function drawSpec(res, p){
   curve(res.Ldet,  tv('--orange'), 2.5);
   curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4]);
 
-  // Window transmission overlay (right Y axis: 0–1 scaled to plot height)
+  // Window transmission overlay
   if(res.winKey && res.winKey !== 'none'){
     const winColor = WINDOWS[res.winKey]?.color || '#10b981';
     ctx.beginPath(); ctx.setLineDash([2,3]);
     res.Lwin.forEach((v,i)=>{
       const x=lx(lamArr[i]);
-      const y=pT+H2*(1-v);   // τ mapped to full plot height
+      const y=pT+H2*(1-v);
       i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     });
     ctx.strokeStyle=winColor; ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
@@ -1420,6 +1461,20 @@ function drawSpec(res, p){
     ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='right';
     ctx.fillText('τ_win', pL+W2-4, pT+12);
     ctx.globalAlpha=1;
+
+    // Window self-emission fill (only when T_win > ambient, visible amount)
+    const hasWinEmit = res.Twin_K > 320; // widoczna dopiero powyżej ~50°C
+    if(hasWinEmit){
+      const gWin = Math.max(...res.Lwin_emit, 1e-30);
+      if(gWin / gMax > 0.001){
+        ctx.beginPath();
+        ctx.moveTo(lx(lamArr[0]),pT+H2);
+        res.Lwin_emit.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
+        ctx.lineTo(lx(lamArr[res.Lwin_emit.length-1]),pT+H2);
+        ctx.closePath();
+        ctx.globalAlpha=0.28; ctx.fillStyle=winColor; ctx.fill(); ctx.globalAlpha=1;
+      }
+    }
   }
 
   // Wien λ_max marker
@@ -1550,7 +1605,8 @@ function drawTau(res){
 ───────────────────────────────────────────── */
 const state = {
   Tobj:1473, eps_real:.70, path:2, rh:50, co2:400, Tatm:20,
-  detKey:'band_065', eps_assumed:.70, windowKey:'none'
+  detKey:'band_065', eps_assumed:.70, windowKey:'none',
+  windowTemp:25, windowThick:5
 };
 
 let lastResult = null;
@@ -1593,7 +1649,9 @@ function updateChain(res, p){
   // window
   const win = WINDOWS[p.windowKey]||WINDOWS.none;
   document.getElementById('cv-win-lbl').textContent = win.label;
-  document.getElementById('cv-win-tau').textContent  = res.win_avg.toFixed(3);
+  document.getElementById('cv-win-tau').textContent = res.win_avg.toFixed(3);
+  document.getElementById('cv-win-d').textContent   = (p.windowKey==='none') ? '—' : res.thick.toFixed(1)+' mm';
+  document.getElementById('cv-win-T').textContent   = (p.windowKey==='none') ? '—' : (p.windowTemp??25)+' °C';
   const cb_win = document.getElementById('cb-win');
   cb_win.style.borderLeftColor = res.win_avg < 0.5 ? 'var(--red)' : res.win_avg < 0.9 ? 'var(--amber)' : '#10b981';
   // det
@@ -1654,7 +1712,9 @@ function onSl(el, key){
     Tobj: v+' K',
     eps_real:v.toFixed(2), path:v+' m',
     rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
-    eps_assumed:v.toFixed(2)
+    eps_assumed:v.toFixed(2),
+    windowThick: v.toFixed(1)+' mm',
+    windowTemp:  v.toFixed(0)+' °C',
   };
   const ve = document.getElementById('val_'+key);
   if(ve) ve.textContent = labels[key]||v;
@@ -1694,15 +1754,29 @@ function onDetChange(){
 
 function onWinChange(){
   state.windowKey = document.getElementById('sel_win').value;
-  const win = WINDOWS[state.windowKey]||WINDOWS.none;
+  const win = WINDOWS[state.windowKey] || WINDOWS.none;
   document.getElementById('win-desc').textContent = win.desc;
+  // Auto-set default thickness for selected material
+  const defThick = win.defaultThick || 5;
+  state.windowThick = defThick;
+  const slT = document.getElementById('sl_windowThick');
+  if(slT){ slT.value = defThick; slPct(slT); }
+  const vT = document.getElementById('val_windowThick');
+  if(vT) vT.textContent = defThick.toFixed(1)+' mm';
+  // Disable sliders when no window
+  const disabled = (state.windowKey === 'none');
+  ['sl_windowThick','sl_windowTemp'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.disabled=disabled; el.style.opacity=disabled?'0.35':'1'; }
+  });
   scheduleUpdate();
 }
 
 function initSliders(){
   const map=[
     ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
-    ['sl_rh','rh'],['sl_co2','co2'],['sl_Tatm','Tatm'],['sl_eps_assumed','eps_assumed']
+    ['sl_rh','rh'],['sl_co2','co2'],['sl_Tatm','Tatm'],['sl_eps_assumed','eps_assumed'],
+    ['sl_windowThick','windowThick'],['sl_windowTemp','windowTemp'],
   ];
   map.forEach(([id,key])=>{
     const el=document.getElementById(id);
@@ -1735,15 +1809,13 @@ function initSliders(){
    PRESETS  (all Tobj in Kelvin)
 ───────────────────────────────────────────── */
 const PRESETS={
-  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00,windowKey:'none'},
-  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90,windowKey:'none'},
-  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85,windowKey:'none'},
-  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92,windowKey:'none'},
-  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',    eps_assumed:1.00,windowKey:'none'},
+  ideal:      {Tobj:1473,eps_real:1.00,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:1.00,windowKey:'none',  windowTemp:25, windowThick:5},
+  emissivity: {Tobj:1473,eps_real:0.15,path:0, rh:0, co2:400,Tatm:20,detKey:'band_065',eps_assumed:0.90,windowKey:'none',  windowTemp:25, windowThick:5},
+  atmosphere: {Tobj:1073,eps_real:0.85,path:25,rh:80,co2:800,Tatm:25,detKey:'window_35',eps_assumed:0.85,windowKey:'none', windowTemp:25, windowThick:5},
+  lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92,windowKey:'none',windowTemp:25, windowThick:5},
+  total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',    eps_assumed:1.00,windowKey:'none', windowTemp:25, windowThick:5},
   // Pomiar przez wziernik z szybą plexiglas — typowa sytuacja w piecu laboratoryjnym
-  // Pirometr 1 µm (InGaAs) — PMMA przepuszcza do 2.8 µm, więc sygnał dociera
-  // ale pasma absorpcji C-H przy 1.69 µm zakłócają odczyt
-  plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma'},
+  plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma', windowTemp:60,  windowThick:5},
 };
 
 function loadPreset(name){
@@ -1752,6 +1824,8 @@ function loadPreset(name){
   document.getElementById('sel_det').value=state.detKey;
   document.getElementById('sel_win').value=state.windowKey;
   initSliders();
+  // trigger onWinChange to update desc + disable state
+  onWinChange();
   scheduleUpdate();
 }
 
@@ -1805,11 +1879,14 @@ specCanvas.addEventListener('mousemove', e=>{
   tt.style.display='block';
   tt.style.left=(e.clientX+14)+'px';
   tt.style.top=(e.clientY-55)+'px';
+  const winRow = (res.winKey && res.winKey!=='none')
+    ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(3)}</span></div>`
+    : '';
   tt.innerHTML=`<div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
     <div class="tt-r"><span class="tt-l">CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber)">${pct(res.Lemit[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(3)}</span></div>
-    <div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:#10b981">${res.Lwin[idx].toFixed(3)}</span></div>
+    ${winRow}
     <div class="tt-r"><span class="tt-l">Sygnał:</span><span style="color:var(--orange)">${pct(res.Ldet[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)}%</span></div>`;
   scheduleUpdate();
