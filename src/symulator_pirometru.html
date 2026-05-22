@@ -965,7 +965,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v1.8.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v1.8.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1208,13 +1208,13 @@ function compute(p){
   const Tobj_C  = Tobj_K  - 273.15;
 
   return {
-    Lbb, Lemit, tau, Latm, Lwin, Ldet, R,
+    Lbb, Lemit, tau, Latm, Lwin, Lwin_emit, Ldet, R,
     lam_um: lams.map(x=>x*1e6),
     T_ind: T_ind_C, T_ind_K,
     Tobj_C, Tobj_K,
     dT:     T_ind_K - Tobj_K,
-    dT_eps: T_eps_K - Tobj_K,          // tylko emisyjność
-    dT_atm: T_atm_K - T_eps_K,         // tylko atmosfera (przyrost)
+    dT_eps: T_eps_K - Tobj_K,
+    dT_atm: T_atm_K - T_eps_K,
     dT_win: T_ind_K - T_atm_K,
     signal, tau_avg, win_avg, wien_um, Tind_arr, det,
     winKey: p.windowKey, Twin_K, thick
