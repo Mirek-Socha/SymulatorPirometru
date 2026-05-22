@@ -156,6 +156,30 @@ body{
 }
 .chain-arrow svg{width:28px;height:18px;overflow:visible}
 .chain-box.cb-win{border-left-color:#10b981}
+
+/* Citation superscripts and bibliography */
+.cite{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  color:var(--cyan);vertical-align:super;line-height:0;
+  cursor:default;
+}
+.bib-list{list-style:none;padding:0;margin:0;counter-reset:bib}
+.bib-item{
+  display:grid;grid-template-columns:28px 1fr;
+  gap:0 8px;align-items:baseline;
+  padding:7px 0;border-bottom:1px solid var(--border);
+  font-size:.78rem;color:var(--pale);line-height:1.55;
+}
+.bib-item:last-child{border-bottom:none}
+.bib-num{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  color:var(--cyan);font-weight:600;text-align:right;
+}
+.bib-item b{color:var(--text);font-weight:600}
+.bib-item a{color:var(--cyan);text-decoration:none}
+.bib-item a:hover{text-decoration:underline}
+.bib-item i{color:var(--amber);font-style:normal}
+
 .panel-hdr.gr{color:#10b981}
 
 /* ═══════════════════════════════════════════════
@@ -246,6 +270,12 @@ input[type=range]::-webkit-slider-thumb{
 .sl-num.cy{color:var(--cyan)}
 .sl-num::-webkit-outer-spin-button,.sl-num::-webkit-inner-spin-button{-webkit-appearance:none}
 .sl-num[type=number]{-moz-appearance:textfield}
+/* compact secondary label (°C conversion, ε hint) */
+.sl-secondary{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+  color:var(--muted);text-align:right;
+  margin-top:-3px;margin-bottom:5px;padding-right:0;
+}
 select{
   width:100%;background:var(--card);border:1px solid var(--border);
   color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.7rem;
@@ -584,21 +614,26 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <!-- OBIEKT -->
     <div class="ctrl-panel">
       <div class="panel-hdr">📡 Obiekt mierzony</div>
+      <!-- Temperatura: suwak K, pole liczbowe °C (krok 1°C) -->
       <div class="sl-row">
         <span class="sl-name">T<sub>obiekt</sub></span>
         <input type="range" id="sl_Tobj" min="10" max="12000" step="10" value="1473"
                oninput="onSl(this,'Tobj')">
-        <input type="number" id="num_Tobj" class="sl-num" min="10" max="12000" step="10" value="1473"
-               title="Wpisz temperaturę w K i naciśnij Enter"
-               onchange="onNumTobj(this)" onkeydown="if(event.key==='Enter')onNumTobj(this)">
+        <input type="number" id="num_Tobj_c" class="sl-num"
+               min="-263" max="11727" step="1" value="1200"
+               title="Wpisz T w °C, zatwierdź Enter"
+               onchange="onNumTobjC(this)" onkeydown="if(event.key==='Enter')onNumTobjC(this)">
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:-4px;margin-bottom:6px">
-        <span id="val_Tobj_c" style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted)">= 1200 °C</span>
-      </div>
+      <div class="sl-secondary" id="val_Tobj_k">= 1473 K</div>
+      <!-- Emisyjność rzeczywista: suwak + pole liczbowe (krok 0,01) -->
       <div class="sl-row">
         <span class="sl-name">ε<sub>rzeczyw.</sub></span>
-        <input type="range" id="sl_eps_real" min="0.02" max="1.00" step="0.01" value="0.70" oninput="onSl(this,'eps_real')">
-        <span class="sl-val" id="val_eps_real">0.70</span>
+        <input type="range" id="sl_eps_real" min="0.02" max="1.00" step="0.01" value="0.70"
+               oninput="onSl(this,'eps_real')">
+        <input type="number" id="num_eps_real" class="sl-num"
+               min="0.02" max="1.00" step="0.01" value="0.70"
+               title="Wpisz ε (0.02–1.00)"
+               onchange="onNumEps(this,'eps_real')" onkeydown="if(event.key==='Enter')onNumEps(this,'eps_real')">
       </div>
     </div>
 
@@ -653,6 +688,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
                oninput="onSl(this,'windowTemp')">
         <span class="sl-val" id="val_windowTemp">25 °C</span>
       </div>
+    </div><!-- /ctrl-panel przesłona -->
 
     <!-- DETEKTOR -->
     <div class="ctrl-panel">
@@ -669,8 +705,12 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       </select>
       <div class="sl-row">
         <span class="sl-name w90">ε<sub>zakładana</sub></span>
-        <input type="range" id="sl_eps_assumed" min="0.02" max="1.00" step="0.01" value="0.70" oninput="onSl(this,'eps_assumed')">
-        <span class="sl-val cy" id="val_eps_assumed">0.70</span>
+        <input type="range" id="sl_eps_assumed" min="0.02" max="1.00" step="0.01" value="0.70"
+               oninput="onSl(this,'eps_assumed')">
+        <input type="number" id="num_eps_assumed" class="sl-num cy"
+               min="0.02" max="1.00" step="0.01" value="0.70"
+               title="Wpisz ε zakładaną (0.02–1.00)"
+               onchange="onNumEps(this,'eps_assumed')" onkeydown="if(event.key==='Enter')onNumEps(this,'eps_assumed')">
       </div>
     </div>
 
@@ -686,13 +726,14 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
     <canvas id="specCanvas" height="308" style="height:308px"></canvas>
     <div class="legend">
-      <div class="leg"><div class="leg-line" style="background:rgba(160,160,200,.3);border-top:1px dashed rgba(160,160,200,.4)"></div>CDC (wzorzec)</div>
+      <div class="leg"><div class="leg-line" style="background:var(--muted);border-top:1px dashed currentColor"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
-      <div class="leg"><div class="leg-fill" style="background:var(--red)"></div>Emisja atm.</div>
+      <div class="leg"><div class="leg-fill" style="background:var(--red);opacity:.5"></div>Emisja atm.</div>
       <div class="leg"><div class="leg-line" style="background:var(--orange);height:3px"></div>Sygnał na det.</div>
-      <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:1px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
+      <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:2px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
       <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
-      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.25"></div>Okno det.</div>
+      <div class="leg"><div class="leg-fill" style="background:#10b981;opacity:.35"></div>Emisja przesłony</div>
+      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.2"></div>Okno det.</div>
     </div>
     <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
     <canvas id="tauCanvas" height="148" style="height:148px"></canvas>
@@ -765,7 +806,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <!-- ──── 2. PRAWO PLANCKA ─────────────────── -->
 <div class="doc-sec">
 <h2>2. Prawo Plancka – ciało doskonale czarne</h2>
-<p>Spektralna luminancja energetyczna (radiance) ciała doskonale czarnego (CDC) w temperaturze T:</p>
+<p>Spektralna luminancja energetyczna (radiance) ciała doskonale czarnego (CDC) w temperaturze T <span class="cite">[1,5]</span>:</p>
 <div class="fml-math">$$L_{bb}(\lambda,\, T) = \frac{2\,h\,c^{2}}{\lambda^{5}} \cdot \frac{1}{\exp\!\left(\dfrac{h c}{\lambda\, k_{B}\, T}\right) - 1} \qquad \left[\mathrm{W \cdot m^{-2} \cdot sr^{-1} \cdot m^{-1}}\right]$$</div>
 <h3>Uproszczenie Wiena (λ → 0)</h3>
 <p>Dla krótkich fal (exp ≫ 1), tj. gdy hc/λk_BT &gt; 6, prawo Plancka przybliżamy:</p>
@@ -773,24 +814,24 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <div class="info-box">W kalkulatorze używane jest pełne prawo Plancka (bez przybliżenia Wiena). Stała c₂ pojawia się w równaniu korekcji temperatury.</div>
 
 <h3>Prawo przesunięć Wiena</h3>
-<p>Długość fali maksimum emisji maleje odwrotnie z temperaturą:</p>
+<p>Długość fali maksimum emisji maleje odwrotnie z temperaturą <span class="cite">[2]</span>:</p>
 <div class="fml-math">$$\lambda_{\max}\cdot T = b = 2{,}8978\times10^{-3}\ \mathrm{m{\cdot}K}$$</div>
 <p>Przykład: dla T = 1200°C = 1473 K → λ_max = 1.97 µm (bliskie IR), dla T = 300 K → λ_max = 9.7 µm.</p>
 
 <h3>Prawo Stefana–Boltzmanna</h3>
-<p>Całkowity strumień promieniowania CDC (integral po wszystkich λ):</p>
+<p>Całkowity strumień promieniowania CDC (integral po wszystkich λ) <span class="cite">[3]</span>:</p>
 <div class="fml-math">$$M = \sigma\, T^{4}, \qquad \sigma = 5{,}6704\times10^{-8}\ \mathrm{W{\cdot}m^{-2}{\cdot}K^{-4}}$$</div>
 </div>
 
 <!-- ──── 3. EMISYJNOŚĆ ────────────────────── -->
 <div class="doc-sec">
 <h2>3. Emisyjność i prawo Kirchhoffa</h2>
-<p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze:</p>
+<p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze <span class="cite">[5,6]</span>:</p>
 <div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
-<p>Zgodnie z prawem Kirchhoffa: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
+<p>Zgodnie z prawem Kirchhoffa <span class="cite">[4]</span>: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
 <div class="warn-box">Symulator przyjmuje model ciała szarego (ε = const w całym zakresie λ). Dla metali rzeczywistość jest bardziej złożona – ε zależy silnie od λ i T.</div>
 <h3>Korekcja temperatury (pirometr monochromatyczny)</h3>
-<p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi:</p>
+<p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
 <p>Błąd przy założonej złej emisyjności (ε_real ≠ ε_zał):</p>
 <div class="fml-math cy">$$\Delta T \approx -\frac{T^{2}\lambda}{c_{2}}\ln\frac{\varepsilon_{\mathrm{real}}}{\varepsilon_{\mathrm{zal}}} \qquad \text{(przyblizenie Wiena)}$$</div>
@@ -799,9 +840,9 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <!-- ──── 4. MODEL ATMOSFERY ───────────────── -->
 <div class="doc-sec">
 <h2>4. Model transmitancji atmosferycznej</h2>
-<p>Transmitancja atmosferyczna τ(λ) opisuje jaki ułamek promieniowania przechodzi przez warstwę atmosfery grubości L. Bazuje na prawie Beer-Lamberta:</p>
+<p>Transmitancja atmosferyczna τ(λ) opisuje jaki ułamek promieniowania przechodzi przez warstwę atmosfery grubości L. Bazuje na prawie Beer-Lamberta <span class="cite">[10]</span>:</p>
 <div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_{i} k_{i}(\lambda)\cdot c_{i}\cdot L\right), \qquad k_i\text{ -- wsp. absorpcji},\quad c_i\text{ -- stezenie}$$</div>
-<p>W symulatorze stosujemy uproszczony model pasmowy oparty na danych HITRAN:</p>
+<p>W symulatorze stosujemy uproszczony model pasmowy oparty na danych HITRAN <span class="cite">[9]</span>:</p>
 <h3>Absorpcja H₂O (para wodna, 12 pasm)</h3>
 <table class="sym-tbl">
   <tr><th>λ_centrum [µm]</th><th>Szerokość [µm]</th><th>Siła pasma</th></tr>
@@ -825,13 +866,75 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <p>Ta emisja jest <b>dodawana</b> do sygnału obiektu. Powoduje to przeszacowanie temperatury (pirometr "widzi" cieplejszą atmosferę).</p>
 </div>
 
-<!-- ──── 5. DETEKTOR ──────────────────────── -->
+<!-- ──── 5. PRZESŁONA OPTYCZNA ────────────────── -->
 <div class="doc-sec">
-<h2>5. Modele funkcji odpowiedzi detektora R(λ)</h2>
+<h2>5. Przesłona optyczna — model kompletny</h2>
+<p>Okno optyczne wprowadza trzy niezależne efekty fizyczne, które symulator modeluje łącznie:</p>
+<ol style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em;margin-bottom:8px">
+  <li><b>Tłumienie transmisyjne</b> τ_win(λ) — zależy od materiału i grubości</li>
+  <li><b>Emisja własna</b> — okno pochłaniające promieniowanie samo emituje (prawo Kirchhoffa)</li>
+  <li><b>Straty Fresnela</b> — odbicia na powierzchniach; uwzględnione w τ_Fresnel (stałe, niezależne od d)</li>
+</ol>
+
+<h3>Pełne równanie toru z oknem</h3>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{po\ atm}}(\lambda)}_{\text{sygnal obiektu przez okno}} + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja wlasna okna}}$$</div>
+<p>Emisja własna jest analogiczna do emisji atmosfery — okno gorące (np. 300–500°C w ścianie pieca) może <b>przekłamywać wskazanie pirometru in plus</b>, nawet gdy τ_win wydaje się wystarczające.</p>
+
+<h3>Model transmitancji — Beer–Lambert z podziałem na składowe</h3>
+<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda,\, d) = \underbrace{\tau_{\mathrm{Fresnel}}}_{\text{stale}} \cdot \underbrace{S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)}_{\text{odciecia pasmowe}} \cdot \underbrace{\tau_{\mathrm{bulk}}(\lambda,d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}}}_{\text{absorpcja objetosciowa (Beer-Lambert)}}$$</div>
+
+<h3>Skalowanie z grubością — prawo Beer–Lamberta</h3>
+<p>Absorpcja objętościowa skaluje się wykładniczo z grubością (prawo Beer-Lamberta <span class="cite">[10]</span>). Dla materiału o absorpcji τ_bulk(λ) przy grubości referencyjnej d_ref:</p>
+<div class="fml-math">$$\tau_{\mathrm{bulk}}(\lambda, d) = \tau_{\mathrm{bulk}}(\lambda, d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}} = e^{-\alpha(\lambda)\cdot d}$$</div>
+<p>Straty Fresnela <b>nie skalują się</b> z grubością — są stałą własnością powierzchni. Dlatego model rozdziela te dwa efekty: podwajając grubość wzmacniamy absorpcję pasm, ale nie zmieniamy strat na odbiciach.</p>
+
+<div class="warn-box">Przykład: szyba float 8 mm zamiast 4 mm. Pasmo OH przy 1.9 µm z absorpcją 9% przy 4 mm daje ~17% przy 8 mm (τ=0.83²≈0.69), ale straty Fresnela pozostają ~9%.</div>
+
+<h3>Emisja własna okna</h3>
+<p>Prawo Kirchhoffa: ciało pochłaniające promieniowanie musi je emitować. Emisyjność okna wynosi:</p>
+<div class="fml-math">$$\varepsilon_{\mathrm{win}}(\lambda) = \alpha_{\mathrm{win}}(\lambda) \approx 1 - \tau_{\mathrm{win}}(\lambda)$$</div>
+<p>(pomijamy odbicia, które są już w τ_Fresnel). Sygnał emitowany przez okno:</p>
+<div class="fml-math">$$L_{\mathrm{win,emit}}(\lambda) = [1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda, T_{\mathrm{win}})$$</div>
+<p>Dla zimnego okna (T_win ≈ T_atm) efekt jest pomijalny. Dla gorącego okna w ścianie pieca (T_win = 400°C) emisja własna może <b>dominować w zakresie 8–14 µm</b> i całkowicie fałszować pomiar pirometrem MCT.</p>
+
+<div class="info-box">Wskazówka do pracy ze studentami: zwiększ T_win do 400°C przy detektorze 8–14 µm i obserwuj jak wskazanie pirometru rośnie pomimo zerowej zmiany T_obj — to czysta emisja okna „udająca" gorący obiekt.</div>
+
+<h3>Parametry referencyjne materiałów</h3>
+<p>W praktycznych pomiarach pirometrycznych obiekt często obserwowany jest przez <b>okno optyczne</b>: wziernik w ścianie pieca, szybę ochronną, okno kriostatu lub filtr spektralny. Każdy taki element wprowadza dodatkowe tłumienie opisane transmitancją spektralną τ<sub>win</sub>(λ).</p>
+
+<h3>Model matematyczny</h3>
+<p>Sygnał na wejściu detektora po uwzględnieniu przesłony:</p>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda) \cdot \Bigl[\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})\Bigr]$$</div>
+<p>Przesłona nie emituje promieniowania (założenie: T<sub>win</sub> ≪ T<sub>obj</sub>, typowe dla pomiarów wysokotemperaturowych). Całkowity sygnał detektora:</p>
+<div class="fml-math">$$S = \int_0^\infty R(\lambda)\cdot\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{det,bez\,okna}}(\lambda)\,\mathrm{d}\lambda$$</div>
+
+<h3>Implementacja — model pasmowy z wygładzaniem</h3>
+<p>Transmitancja każdego materiału modelowana jest funkcją złożoną z <b>płynnych schodków</b> (Hermite smoothstep) definiujących odcięcie UV i IR, oraz <b>gaussowskich pasm absorpcji</b> <span class="cite">[7,10]</span>:</p>
+<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda) = S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)\cdot\tau_{\mathrm{peak}}\cdot\prod_k\!\left(1 - A_k\cdot e^{-(\lambda-\lambda_k)^2/2\sigma_k^2}\right)$$</div>
+<p>Funkcja schodkowa Hermite'a zapewnia ciągłe pierwsze pochodne na krawędziach odcięcia (brak artefaktów numerycznych). τ<sub>peak</sub> uwzględnia straty Fresnela na powierzchniach okna.</p>
+
+<h3>Zaimplementowane materiały okien optycznych</h3>
+<table class="sym-tbl">
+  <tr><th>Materiał</th><th>Zakres [µm]</th><th>τ<sub>Fresnel</sub></th><th>d<sub>ref</sub> [mm]</th><th>Charakterystyczne pasma absorpcji</th></tr>
+  <tr><td>Szyba float (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>4</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
+  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>5</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
+  <tr><td>Kwarc topiony (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>5</td><td>Słabe pasmo OH przy 2.72 µm (domieszka wody)</td></tr>
+  <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>2</td><td>Brak istotnych pasm absorpcji</td></tr>
+  <tr><td>Selenek cynku (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>3</td><td>Słabe pasmo przy 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
+  <tr><td>German (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>3</td><td>Blokuje cały UV/VIS (przerwa energetyczna 0.67 eV); n ≈ 4 → straty Fresnela ~36%</td></tr>
+</table>
+
+<div class="warn-box">Pirometr <b>nie koryguje</b> wpływu przesłony — zakłada τ<sub>win</sub> = 1. Skutkuje to zaniżeniem T<sub>ind</sub> (mniej promieniowania dociera do detektora). Poprawna kalibracja wymaga znajomości τ<sub>win</sub>(λ) dla konkretnego okna.</div>
+<div class="info-box">Praktyczna wskazówka: pomiar przez szybę piekarniczą (float glass) pirometrem 0.65 µm (Si) działa poprawnie — szyba przepuszcza tę falę. Pirometr 8–14 µm (MCT/bolometr) wskaże zerowy sygnał, bo float glass jest w tym zakresie <b>całkowicie nieprzezroczysty</b>.</div>
+</div>
+
+<!-- ──── 6. DETEKTOR ──────────────────────── -->
+<div class="doc-sec">
+<h2>6. Modele funkcji odpowiedzi detektora R(λ)</h2>
 
 <h3>Pirometr pasmowy (gauss)</h3>
 <div class="fml-math">$$R(\lambda) = R_p\cdot\exp\!\left[-\frac{1}{2}\left(\frac{\lambda-\lambda_c}{\sigma}\right)^{\!2}\right], \qquad \sigma = \frac{\Delta\lambda}{2{,}355}$$</div>
-<p>Stosowany: Si (0.65 µm), InGaAs (1.0, 1.6 µm), InSb (3.9 µm). Wąskie pasmo minimalizuje wpływ absorpcji atmosferycznej.</p>
+<p>Stosowany: Si (0.65 µm), InGaAs (1.0, 1.6 µm), InSb (3.9 µm). Wąskie pasmo minimalizuje wpływ absorpcji atmosferycznej <span class="cite">[5]</span>.</p>
 
 <h3>Pirometr okienkowy (prostokąt ze złagodzonymi krawędziami)</h3>
 <div class="fml-math">$$R(\lambda) = \begin{cases} R_p & |\lambda-\lambda_c| < 0{,}88\,\tfrac{\Delta\lambda}{2} \\ 0 & |\lambda-\lambda_c| > \tfrac{\Delta\lambda}{2} \end{cases}$$</div>
@@ -843,16 +946,16 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <div class="warn-box">Pirometr całkujący: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{zal}}\,\sigma}\right)^{1/4}\). Błąd emisyjności proporcjonalny do \(T^4\) — bardzo wrażliwy!</div>
 </div>
 
-<!-- ──── 6. SYGNAŁ I INWERSJA ─────────────── -->
+<!-- ──── 7. SYGNAŁ I INWERSJA ─────────────── -->
 <div class="doc-sec">
-<h2>6. Całkowanie sygnału i inwersja temperatury</h2>
+<h2>7. Całkowanie sygnału i inwersja temperatury</h2>
 <h3>Sygnał detektora</h3>
 <p>Całkowity sygnał elektryczny (proporcjonalny do mocy) detektora z toru optycznego:</p>
 <div class="fml-math">$$S = \int_{0}^{\infty} R(\lambda)\cdot L_{\mathrm{det}}(\lambda)\,\mathrm{d}\lambda$$</div>
 <p>W symulatorze: grid N=480 punktów, λ ∈ [0.4, 16] µm, całkowanie metodą prostokątów.</p>
 
 <h3>Inwersja temperatury (algorytm bisekcji)</h3>
-<p>Pirometr szuka T_ind taką, że model uproszczony (tylko ε_zał, τ=1) daje ten sam sygnał S:</p>
+<p>Pirometr szuka T_ind taką, że model uproszczony (tylko ε_zał, τ=1) daje ten sam sygnał S <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$\text{znajdz } T_{\mathrm{ind}}:\quad \int_{0}^{\infty} R(\lambda)\cdot\varepsilon_{\mathrm{zal}}\cdot L_{bb}(\lambda,\,T_{\mathrm{ind}})\,\mathrm{d}\lambda \;=\; S$$</div>
 <p>Algorytm: <b>bisekcja 64 iteracje</b>, zakres T ∈ [200, 6500] K, zbieżność &lt; 0.01 K.</p>
 <div class="fml-math gr">$$\mathcal{O}(72\times N_{\mathrm{grid}}) \approx 50\,400 \ \text{ewaluacji Plancka na kazde przesuniecie suwaka}$$</div>
@@ -864,9 +967,9 @@ $$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}(\text{pelny model}) - T_{\mathrm{in
 $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </div>
 
-<!-- ──── 7. SŁOWNIK ───────────────────────── -->
+<!-- ──── 8. SŁOWNIK ───────────────────────── -->
 <div class="doc-sec">
-<h2>7. Słownik symboli</h2>
+<h2>8. Słownik symboli</h2>
 <table class="sym-tbl">
   <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
   <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — polski skrót; odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε&nbsp;=&nbsp;1</td><td>—</td></tr>
@@ -893,69 +996,6 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </table>
 </div>
 
-
-<!-- ──── 8. PRZESŁONA OPTYCZNA ────────────────── -->
-<div class="doc-sec">
-<h2>8. Przesłona optyczna — model kompletny</h2>
-<p>Okno optyczne wprowadza trzy niezależne efekty fizyczne, które symulator modeluje łącznie:</p>
-<ol style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em;margin-bottom:8px">
-  <li><b>Tłumienie transmisyjne</b> τ_win(λ) — zależy od materiału i grubości</li>
-  <li><b>Emisja własna</b> — okno pochłaniające promieniowanie samo emituje (prawo Kirchhoffa)</li>
-  <li><b>Straty Fresnela</b> — odbicia na powierzchniach; uwzględnione w τ_Fresnel (stałe, niezależne od d)</li>
-</ol>
-
-<h3>Pełne równanie toru z oknem</h3>
-<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{po\ atm}}(\lambda)}_{\text{sygnal obiektu przez okno}} + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja wlasna okna}}$$</div>
-<p>Emisja własna jest analogiczna do emisji atmosfery — okno gorące (np. 300–500°C w ścianie pieca) może <b>przekłamywać wskazanie pirometru in plus</b>, nawet gdy τ_win wydaje się wystarczające.</p>
-
-<h3>Model transmitancji — Beer–Lambert z podziałem na składowe</h3>
-<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda,\, d) = \underbrace{\tau_{\mathrm{Fresnel}}}_{\text{stale}} \cdot \underbrace{S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)}_{\text{odciecia pasmowe}} \cdot \underbrace{\tau_{\mathrm{bulk}}(\lambda,d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}}}_{\text{absorpcja objetosciowa (Beer-Lambert)}}$$</div>
-
-<h3>Skalowanie z grubością — prawo Beer–Lamberta</h3>
-<p>Absorpcja objętościowa skaluje się wykładniczo z grubością. Dla materiału o absorpcji τ_bulk(λ) przy grubości referencyjnej d_ref:</p>
-<div class="fml-math">$$\tau_{\mathrm{bulk}}(\lambda, d) = \tau_{\mathrm{bulk}}(\lambda, d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}} = e^{-\alpha(\lambda)\cdot d}$$</div>
-<p>Straty Fresnela <b>nie skalują się</b> z grubością — są stałą własnością powierzchni. Dlatego model rozdziela te dwa efekty: podwajając grubość wzmacniamy absorpcję pasm, ale nie zmieniamy strat na odbiciach.</p>
-
-<div class="warn-box">Przykład: szyba float 8 mm zamiast 4 mm. Pasmo OH przy 1.9 µm z absorpcją 9% przy 4 mm daje ~17% przy 8 mm (τ=0.83²≈0.69), ale straty Fresnela pozostają ~9%.</div>
-
-<h3>Emisja własna okna</h3>
-<p>Prawo Kirchhoffa: ciało pochłaniające promieniowanie musi je emitować. Emisyjność okna wynosi:</p>
-<div class="fml-math">$$\varepsilon_{\mathrm{win}}(\lambda) = \alpha_{\mathrm{win}}(\lambda) \approx 1 - \tau_{\mathrm{win}}(\lambda)$$</div>
-<p>(pomijamy odbicia, które są już w τ_Fresnel). Sygnał emitowany przez okno:</p>
-<div class="fml-math">$$L_{\mathrm{win,emit}}(\lambda) = [1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda, T_{\mathrm{win}})$$</div>
-<p>Dla zimnego okna (T_win ≈ T_atm) efekt jest pomijalny. Dla gorącego okna w ścianie pieca (T_win = 400°C) emisja własna może <b>dominować w zakresie 8–14 µm</b> i całkowicie fałszować pomiar pirometrem MCT.</p>
-
-<div class="info-box">Wskazówka do pracy ze studentami: zwiększ T_win do 400°C przy detektorze 8–14 µm i obserwuj jak wskazanie pirometru rośnie pomimo zerowej zmiany T_obj — to czysta emisja okna „udająca" gorący obiekt.</div>
-
-<h3>Parametry referencyjne materiałów</h3>
-<p>W praktycznych pomiarach pirometrycznych obiekt często obserwowany jest przez <b>okno optyczne</b>: wziernik w ścianie pieca, szybę ochronną, okno kriostatu lub filtr spektralny. Każdy taki element wprowadza dodatkowe tłumienie opisane transmitancją spektralną τ<sub>win</sub>(λ).</p>
-
-<h3>Model matematyczny</h3>
-<p>Sygnał na wejściu detektora po uwzględnieniu przesłony:</p>
-<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda) \cdot \Bigl[\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})\Bigr]$$</div>
-<p>Przesłona nie emituje promieniowania (założenie: T<sub>win</sub> ≪ T<sub>obj</sub>, typowe dla pomiarów wysokotemperaturowych). Całkowity sygnał detektora:</p>
-<div class="fml-math">$$S = \int_0^\infty R(\lambda)\cdot\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{det,bez\,okna}}(\lambda)\,\mathrm{d}\lambda$$</div>
-
-<h3>Implementacja — model pasmowy z wygładzaniem</h3>
-<p>Transmitancja każdego materiału modelowana jest funkcją złożoną z <b>płynnych schodków</b> (Hermite smoothstep) definiujących odcięcie UV i IR, oraz <b>gaussowskich pasm absorpcji</b>:</p>
-<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda) = S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)\cdot\tau_{\mathrm{peak}}\cdot\prod_k\!\left(1 - A_k\cdot e^{-(\lambda-\lambda_k)^2/2\sigma_k^2}\right)$$</div>
-<p>Funkcja schodkowa Hermite'a zapewnia ciągłe pierwsze pochodne na krawędziach odcięcia (brak artefaktów numerycznych). τ<sub>peak</sub> uwzględnia straty Fresnela na powierzchniach okna.</p>
-
-<h3>Zaimplementowane materiały okien optycznych</h3>
-<table class="sym-tbl">
-  <tr><th>Materiał</th><th>Zakres [µm]</th><th>τ<sub>Fresnel</sub></th><th>d<sub>ref</sub> [mm]</th><th>Charakterystyczne pasma absorpcji</th></tr>
-  <tr><td>Szyba float (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
-  <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>5</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
-  <tr><td>Kwarc topiony (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>5</td><td>Słabe pasmo OH przy 2.72 µm (domieszka wody)</td></tr>
-  <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>2</td><td>Brak istotnych pasm absorpcji</td></tr>
-  <tr><td>Selenek cynku (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>3</td><td>Słabe pasmo przy 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
-  <tr><td>German (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>3</td><td>Blokuje cały UV/VIS (przerwa energetyczna 0.67 eV); n ≈ 4 → straty Fresnela ~36%</td></tr>
-</table>
-
-<div class="warn-box">Pirometr <b>nie koryguje</b> wpływu przesłony — zakłada τ<sub>win</sub> = 1. Skutkuje to zaniżeniem T<sub>ind</sub> (mniej promieniowania dociera do detektora). Poprawna kalibracja wymaga znajomości τ<sub>win</sub>(λ) dla konkretnego okna.</div>
-<div class="info-box">Praktyczna wskazówka: pomiar przez szybę piekarniczą (float glass) pirometrem 0.65 µm (Si) działa poprawnie — szyba przepuszcza tę falę. Pirometr 8–14 µm (MCT/bolometr) wskaże zerowy sygnał, bo float glass jest w tym zakresie <b>całkowicie nieprzezroczysty</b>.</div>
-</div>
-
 <!-- ──── 9. AUTOR I WERSJA ─────────────────── -->
 <div class="doc-sec">
 <h2>9. Informacje o aplikacji</h2>
@@ -965,12 +1005,109 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v1.8.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v1.8.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
 </table>
 <div class="info-box">Aplikacja jest samodzielnym plikiem HTML bez zależności lokalnych. Zewnętrzne zasoby ładowane przez CDN: Google Fonts (typografia) i KaTeX (renderowanie wzorów matematycznych).</div>
+</div>
+
+
+<!-- ──── 10. LITERATURA ─────────────────── -->
+<div class="doc-sec">
+<h2>10. Literatura i źródła</h2>
+<p>Podstawy fizyczne i algorytmiczne symulatora opierają się na następujących publikacjach:</p>
+
+<ol class="bib-list">
+
+  <li class="bib-item">
+    <span class="bib-num">[1]</span>
+    <span><b>Planck M.</b> (1901). <i>Ueber das Gesetz der Energieverteilung im Normalspectrum.</i>
+    Annalen der Physik, 4(3), 553–563.
+    <a href="https://doi.org/10.1002/andp.19013090310" target="_blank">DOI:10.1002/andp.19013090310</a>
+    — oryginalna praca opisująca rozkład energii w widmie ciała doskonale czarnego.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[2]</span>
+    <span><b>Wien W.</b> (1896). <i>Ueber die Energievertheilung im Emissionsspectrum eines schwarzen Körpers.</i>
+    Annalen der Physik, 294(8), 662–669.
+    <a href="https://doi.org/10.1002/andp.18962940803" target="_blank">DOI:10.1002/andp.18962940803</a>
+    — prawo przesunięć Wiena (λ<sub>max</sub>·T = b).</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[3]</span>
+    <span><b>Boltzmann L.</b> (1884). <i>Ableitung des Stefan'schen Gesetzes, betreffend die Abhängigkeit der Wärmestrahlung von der Temperatur aus der electromagnetischen Lichttheorie.</i>
+    Annalen der Physik, 258(6), 291–294.
+    <a href="https://doi.org/10.1002/andp.18842580616" target="_blank">DOI:10.1002/andp.18842580616</a>
+    — teoretyczne wyprowadzenie prawa Stefana–Boltzmanna (M = σT⁴).</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[4]</span>
+    <span><b>Kirchhoff G.</b> (1860). <i>Über das Verhältnis zwischen dem Emissionsvermögen und dem Absorptionsvermögen der Körper für Wärme und Licht.</i>
+    Annalen der Physik, 185(2), 275–301.
+    <a href="https://doi.org/10.1002/andp.18601850205" target="_blank">DOI:10.1002/andp.18601850205</a>
+    — prawo Kirchhoffa: ε(λ,T) = α(λ,T).</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[5]</span>
+    <span><b>DeWitt D.P., Nutter G.D.</b> (red.) (1988). <i>Theory and Practice of Radiation Thermometry.</i>
+    Wiley-Interscience, Nowy Jork. ISBN: 978-0-471-61018-2.
+    <a href="https://doi.org/10.1002/9780470172575" target="_blank">DOI:10.1002/9780470172575</a>
+    — główna monografia pirometrii: podstawy, typy detektorów, kalibracja, emisyjność.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[6]</span>
+    <span><b>Preston-Thomas H.</b> (1990). <i>The International Temperature Scale of 1990 (ITS-90).</i>
+    Metrologia, 27(1), 3–10.
+    <a href="https://doi.org/10.1088/0026-1394/27/1/002" target="_blank">DOI:10.1088/0026-1394/27/1/002</a>
+    — definicja Międzynarodowej Skali Temperatury ITS-90; punkty stałe i realizacja powyżej 961 °C metodą pirometrii Plancka.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[7]</span>
+    <span><b>Palik E.D.</b> (red.) (1985). <i>Handbook of Optical Constants of Solids.</i>
+    Academic Press, Nowy Jork. ISBN: 0-12-544420-6.
+    — zestawienie tabelaryczne współczynników optycznych (n, k, τ) dla szkieł, kryształów jonowych i półprzewodników IR (CaF₂, ZnSe, Ge, kwarc).</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[8]</span>
+    <span><b>Michalski L., Eckersdorf K., Kucharski J.</b> (1998). <i>Termometria. Przyrządy i metody.</i>
+    Wydawnictwo Politechniki Łódzkiej, Łódź. ISBN: 83-87198-53-6.
+    — podręcznik akademicki: teoria i praktyka pomiaru temperatury, pirometry, emisyjność ciał rzeczywistych.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[9]</span>
+    <span><b>Gordon I.E., Rothman L.S., Hargreaves R.J. et al.</b> (2022).
+    <i>The HITRAN2020 molecular spectroscopic database.</i>
+    Journal of Quantitative Spectroscopy and Radiative Transfer, 277, 107949.
+    <a href="https://doi.org/10.1016/j.jqsrt.2021.107949" target="_blank">DOI:10.1016/j.jqsrt.2021.107949</a>
+    — baza danych parametrów spektroskopowych cząsteczek atmosferycznych (H₂O, CO₂, O₃ i in.);
+    podstawa uproszczonego modelu transmitancji atmosferycznej zastosowanego w symulatorze.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[10]</span>
+    <span><b>Modest M.F.</b> (2013). <i>Radiative Heat Transfer</i>, wyd. 3.
+    Academic Press / Elsevier, Oksford. ISBN: 978-0-12-386944-9.
+    <a href="https://doi.org/10.1016/C2010-0-65874-3" target="_blank">DOI:10.1016/C2010-0-65874-3</a>
+    — kompleksowe ujęcie transportu promieniowania cieplnego: prawo Beer-Lamberta, równanie transportu,
+    absorpcja gazów, promieniowanie ciał rzeczywistych.</span>
+  </li>
+
+</ol>
+
+<p style="margin-top:12px;font-size:.75rem;color:var(--muted)">
+  Oznaczenia literaturowe <span class="cite">[n]</span> w tekście dokumentacji odnoszą się do powyższego wykazu.
+  Linki DOI prowadzą do oryginalnych publikacji w wydawnictwach naukowych.
+</p>
 </div>
 
   </div><!-- /docs-body -->
@@ -1709,35 +1846,55 @@ function onSl(el, key){
   state[key] = v;
   slPct(el);
   const labels = {
-    Tobj: v+' K',
-    eps_real:v.toFixed(2), path:v+' m',
-    rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
-    eps_assumed:v.toFixed(2),
-    windowThick: v.toFixed(1)+' mm',
-    windowTemp:  v.toFixed(0)+' °C',
+    path:v+' m', rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
+    windowThick: v.toFixed(1)+' mm', windowTemp: v.toFixed(0)+' °C',
   };
   const ve = document.getElementById('val_'+key);
   if(ve) ve.textContent = labels[key]||v;
-  // sync numeric input and °C for Tobj
+
   if(key==='Tobj'){
-    const num=document.getElementById('num_Tobj');
-    if(num) num.value=v;
-    const sec=document.getElementById('val_Tobj_c');
-    if(sec) sec.textContent='= '+(v-273.15).toFixed(0)+' °C';
+    // suwak w K → aktualizuj pole °C i etykietę K
+    const numC = document.getElementById('num_Tobj_c');
+    if(numC) numC.value = Math.round(v - 273.15);
+    const kLbl = document.getElementById('val_Tobj_k');
+    if(kLbl) kLbl.textContent = '= '+Math.round(v)+' K';
+  }
+  if(key==='eps_real'){
+    const n = document.getElementById('num_eps_real');
+    if(n) n.value = v.toFixed(2);
+  }
+  if(key==='eps_assumed'){
+    const n = document.getElementById('num_eps_assumed');
+    if(n) n.value = v.toFixed(2);
   }
   scheduleUpdate();
 }
 
-function onNumTobj(el){
+/* Pole numeryczne T w °C → konwersja na K → synchronizacja suwaka */
+function onNumTobjC(el){
+  let c = parseFloat(el.value);
+  if(isNaN(c)) return;
+  c = Math.max(-263, Math.min(11727, Math.round(c)));  // clamp, 1°C krok
+  el.value = c;
+  const K = Math.round(c + 273.15);
+  const Kclamped = Math.max(10, Math.min(12000, K));
+  state.Tobj = Kclamped;
+  const sl = document.getElementById('sl_Tobj');
+  if(sl){ sl.value = Kclamped; slPct(sl); }
+  const kLbl = document.getElementById('val_Tobj_k');
+  if(kLbl) kLbl.textContent = '= '+Kclamped+' K';
+  scheduleUpdate();
+}
+
+/* Pole numeryczne emisyjności (eps_real lub eps_assumed) */
+function onNumEps(el, key){
   let v = parseFloat(el.value);
   if(isNaN(v)) return;
-  v = Math.max(10, Math.min(12000, Math.round(v/10)*10)); // clamp + snap to step
-  el.value = v;
-  state.Tobj = v;
-  const sl = document.getElementById('sl_Tobj');
-  if(sl){ sl.value=v; slPct(sl); }
-  const sec = document.getElementById('val_Tobj_c');
-  if(sec) sec.textContent='= '+(v-273.15).toFixed(0)+' °C';
+  v = Math.max(0.02, Math.min(1.00, Math.round(v*100)/100));
+  el.value = v.toFixed(2);
+  state[key] = v;
+  const sl = document.getElementById('sl_'+key);
+  if(sl){ sl.value = v; slPct(sl); }
   scheduleUpdate();
 }
 
@@ -1782,19 +1939,29 @@ function initSliders(){
     const el=document.getElementById(id);
     if(!el) return;
     el.value=state[key]; slPct(el);
-    // Tobj uses numeric input instead of sl-val span
+
     if(key==='Tobj'){
-      const num=document.getElementById('num_Tobj');
-      if(num) num.value=state[key];
-      const sec=document.getElementById('val_Tobj_c');
-      if(sec) sec.textContent='= '+(state[key]-273.15).toFixed(0)+' °C';
+      const nc=document.getElementById('num_Tobj_c');
+      if(nc) nc.value=Math.round(state[key]-273.15);
+      const kl=document.getElementById('val_Tobj_k');
+      if(kl) kl.textContent='= '+Math.round(state[key])+' K';
+      return;
+    }
+    if(key==='eps_real'){
+      const n=document.getElementById('num_eps_real');
+      if(n) n.value=state[key].toFixed(2);
+      return;
+    }
+    if(key==='eps_assumed'){
+      const n=document.getElementById('num_eps_assumed');
+      if(n) n.value=state[key].toFixed(2);
       return;
     }
     const ve=document.getElementById('val_'+key);
     if(ve){
       const v=state[key];
-      const labels={eps_real:v.toFixed(2),path:v+' m',
-        rh:v+' %',co2:v+' ppm',Tatm:v+' °C',eps_assumed:v.toFixed(2)};
+      const labels={path:v+' m',rh:v+' %',co2:v+' ppm',Tatm:v+' °C',
+        windowThick:v.toFixed(1)+' mm',windowTemp:v.toFixed(0)+' °C'};
       ve.textContent=labels[key]||v;
     }
   });
