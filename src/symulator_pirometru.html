@@ -20,7 +20,7 @@
   --amber:#f59e0b; --amber-dim:rgba(245,158,11,.12);
   --orange:#ea580c; --red:#ef4444; --red-dim:rgba(239,68,68,.12);
   --cyan:#06b6d4; --cyan-dim:rgba(6,182,212,.12);
-  --green:#22c55e; --violet:#a78bfa;
+  --green:#22c55e; --violet:#a78bfa; --signal:#c026d3;
   --shadow:rgba(0,0,0,.6);
   --plot-grid:rgba(34,34,46,.9);
   --plot-bg:#07070a;
@@ -32,7 +32,7 @@
   --amber:#b45309; --amber-dim:rgba(180,83,9,.1);
   --orange:#c2410c; --red:#dc2626; --red-dim:rgba(220,38,38,.08);
   --cyan:#0e7490; --cyan-dim:rgba(14,116,144,.1);
-  --green:#15803d; --violet:#7c3aed;
+  --green:#15803d; --violet:#7c3aed; --signal:#9333ea;
   --shadow:rgba(0,0,0,.15);
   --plot-grid:rgba(100,95,88,.35);
   --plot-bg:#ece8dd;
@@ -729,11 +729,11 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="leg"><div class="leg-line" style="background:var(--muted);border-top:1px dashed currentColor"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
       <div class="leg"><div class="leg-fill" style="background:var(--red);opacity:.5"></div>Emisja atm.</div>
-      <div class="leg"><div class="leg-line" style="background:var(--orange);height:3px"></div>Sygnał na det.</div>
+      <div class="leg"><div class="leg-line" style="background:var(--signal);height:3px"></div>Sygnał na det.</div>
       <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:2px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
+      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.3"></div>R(λ) det. [góra]</div>
       <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
       <div class="leg"><div class="leg-fill" style="background:#10b981;opacity:.35"></div>Emisja przesłony</div>
-      <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.2"></div>Okno det.</div>
     </div>
     <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
     <canvas id="tauCanvas" height="148" style="height:148px"></canvas>
@@ -1102,9 +1102,61 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
     absorpcja gazów, promieniowanie ciał rzeczywistych.</span>
   </li>
 
+
+  <li class="bib-item">
+    <span class="bib-num">[11]</span>
+    <span><b>Minkina W., Dudzik S.</b> (2009). <i>Pomiary termowizyjne — Przyrządy i metody.</i>
+    Wydawnictwo BTC, Legionowo. ISBN: 978-83-60233-26-4.
+    — polskojęzyczna monografia obejmująca termografię IR i pirometrię: fizyka promieniowania,
+    emisyjność, błędy pomiarowe, zastosowania przemysłowe. Dostępna w bibliotekach uczelni technicznych.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[12]</span>
+    <span><b>GUM — Główny Urząd Miar: Laboratorium Temperatury.</b>
+    Przewodnik po dziedzinie termometrii (2018).
+    <a href="https://www.gum.gov.pl/ftp/pdf/Przewodniki/w-termometria-08_2018.pdf" target="_blank">gum.gov.pl [PDF]</a>
+    — oficjalny przewodnik GUM opisujący metody wzorcowania termometrów,
+    skalę ITS-90 w praktyce laboratoryjnej i możliwości pomiarowe Laboratorium Temperatury GUM.
+    Dostępny bezpłatnie online (PDF).</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[13]</span>
+    <span><b>BIPM — Międzynarodowe Biuro Miar.</b>
+    <i>The International System of Units (SI Brochure)</i>, wyd. 9, 2019.
+    <a href="https://www.bipm.org/documents/20126/41483022/SI-Brochure-9-EN.pdf" target="_blank">bipm.org [PDF]</a>
+    — definicja kelwina w oparciu o stałą Boltzmanna (od 2019 r.),
+    powiązanie z ITS-90. Dostępna bezpłatnie online w języku angielskim i francuskim.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[14]</span>
+    <span><b>HITRAN on the Web — baza danych spektroskopowych.</b>
+    <a href="https://hitran.org" target="_blank">hitran.org</a>
+    — interaktywny interfejs do bazy HITRAN pozwalający przeglądać parametry
+    linii absorpcyjnych H₂O, CO₂, O₃ i ponad 50 innych cząsteczek.
+    Bezpłatne konto umożliwia pobieranie danych; przydatny do weryfikacji
+    modelu atmosferycznego zastosowanego w symulatorze.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[15]</span>
+    <span><b>Wikipedia PL — hasła encyklopedyczne z dziedziny promieniowania termicznego.</b>
+    Dostępne pod adresami:
+    <a href="https://pl.wikipedia.org/wiki/Prawo_Plancka" target="_blank">Prawo Plancka</a> ·
+    <a href="https://pl.wikipedia.org/wiki/Prawo_przesuni%C4%99%C4%87_Wiena" target="_blank">Prawo Wiena</a> ·
+    <a href="https://pl.wikipedia.org/wiki/Prawo_Stefana-Boltzmanna" target="_blank">Prawo Stefana–Boltzmanna</a> ·
+    <a href="https://pl.wikipedia.org/wiki/Emisyjno%C5%9B%C4%87" target="_blank">Emisyjność</a> ·
+    <a href="https://pl.wikipedia.org/wiki/Pirometr" target="_blank">Pirometr</a>.
+    — polskojęzyczny punkt startowy; artykuły zawierają wyprowadzenia wzorów i linki do źródeł
+    pierwotnych. <i>Zalecane jako wstępne rozeznanie, a nie jako jedyne źródło.</i></span>
+  </li>
+
 </ol>
 
 <p style="margin-top:12px;font-size:.75rem;color:var(--muted)">
+  Pozycje [1]–[10] to publikacje naukowe z linkami DOI. Pozycje [11]–[15] to polskojęzyczne lub bezpłatnie dostępne online zasoby przeznaczone dla studentów II roku.<br>
   Oznaczenia literaturowe <span class="cite">[n]</span> w tekście dokumentacji odnoszą się do powyższego wykazu.
   Linki DOI prowadzą do oryginalnych publikacji w wydawnictwach naukowych.
 </p>
@@ -1248,13 +1300,15 @@ function windowTau(lam_m, type, thick_mm){
 }
 
 const DETS = {
-  band_065: {label:'0.65 µm – Si',lc:.65,bw:.045,mode:'gauss',Rp:1.0,range:[.45,1.0]},
-  band_100: {label:'1.0 µm – InGaAs',lc:1.00,bw:.07,mode:'gauss',Rp:1.0,range:[.7,1.4]},
-  band_160: {label:'1.6 µm – InGaAs',lc:1.60,bw:.10,mode:'gauss',Rp:.9,range:[1.2,2.1]},
-  band_390: {label:'3.9 µm – InSb',lc:3.90,bw:.35,mode:'gauss',Rp:.85,range:[3.0,5.0]},
-  window_35:{label:'3–5 µm – InSb',lc:4.00,bw:2.0,mode:'window',Rp:.75,range:[2.8,5.4]},
-  window_814:{label:'8–14 µm – MCT',lc:11.0,bw:6.0,mode:'window',Rp:.65,range:[7.5,15.0]},
-  total:    {label:'1–18 µm – termostos',lc:9.5,bw:17.0,mode:'total',Rp:.4,range:[0.8,16.5]},
+  // Gauss: σ = bw/2.355  →  range = [lc-5σ, lc+5σ], gdzie R(±5σ) ≈ 3.7×10⁻⁶ (praktycznie zero)
+  band_065: {label:'0.65 µm – Si',         lc:.65,  bw:.045, mode:'gauss',  Rp:1.0, range:[0.555, 0.745]},  // σ=0.0191 µm
+  band_100: {label:'1.0 µm – InGaAs',      lc:1.00, bw:.07,  mode:'gauss',  Rp:1.0, range:[0.851, 1.149]},  // σ=0.0297 µm
+  band_160: {label:'1.6 µm – InGaAs',      lc:1.60, bw:.10,  mode:'gauss',  Rp:.9,  range:[1.388, 1.812]},  // σ=0.0425 µm
+  band_390: {label:'3.9 µm – InSb',        lc:3.90, bw:.35,  mode:'gauss',  Rp:.85, range:[3.156, 4.644]},  // σ=0.1486 µm
+  // Okienkowe i całkujący: range = fizyczny zakres czułości detektora
+  window_35: {label:'3–5 µm – InSb',       lc:4.00, bw:2.0,  mode:'window', Rp:.75, range:[2.8,  5.4]},
+  window_814:{label:'8–14 µm – MCT',       lc:11.0, bw:6.0,  mode:'window', Rp:.65, range:[7.5, 15.0]},
+  total:     {label:'1–18 µm – termostos', lc:9.5,  bw:17.0, mode:'total',  Rp:.40, range:[0.8, 16.5]},
 };
 
 function detResp(lam_m, det){
@@ -1556,12 +1610,65 @@ function drawSpec(res, p){
   });
   ctx.textAlign='left'; ctx.fillText('λ [µm]',pL+W2+3,pT+H2+28);
 
-  // detector window shading
-  const [dmin,dmax]=res.det.range;
-  const xd1=lx(dmin), xd2=lx(dmax);
-  ctx.globalAlpha=0.18; ctx.fillStyle=tv('--cyan');
-  ctx.fillRect(Math.max(pL,xd1),pT,Math.min(pL+W2,xd2)-Math.max(pL,xd1),H2);
-  ctx.globalAlpha=1;
+  // ── Detector response R(λ) — adaptacyjna siatka ───────────────────────
+  // Gęsta siatka w zakresie czułości detektora, rzadka poza nim.
+  // Dzięki temu wąski Gaussian 0.65 µm ma tyle samo punktów co szerokie okno 8–14 µm.
+  {
+    const det = res.det;
+    const [dmin, dmax] = det.range;   // µm — teraz fizycznie poprawne ±5σ dla Gaussa
+    // bufor: dla Gaussa mały (range już jest ±5σ), dla okienkowego większy
+    const buf = det.mode === 'gauss'
+      ? (det.bw / 2.355) * 1.0      // 1σ extra poza ±5σ
+      : Math.max(0.3, (dmax-dmin)*0.12);
+    const r0 = Math.max(LAM_MIN*1e6, dmin - buf);
+    const r1 = Math.min(LAM_MAX*1e6, dmax + buf);
+
+    // trzy segmenty siatki
+    const NL = 40, NM = 500, NR = 40;
+    const seg = [];
+    for(let i=0;i<=NL;i++) seg.push(LAM_MIN*1e6 + (r0-LAM_MIN*1e6)*i/NL);
+    for(let i=1;i<=NM;i++) seg.push(r0 + (r1-r0)*i/NM);
+    for(let i=1;i<=NR;i++) seg.push(r1 + (LAM_MAX*1e6-r1)*i/NR);
+
+    const Rvals = seg.map(u => detResp(u*1e-6, det));
+    const maxR  = Math.max(...Rvals, 0.01);
+    const Rzone = H2 * 0.21;
+    const ryR   = r => pT + Rzone * (1 - r/maxR);
+
+    // wypełnienie
+    ctx.beginPath();
+    ctx.moveTo(lx(seg[0]), pT + Rzone);
+    seg.forEach((u,i) => ctx.lineTo(lx(u), ryR(Rvals[i])));
+    ctx.lineTo(lx(seg[seg.length-1]), pT + Rzone);
+    ctx.closePath();
+    ctx.globalAlpha = 0.22; ctx.fillStyle = tv('--cyan'); ctx.fill(); ctx.globalAlpha = 1;
+
+    // linia R(λ)
+    ctx.beginPath();
+    seg.forEach((u,i) => { const x=lx(u), y=ryR(Rvals[i]); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 1.8; ctx.stroke();
+
+    // linia bazowa strefy
+    ctx.globalAlpha = 0.15; ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(pL, pT+Rzone); ctx.lineTo(pL+W2, pT+Rzone); ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // etykieta + skala
+    ctx.globalAlpha = 0.70; ctx.fillStyle = tv('--cyan');
+    ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
+    ctx.fillText('R(λ)', pL + 4, pT + 9);
+    ctx.globalAlpha = 0.40; ctx.font = '7px IBM Plex Mono,monospace'; ctx.textAlign = 'right';
+    ctx.fillText('100%', pL - 2, pT + 5);
+    ctx.globalAlpha = 1;
+
+    // pionowe linie granicy okna (poniżej strefy R, bez wypełnienia)
+    ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.globalAlpha=0.40;
+    ctx.strokeStyle = tv('--cyan');
+    const x1=lx(dmin), x2=lx(dmax);
+    if(x1>pL&&x1<pL+W2){ ctx.beginPath(); ctx.moveTo(x1,pT+Rzone); ctx.lineTo(x1,pT+H2); ctx.stroke(); }
+    if(x2>pL&&x2<pL+W2){ ctx.beginPath(); ctx.moveTo(x2,pT+Rzone); ctx.lineTo(x2,pT+H2); ctx.stroke(); }
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
 
   // helper curve
   function curve(arr, color, lw, dashes){
@@ -1577,10 +1684,10 @@ function drawSpec(res, p){
   ctx.lineTo(lx(lamArr[res.Latm.length-1]),pT+H2); ctx.closePath();
   ctx.globalAlpha=0.35; ctx.fillStyle=tv('--red'); ctx.fill(); ctx.globalAlpha=1;
 
-  curve(res.Lbb,   tv('--muted'),  1, [4,4]);
-  curve(res.Latm,  tv('--red'),    1);
-  curve(res.Lemit, tv('--amber'),  1.8);
-  curve(res.Ldet,  tv('--orange'), 2.5);
+  curve(res.Lbb,   tv('--muted'),   1, [4,4]);
+  curve(res.Latm,  tv('--red'),     1);
+  curve(res.Lemit, tv('--amber'),   2.0);
+  curve(res.Ldet,  tv('--signal'),  2.8);        // sygnał wynikowy — wyróżniony kolorem
   curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4]);
 
   // Window transmission overlay
@@ -1624,13 +1731,6 @@ function drawSpec(res, p){
     ctx.textAlign='center'; ctx.fillText('λ_max',wienX,pT+9);
     ctx.globalAlpha=1;
   }
-
-  // detector window borders
-  ctx.globalAlpha=0.55; ctx.strokeStyle=tv('--cyan');
-  ctx.lineWidth=1; ctx.setLineDash([3,4]);
-  if(xd1>pL&&xd1<pL+W2){ ctx.beginPath(); ctx.moveTo(xd1,pT); ctx.lineTo(xd1,pT+H2); ctx.stroke(); }
-  if(xd2>pL&&xd2<pL+W2){ ctx.beginPath(); ctx.moveTo(xd2,pT); ctx.lineTo(xd2,pT+H2); ctx.stroke(); }
-  ctx.setLineDash([]); ctx.globalAlpha=1;
 
   // hover crosshair — uses same lx() already defined above
   if(hoverFrac!==null){
