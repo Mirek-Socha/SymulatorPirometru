@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Symulator Toru Pirometrycznego</title>
+<title>Pirometria — Symulator Toru Pomiarowego</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -156,6 +156,169 @@ body{
 }
 .chain-arrow svg{width:28px;height:18px;overflow:visible}
 .chain-box.cb-win{border-left-color:#10b981}
+
+/* ── BEGINNER DOCUMENTATION ─────────────────── */
+.beg-doc-sec{margin-bottom:24px}
+.beg-doc-sec h2{
+  font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;
+  color:var(--amber);margin-bottom:10px;padding-bottom:5px;
+  border-bottom:1px solid var(--border);
+}
+.beg-doc-sec h3{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--cyan);margin:14px 0 6px;
+}
+.beg-doc-sec p{font-size:.85rem;color:var(--pale);line-height:1.75;margin-bottom:8px}
+.beg-doc-sec p b{color:var(--text);font-weight:600}
+.beg-doc-sec p i{color:var(--amber);font-style:normal}
+.beg-analogy{
+  background:var(--card);border-left:3px solid var(--amber);
+  padding:10px 14px;margin:10px 0;font-size:.83rem;
+  color:var(--pale);line-height:1.65;
+}
+.beg-analogy::before{content:'💡 ';font-size:.9rem}
+.beg-key-box{
+  background:var(--amber-dim);border:1px solid var(--amber);
+  padding:10px 14px;margin:10px 0;font-size:.83rem;
+  color:var(--text);line-height:1.65;
+}
+.beg-key-box b{color:var(--amber)}
+.beg-spectrum-legend{
+  display:flex;flex-direction:column;gap:7px;margin:10px 0;
+}
+.bsl-row{display:flex;align-items:flex-start;gap:10px;font-size:.8rem;color:var(--pale);line-height:1.5}
+.bsl-swatch{width:16px;height:16px;border-radius:2px;flex-shrink:0;margin-top:2px}
+.bsl-row b{color:var(--text)}
+.beg-eps-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.8rem}
+.beg-eps-table th{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);font-weight:400;
+  text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);
+}
+.beg-eps-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--pale)}
+.beg-eps-table tr:last-child td{border-bottom:none}
+.beg-eps-table td:first-child{color:var(--text);font-weight:500}
+.beg-eps-table .eps-val{
+  font-family:'IBM Plex Mono',monospace;color:var(--amber);font-weight:600;
+}
+
+
+/* ── MODE SWITCHING ─────────────────────────────── */
+.xo { display:none !important; }           /* expert-only: ukryte domyślnie  */
+.bo { display:none !important; }           /* beginner-only: ukryte domyślnie */
+
+body.expert   .xo { display:revert !important; }
+body.expert   .bo { display:none   !important; }
+body.beginner .xo { display:none   !important; }
+body.beginner .bo { display:revert !important; }
+
+/* Grid items (aside, main, div z grid-area) muszą używać konkretnego display */
+body.expert   aside.xo  { display:flex   !important; flex-direction:column; }
+body.beginner aside.bo  { display:flex   !important; flex-direction:column; }
+body.expert   section.xo{ display:block  !important; }
+body.beginner div.bo    { display:block  !important; }
+/* Wewnętrzne elementy wynikowe */
+body.expert   .res-col > div.xo { display:block !important; }
+body.beginner .res-col > div.bo { display:block !important; }
+
+/* ── MODE TOGGLE BUTTON ────────────────────────── */
+.mode-btn {
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;
+  background:var(--amber);color:var(--bg);border:none;
+  cursor:pointer;transition:all .18s;white-space:nowrap;border-radius:2px;
+  box-shadow:0 0 10px rgba(245,158,11,.3);
+}
+.mode-btn:hover{background:var(--orange);box-shadow:0 0 14px rgba(234,88,12,.4)}
+.theme-light .mode-btn{color:#fff}
+
+/* ── PRESET DROPDOWN MENU ──────────────────────── */
+.preset-menu{position:relative;display:inline-block}
+.preset-menu-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.08em;
+  text-transform:uppercase;padding:5px 12px;background:transparent;
+  border:1px solid var(--border);color:var(--pale);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.preset-menu-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.preset-menu-btn.open{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.preset-dropdown{
+  position:absolute;top:calc(100% + 4px);right:0;
+  background:var(--card);border:1px solid var(--border);
+  min-width:200px;z-index:300;display:none;flex-direction:column;
+  box-shadow:0 6px 20px var(--shadow);
+}
+.preset-dropdown.open{display:flex}
+.preset-drop-item{
+  font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.04em;
+  padding:9px 14px;background:transparent;border:none;border-bottom:1px solid var(--border);
+  color:var(--pale);cursor:pointer;text-align:left;transition:background .1s;
+}
+.preset-drop-item:last-child{border-bottom:none}
+.preset-drop-item:hover{background:var(--amber-dim);color:var(--amber)}
+.preset-drop-sep{
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);padding:6px 14px 3px;
+  border-bottom:1px solid var(--border);background:var(--surf);
+  pointer-events:none;
+}
+
+/* ── BEGINNER CONTROLS ─────────────────────────── */
+.beg-panel{padding:14px 14px 16px;border-bottom:1px solid var(--border)}
+.beg-label{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--amber);
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.beg-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.eps-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.eps-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.04em;
+  padding:7px 6px;background:var(--card2);border:1px solid var(--border);
+  color:var(--pale);cursor:pointer;transition:all .15s;text-align:center;
+  line-height:1.3;
+}
+.eps-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.eps-btn.active{border-color:var(--amber);color:var(--amber);background:var(--amber-dim);font-weight:600}
+.atm-btns{display:flex;gap:6px}
+.atm-btn{
+  flex:1;font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+  padding:7px 4px;background:var(--card2);border:1px solid var(--border);
+  color:var(--pale);cursor:pointer;transition:all .15s;text-align:center;
+}
+.atm-btn:hover{border-color:var(--red);color:var(--red)}
+.atm-btn.active{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+.det-btns{display:flex;gap:6px;flex-direction:column}
+.det-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.03em;
+  padding:8px 10px;background:var(--card2);border:1px solid var(--border);
+  color:var(--pale);cursor:pointer;transition:all .15s;text-align:left;
+}
+.det-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.det-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim);font-weight:600}
+.det-btn small{display:block;font-size:.6rem;color:var(--muted);margin-top:2px}
+
+/* ── BEGINNER RESULTS ──────────────────────────── */
+.traffic-light{
+  display:flex;justify-content:center;gap:8px;margin:10px 0 4px;
+}
+.tl-dot{width:18px;height:18px;border-radius:50%;opacity:.25;transition:opacity .3s, box-shadow .3s}
+.tl-dot.on{opacity:1;box-shadow:0 0 8px currentColor}
+.tl-red{background:#ef4444;color:#ef4444}
+.tl-yellow{background:#f59e0b;color:#f59e0b}
+.tl-green{background:#22c55e;color:#22c55e}
+.beg-hint{font-size:.75rem;color:var(--muted);text-align:center;margin-top:6px;line-height:1.5}
+
+/* ── BEGINNER SUBTITLE ─────────────────────────── */
+.beg-mode-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--amber-dim);border:1px solid var(--amber);
+  color:var(--amber);font-family:'IBM Plex Mono',monospace;
+  font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 10px;margin-left:10px;vertical-align:middle;
+}
+
 
 /* Citation superscripts and bibliography */
 .cite{
@@ -375,9 +538,9 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 ═══════════════════════════════════════════════ */
 #tooltip{
   position:fixed;background:var(--card);border:1px solid var(--border);
-  padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+  padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:.72rem;
   pointer-events:none;display:none;z-index:500;
-  box-shadow:0 4px 16px var(--shadow);line-height:1.7;min-width:160px;
+  box-shadow:0 4px 16px var(--shadow);line-height:1.7;min-width:220px;
   color:var(--text);
 }
 .tt-h{color:var(--amber);margin-bottom:3px;font-weight:600}
@@ -514,32 +677,47 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 }
 </style>
 </head>
-<body class="theme-dark">
+<body class="theme-dark beginner">
 <div id="app">
 
 <!-- ═══ HEADER ═══════════════════════════════ -->
 <header class="hdr">
   <div class="hdr-brand">
-    <span class="hdr-title">Symulator Pirometryczny</span>
-    <span class="hdr-sub">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
+    <span class="hdr-title">Pirometria</span>
+    <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
+    <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
+    <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
   </div>
   <div class="hdr-actions">
-    <div class="presets">
-      <button class="preset-btn" onclick="loadPreset('ideal')">Idealny</button>
-      <button class="preset-btn" onclick="loadPreset('emissivity')">Błąd ε</button>
-      <button class="preset-btn" onclick="loadPreset('atmosphere')">Atmosfera</button>
-      <button class="preset-btn" onclick="loadPreset('lowtemp')">Niska T</button>
-      <button class="preset-btn" onclick="loadPreset('total')">Całkujący</button>
-      <button class="preset-btn" onclick="loadPreset('plexiglas')">🪟 Plexiglas</button>
+
+    <!-- PRESET DROPDOWN -->
+    <div class="preset-menu" id="presetMenu">
+      <button class="preset-menu-btn" id="presetMenuBtn" onclick="togglePresetMenu()">☰ Presety ▾</button>
+      <div class="preset-dropdown" id="presetDropdown">
+        <div class="preset-drop-sep">Tryb podstawowy</div>
+        <button class="preset-drop-item" onclick="loadPreset('beg_ideal');closePresets()">⬜ CDC — wzorzec idealny</button>
+        <button class="preset-drop-item" onclick="loadPreset('beg_metal');closePresets()">🏭 Stal w piecu</button>
+        <button class="preset-drop-item" onclick="loadPreset('beg_ceramic');closePresets()">🏺 Ceramika</button>
+        <div class="preset-drop-sep xo">Tryb eksperta</div>
+        <button class="preset-drop-item xo" onclick="loadPreset('ideal');closePresets()">⬜ Idealny (τ=1, ε=1)</button>
+        <button class="preset-drop-item xo" onclick="loadPreset('emissivity');closePresets()">⚠ Błąd emisyjności</button>
+        <button class="preset-drop-item xo" onclick="loadPreset('atmosphere');closePresets()">🌫 Atmosfera</button>
+        <button class="preset-drop-item xo" onclick="loadPreset('lowtemp');closePresets()">❄ Niska T / MCT</button>
+        <button class="preset-drop-item xo" onclick="loadPreset('total');closePresets()">∫ Całkujący</button>
+        <button class="preset-drop-item xo" onclick="loadPreset('plexiglas');closePresets()">🪟 Przesłona Plexiglas</button>
+      </div>
     </div>
+
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
-    <button class="icon-btn" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
+    <button class="icon-btn xo" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
+    <button class="icon-btn bo" id="docsBtnBeg" onclick="toggleDocs()" title="Jak to działa?">📖 Jak to działa?</button>
+    <button class="mode-btn" id="modeBtn" onclick="toggleMode()">🔬 Tryb Eksperta</button>
   </div>
 </header>
 
 <!-- ═══ CHAIN DIAGRAM ════════════════════════ -->
-<section class="chain-section">
-  <div class="chain-label">Schemat blokowy toru pomiarowego</div>
+<section class="chain-section xo">
+  <div class="chain-label">Schemat blokowy toru pomiarowego — tryb eksperta</div>
   <div class="chain">
 
     <div class="chain-box cb-obj" id="cb-obj">
@@ -608,8 +786,83 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <!-- ═══ MAIN LAYOUT ══════════════════════════ -->
 <div class="main-layout">
 
-  <!-- ─── CONTROLS ─── -->
-  <aside class="ctrl-col">
+  <!-- ─── BEGINNER CONTROLS ─── -->
+  <aside class="ctrl-col bo" id="begCtrlCol">
+
+    <!-- T OBIEKTU -->
+    <div class="beg-panel">
+      <div class="beg-label">📡 Temperatura obiektu</div>
+      <div class="sl-row">
+        <span class="sl-name">T</span>
+        <input type="range" id="beg_sl_T" min="-20" max="2000" step="50" value="1000"
+               oninput="begOnT(this)">
+        <input type="number" id="beg_num_T" class="sl-num"
+               min="-20" max="2000" step="1" value="1000"
+               title="Wpisz T w °C"
+               onchange="begOnTNum(this)" onkeydown="if(event.key==='Enter')begOnTNum(this)">
+      </div>
+      <div class="sl-secondary">°C — zakres −20 do 2000 °C</div>
+    </div>
+
+    <!-- EMISYJNOŚĆ PRESET -->
+    <div class="beg-panel">
+      <div class="beg-label">🌑 Emisyjność ε obiektu</div>
+      <div class="eps-preset-grid">
+        <button class="eps-btn" id="bep0" onclick="begSetEps(0.10,'bep0')">
+          Metal polerowany<br><b>ε = 0.10</b>
+        </button>
+        <button class="eps-btn active" id="bep1" onclick="begSetEps(0.70,'bep1')">
+          Stal utleniona<br><b>ε = 0.70</b>
+        </button>
+        <button class="eps-btn" id="bep2" onclick="begSetEps(0.90,'bep2')">
+          Ceramika<br><b>ε = 0.90</b>
+        </button>
+        <button class="eps-btn" id="bep3" onclick="begSetEps(1.00,'bep3')">
+          CDC (wzorzec)<br><b>ε = 1.00</b>
+        </button>
+      </div>
+      <div class="sl-secondary" id="beg_eps_val">ε = 0.70</div>
+    </div>
+
+    <!-- ATMOSFERA -->
+    <div class="beg-panel">
+      <div class="beg-label">🌫 Atmosfera</div>
+      <div class="atm-btns">
+        <button class="atm-btn active" id="bat0" onclick="begSetAtm(0,'bat0')">
+          Brak<br><small>τ = 1</small>
+        </button>
+        <button class="atm-btn" id="bat1" onclick="begSetAtm(2,'bat1')">
+          Krótka<br><small>2 m</small>
+        </button>
+        <button class="atm-btn" id="bat2" onclick="begSetAtm(20,'bat2')">
+          Długa<br><small>20 m</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- DETEKTOR -->
+    <div class="beg-panel">
+      <div class="beg-label cy">🔬 Typ pirometru</div>
+      <div class="det-btns">
+        <button class="det-btn active" id="bdt0" onclick="begSetDet('band_065','bdt0')">
+          Bliskie IR — 0.65 µm (Si)
+          <small>Typowy pirometr jasnościowy — metale</small>
+        </button>
+        <button class="det-btn" id="bdt1" onclick="begSetDet('window_35','bdt1')">
+          Średnie IR — 3–5 µm (InSb)
+          <small>Piece i procesy do 1500°C</small>
+        </button>
+        <button class="det-btn" id="bdt2" onclick="begSetDet('window_814','bdt2')">
+          Dalekie IR — 8–14 µm (MCT)
+          <small>Pomiary niskotemperaturowe &lt;500°C</small>
+        </button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ─── EXPERT CONTROLS ─── -->
+  <aside class="ctrl-col xo" id="expCtrlCol">
 
     <!-- OBIEKT -->
     <div class="ctrl-panel">
@@ -716,6 +969,8 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
   </aside>
 
+  </aside><!-- /expCtrlCol -->
+
   <!-- ─── PLOTS ─── -->
   <main class="plots-col">
     <div class="plot-hdr">Widmo promieniowania w torze pomiarowym
@@ -724,7 +979,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <button class="st-btn active" id="btnLin" onclick="setScale('lin')">lin λ</button>
       </div>
     </div>
-    <canvas id="specCanvas" height="308" style="height:308px"></canvas>
+    <canvas id="specCanvas" height="348" style="height:clamp(180px, 42vh, 348px)"></canvas>
     <div class="legend">
       <div class="leg"><div class="leg-line" style="background:var(--muted);border-top:1px dashed currentColor"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
@@ -735,27 +990,56 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
       <div class="leg"><div class="leg-fill" style="background:#10b981;opacity:.35"></div>Emisja przesłony</div>
     </div>
-    <div class="plot-hdr tau-hdr">Transmitancja atmosferyczna τ(λ)</div>
-    <canvas id="tauCanvas" height="148" style="height:148px"></canvas>
+    <div class="plot-hdr tau-hdr xo">Transmitancja atmosferyczna τ(λ)</div>
+    <canvas id="tauCanvas" height="148" style="height:clamp(80px, 16vh, 148px)" class="xo"></canvas>
   </main>
 
   <!-- ─── RESULTS ─── -->
   <div class="res-col">
 
+    <!-- BEGINNER RESULTS -->
+    <div class="bo">
+      <div class="rb a">
+        <div class="rb-lbl">T wskazana przez pirometr</div>
+        <div class="rb-val a" id="r_Tind">—</div>
+      </div>
+      <div class="rb c" style="margin-top:8px">
+        <div class="rb-lbl">T rzeczywista obiektu</div>
+        <div class="rb-val c" id="r_Tobj_b">—</div>
+      </div>
+      <div class="rb" id="rb_dT_b" style="margin-top:8px;border-color:var(--border)">
+        <div class="rb-lbl">Błąd ΔT</div>
+        <div class="rb-val" id="r_dT_b">—</div>
+        <div class="traffic-light">
+          <div class="tl-dot tl-green" id="tl_g">●</div>
+          <div class="tl-dot tl-yellow" id="tl_y">●</div>
+          <div class="tl-dot tl-red" id="tl_r">●</div>
+        </div>
+        <div class="beg-hint" id="beg_hint">Przesuń suwak temperatury<br>i obserwuj wynik</div>
+      </div>
+      <div class="rb" style="border-color:var(--border);margin-top:8px">
+        <div class="rb-lbl">λ<sub>max</sub> Wien</div>
+        <div class="rb-val" id="r_wien_b" style="font-size:1.1rem;color:var(--muted)">—</div>
+        <div class="rb-sub">Zielone: ΔT &lt; 5 K · Żółte: &lt; 30 K · Czerwone: &gt; 30 K</div>
+      </div>
+    </div>
+
+    <!-- EXPERT RESULTS -->
+    <div class="xo">
     <div class="rb a">
       <div class="rb-lbl">T wskazana przez pirometr</div>
-      <div class="rb-val a" id="r_Tind">—</div>
+      <div class="rb-val a" id="r_Tind_x">—</div>
     </div>
 
     <div class="rb c">
       <div class="rb-lbl">T rzeczywista obiektu</div>
-      <div class="rb-val c" id="r_Tobj">—</div>
+      <div class="rb-val c" id="r_Tobj_x">—</div>
     </div>
 
-    <div class="rb" id="rb_dT">
+    <div class="rb" id="rb_dT_x">
       <div class="rb-lbl">Błąd ΔT = T<sub>ind</sub> − T<sub>obj</sub></div>
-      <div class="rb-val" id="r_dT">—</div>
-      <div class="rb-sub" id="r_dT_rel">—</div>
+      <div class="rb-val" id="r_dT_x">—</div>
+      <div class="rb-sub" id="r_dT_rel_x">—</div>
     </div>
 
     <div class="rb" style="border-color:var(--border)">
@@ -776,6 +1060,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <tr><td class="en">Sygnał S</td><td class="ev" id="r_sig" style="color:var(--pale);font-size:.62rem">—</td></tr>
       </table>
     </div>
+    </div><!-- /expert results -->
 
   </div>
 </div><!-- /main-layout -->
@@ -789,11 +1074,100 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <div class="docs-overlay" id="docsOverlay" onclick="closeDocs(event)">
 <div class="docs-panel" id="docsPanel">
   <div class="docs-top">
-    <div class="docs-title">Dokumentacja fizyczna i algorytmiczna</div>
+    <div class="docs-title xo">Dokumentacja fizyczna i algorytmiczna</div>
+    <div class="docs-title bo">Jak działa pirometr? — Przewodnik</div>
     <button class="docs-close" onclick="toggleDocs()">✕</button>
   </div>
   <div class="docs-body" id="docsBody">
 
+<!-- ══════════════════════════════════════════
+     DOKUMENTACJA TRYBU PODSTAWOWEGO (bo)
+══════════════════════════════════════════ -->
+<div class="bo">
+
+<!-- Sekcja 1 -->
+<div class="beg-doc-sec">
+<h2>1. Co to jest pirometr?</h2>
+<p>Pirometr to termometr <b>bezdotykowy</b> — mierzy temperaturę obiektu <b>bez dotykania go</b>,
+analizując promieniowanie podczerwone (IR) emitowane przez każde ciało o temperaturze wyższej od zera bezwzględnego.</p>
+<div class="beg-analogy">Każdy obiekt „świeci" ciepłem. Im gorętszy — tym intensywniej i przy krótszych falach.
+Żarząca stal świeci na czerwono bo jej fale IR są krótkie. Twoja dłoń też emituje IR — tylko fale za długie,
+żeby oko je zobaczyło.</div>
+<h3>Jak widzisz to na wykresie?</h3>
+<p>Szara przerywana krzywa (CDC — ciało doskonale czarne) to <b>maksymalna możliwa emisja</b> dla danej temperatury.
+Żółta krzywa poniżej to co <b>naprawdę emituje</b> mierzony obiekt — zawsze słabiej, zależnie od materiału.
+Fioletowa krzywa to <b>sygnał który dociera do detektora</b> po przejściu przez atmosferę.</p>
+<div class="beg-spectrum-legend">
+  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--muted);opacity:.6"></div><span><b>Szara przerywana</b> — wzorzec CDC (ciało doskonale czarne, ε = 1)</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--amber)"></div><span><b>Żółta</b> — promieniowanie emitowane przez obiekt (ε·B)</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--signal)"></div><span><b>Fioletowa</b> — sygnał na detektorze (po atmosferze)</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--cyan)"></div><span><b>Cyjanowy dzwonek u góry</b> — czułość detektora R(λ)</span></div>
+</div>
+<div class="beg-key-box">Przesuń suwak temperatury i obserwuj jak krzywe rosną i <b>przesuwają się w lewo</b> (ku krótszym falom).
+Przy ok. 700°C obiekt zaczyna być widoczny gołym okiem jako czerwony blask — to właśnie prawo Wiena w akcji.</div>
+</div>
+
+<!-- Sekcja 2 -->
+<div class="beg-doc-sec">
+<h2>2. Emisyjność — dlaczego materiał ma znaczenie?</h2>
+<p>Nie każdy obiekt emituje tyle samo ciepła przy tej samej temperaturze. <b>Emisyjność ε</b> (od 0 do 1)
+opisuje jak bardzo obiekt zbliżony jest do idealnego „ciała doskonale czarnego" (ε = 1).</p>
+<div class="beg-analogy">Wyobraź sobie nagrzaną blachę stalową i lusterko — obie w tej samej temperaturze.
+Lusterko odbija ciepło zamiast je emitować (ε ≈ 0.05). Blacha emituje to ciepło sprawnie (ε ≈ 0.7–0.9).
+Pirometr skierowany na lusterko zobaczy prawie nic.</div>
+<h3>Typowe wartości emisyjności</h3>
+<table class="beg-eps-table">
+  <tr><th>Materiał</th><th>ε</th><th>Uwaga</th></tr>
+  <tr><td>Metal polerowany</td><td class="eps-val">0.05–0.15</td><td>Trudny do pomiaru — odbija otoczenie</td></tr>
+  <tr><td>Stal utleniona</td><td class="eps-val">0.60–0.80</td><td>Zgorzelina zwiększa ε</td></tr>
+  <tr><td>Ceramika, tlenki</td><td class="eps-val">0.85–0.95</td><td>Dobry obiekt pomiarowy</td></tr>
+  <tr><td>Grafit, matowa czerń</td><td class="eps-val">0.90–0.97</td><td>Prawie idealne CDC</td></tr>
+  <tr><td>CDC (wzorzec)</td><td class="eps-val">1.00</td><td>Idealny — tylko teoretyczny</td></tr>
+</table>
+<div class="beg-key-box">Spróbuj: ustaw <b>Metal polerowany (ε = 0.10)</b> i obserwuj jak <b>ΔT staje się duże i czerwone</b>.
+To błąd — pirometr widzi zbyt mało promieniowania i zaniża temperaturę. Zmień na <b>CDC (ε = 1.00)</b> — ΔT wraca do zera.</div>
+</div>
+
+<!-- Sekcja 3 -->
+<div class="beg-doc-sec">
+<h2>3. Atmosfera — dlaczego odległość ma znaczenie?</h2>
+<p>Powietrze między pirometrem a obiektem <b>pochłania część promieniowania</b> — głównie para wodna (H₂O)
+i dwutlenek węgla (CO₂). Im dłuższa droga optyczna, tym więcej promieniowania ginie po drodze.</p>
+<div class="beg-analogy">To jak patrzenie przez mgłę — im gęstsza i dalsza, tym mniej widzisz.
+Powietrze jest „mgłą" dla podczerwieni, zwłaszcza wilgotne lub bogate w CO₂ (np. blisko pieca).</div>
+<h3>Efekt w praktyce</h3>
+<p>Przy krótkiej drodze (2 m, niskie wilgotne) atmosfera pochłania kilka procent sygnału — mały błąd.
+Przy długiej drodze (20 m, wysoka wilgotność) strata może być poważna, szczególnie przy długich falach (8–14 µm).</p>
+<div class="beg-key-box">Spróbuj: wybierz detektor <b>Dalekie IR 8–14 µm</b>, przestaw atmosferę na <b>Długa (20 m)</b>
+i obserwuj ΔT. Potem zmień na <b>Bliskie IR 0.65 µm</b> przy tej samej atmosferze — błąd znacznie mniejszy,
+bo krótkie fale lepiej przenikają przez powietrze.</div>
+</div>
+
+<!-- Sekcja 4 -->
+<div class="beg-doc-sec">
+<h2>4. Jak czytać wykresy?</h2>
+<h3>Wykres widma promieniowania</h3>
+<p>Oś pozioma to długość fali λ (w mikrometrach, µm). Im krótsza fala — tym bliżej widzialnego światła (0.4 µm).
+Im dłuższa — tym głębiej w podczerwień. Oś pionowa to intensywność promieniowania.</p>
+<p>Pionowy przerywany pasek w kolorze cyjanowym (R(λ)) pokazuje <b>zakres czułości wybranego detektora</b>.
+Pirometr „widzi" tylko promieniowanie w tym wąskim oknie.</p>
+<h3>Sygnalizacja świetlna ΔT</h3>
+<p>Pod wynikiem temperatury znajdziesz trzy kółka:</p>
+<div class="beg-spectrum-legend">
+  <div class="bsl-row"><div class="bsl-swatch tl-green" style="background:#22c55e;border-radius:50%"></div><span><b>Zielone</b> — błąd małe niż 5 K — pomiar dokładny</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:#f59e0b;border-radius:50%"></div><span><b>Żółte</b> — błąd 5–30 K — sprawdź emisyjność lub skróć drogę</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:#ef4444;border-radius:50%"></div><span><b>Czerwone</b> — błąd powyżej 30 K — duże przekłamanie</span></div>
+</div>
+<div class="beg-analogy">W praktyce laboratoryjnej błąd poniżej 5 K uważa się za dobry wynik.
+Błąd powyżej 30 K oznacza że coś jest bardzo nie tak z emisyjnością lub torem optycznym.</div>
+<div class="beg-key-box">Chcesz zobaczyć więcej szczegółów? Kliknij <b>🔬 Tryb Eksperta</b> w prawym górnym rogu —
+odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, budżet błędów i dokumentację z wzorami.</div>
+</div>
+
+</div><!-- /bo beginner docs -->
+
+
+<div class="xo"><!-- expert docs -->
 <!-- ──── 1. MODEL TORU ──────────────────────── -->
 <div class="doc-sec">
 <h2>1. Model toru pomiarowego</h2>
@@ -1005,7 +1379,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v1.8.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.0.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1162,6 +1536,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </p>
 </div>
 
+</div><!-- /expert docs -->
   </div><!-- /docs-body -->
 </div><!-- /docs-panel -->
 </div><!-- /docs-overlay -->
@@ -1427,8 +1802,9 @@ function tv(name){ return getComputedStyle(document.body).getPropertyValue(name)
 
 function resizeCanvas(c){
   const dpr = window.devicePixelRatio || 1;
-  const w = c.offsetWidth  || parseInt(c.getAttribute('width'))  || 600;
-  const h = c.offsetHeight || parseInt(c.getAttribute('height')) || 300;
+  const w = c.offsetWidth  || 600;
+  // offsetHeight = 0 gdy canvas właśnie wyszedł z display:none — fallback na atrybut
+  const h = c.offsetHeight || parseInt(c.getAttribute('height')) || 200;
   const needW = Math.round(w * dpr);
   const needH = Math.round(h * dpr);
   if(c.width !== needW || c.height !== needH){
@@ -1443,23 +1819,6 @@ function setupCanvas(){
   resizeCanvas(tauCanvas);
 }
 
-function drawGrid(ctx, W, H, pL, pR, pT, pB, xN, yN){
-  const W2=W-pL-pR, H2=H-pT-pB;
-  ctx.strokeStyle = tv('--plot-grid');
-  ctx.lineWidth=1;
-  for(let i=0;i<=yN;i++){
-    const y=pT+H2*i/yN;
-    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
-  }
-  for(let i=0;i<=xN;i++){
-    const x=pL+W2*i/xN;
-    ctx.beginPath(); ctx.moveTo(x,pT); ctx.lineTo(x,pT+H2); ctx.stroke();
-  }
-}
-
-/* ─────────────────────────────────────────────
-   VISIBLE + UV SPECTRUM BAR
-───────────────────────────────────────────── */
 function drawVisibleBar(ctx, lx, pL, W2, pT, H2, barY, barH){
   // ── UV strip (100–380 nm) ──────────────────
   const xUV1 = Math.max(pL,    lx(0.10));
@@ -1555,12 +1914,13 @@ function drawGrid(ctx, pL, pR, pT, pB, W, H, yN){
 ───────────────────────────────────────────── */
 function drawSpec(res, p){
   const ctx = specCtx;
-  const W = specCanvas.offsetWidth, H = parseInt(specCanvas.getAttribute('height'));
+  const W = specCanvas.offsetWidth;
+  const H = specCanvas.offsetHeight || parseInt(specCanvas.getAttribute('height')) || 308;
   ctx.clearRect(0,0,W,H);
 
-  const pL=48,pR=14,pT=14,pB=40;
+  const pL=Math.round(Math.min(54,Math.max(36,W*0.072))),pR=12,pT=14,pB=40;
   const W2=W-pL-pR, H2=H-pT-pB;
-  if(W2<10||H2<10) return;
+  if(W2<50||H2<10) return;
 
   ctx.fillStyle=tv('--bg');   ctx.fillRect(0,0,W,H);
   ctx.fillStyle=tv('--surf'); ctx.fillRect(pL,pT,W2,H2);
@@ -1574,10 +1934,22 @@ function drawSpec(res, p){
     : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
 
   const gMax = Math.max(...res.Lbb, 1e-30);
-  const ly   = v => pT + H2*(1 - Math.min(v/gMax, 1.05));
+  // Widmo zaczyna się PONIŻEJ strefy R(λ)
+  const Rz = Math.round(H2*0.22);  // rezerwuj górne 22% na R(λ)
+  const specTop = pT + Rz;         // góra widma
+  const specH   = H2 - Rz;         // wysokość widma
+  const ly = v => specTop + specH*(1 - Math.min(v/gMax, 1.05));
 
-  // y-grid (horizontal lines)
-  drawGrid(ctx,pL,pR,pT,pB,W,H,4);
+  // y-grid — tylko strefa widma (specTop..specTop+specH)
+  ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y = specTop + specH*i/4;
+    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
+  }
+  // delikatna linia oddzielająca strefę R(λ) od widma
+  ctx.globalAlpha=0.3; ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=0.5;
+  ctx.beginPath(); ctx.moveTo(pL,specTop); ctx.lineTo(pL+W2,specTop); ctx.stroke();
+  ctx.globalAlpha=1;
 
   // x-grid: log or linear ticks
   ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
@@ -1590,10 +1962,11 @@ function drawSpec(res, p){
     }
   });
 
-  // y-axis labels
+  // y-axis labels — względem specTop/specH (poniżej strefy R)
   ctx.fillStyle=tv('--muted'); ctx.font='10px IBM Plex Mono,monospace';
   ctx.textAlign='right';
-  ['100','75','50','25','0'].forEach((v,i)=> ctx.fillText(v+'%',pL-4,pT+H2*i/4+4));
+  [['100%',0],['75%',1],['50%',2],['25%',3],['0%',4]].forEach(([v,i])=>
+    ctx.fillText(v, pL-4, specTop + specH*i/4 + 4));
 
   // visible + UV spectrum bar
   const barY=pT+H2+3, barH=7;
@@ -1632,8 +2005,14 @@ function drawSpec(res, p){
 
     const Rvals = seg.map(u => detResp(u*1e-6, det));
     const maxR  = Math.max(...Rvals, 0.01);
-    const Rzone = H2 * 0.21;
-    const ryR   = r => pT + Rzone * (1 - r/maxR);
+    const Rzone = Rz;                                  // górna strefa [pT .. pT+Rz]
+    const ryR   = r => pT + Rzone*(1 - r/maxR);       // r=maxR→pT (szczyt), r=0→pT+Rzone (baza)
+
+    // ── Strefa R(λ) clipped do [pT .. pT+Rzone] ────────────────────────
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(pL, pT, W2, Rzone);   // clip: TYLKO strefa R, bez zachodzenia na widmo
+    ctx.clip();
 
     // wypełnienie
     ctx.beginPath();
@@ -1648,25 +2027,19 @@ function drawSpec(res, p){
     seg.forEach((u,i) => { const x=lx(u), y=ryR(Rvals[i]); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
     ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 1.8; ctx.stroke();
 
-    // linia bazowa strefy
-    ctx.globalAlpha = 0.15; ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 0.5;
-    ctx.beginPath(); ctx.moveTo(pL, pT+Rzone); ctx.lineTo(pL+W2, pT+Rzone); ctx.stroke();
-    ctx.globalAlpha = 1;
+    ctx.restore();
 
-    // etykieta + skala
+    // etykieta R(λ) — wewnątrz górnej strefy
     ctx.globalAlpha = 0.70; ctx.fillStyle = tv('--cyan');
-    ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
-    ctx.fillText('R(λ)', pL + 4, pT + 9);
-    ctx.globalAlpha = 0.40; ctx.font = '7px IBM Plex Mono,monospace'; ctx.textAlign = 'right';
-    ctx.fillText('100%', pL - 2, pT + 5);
-    ctx.globalAlpha = 1;
+    ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'right';
+    ctx.fillText('R(λ)', pL + W2 - 4, pT + 10); ctx.globalAlpha = 1;
 
-    // pionowe linie granicy okna (poniżej strefy R, bez wypełnienia)
+    // pionowe linie granic okna detektora — od granicy strefy R do dołu wykresu
     ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.globalAlpha=0.40;
     ctx.strokeStyle = tv('--cyan');
     const x1=lx(dmin), x2=lx(dmax);
-    if(x1>pL&&x1<pL+W2){ ctx.beginPath(); ctx.moveTo(x1,pT+Rzone); ctx.lineTo(x1,pT+H2); ctx.stroke(); }
-    if(x2>pL&&x2<pL+W2){ ctx.beginPath(); ctx.moveTo(x2,pT+Rzone); ctx.lineTo(x2,pT+H2); ctx.stroke(); }
+    if(x1>pL&&x1<pL+W2){ ctx.beginPath(); ctx.moveTo(x1,specTop); ctx.lineTo(x1,specTop+specH); ctx.stroke(); }
+    if(x2>pL&&x2<pL+W2){ ctx.beginPath(); ctx.moveTo(x2,specTop); ctx.lineTo(x2,specTop+specH); ctx.stroke(); }
     ctx.setLineDash([]); ctx.globalAlpha = 1;
   }
 
@@ -1749,10 +2122,11 @@ function drawSpec(res, p){
 
 function drawTau(res){
   const ctx = tauCtx;
-  const W = tauCanvas.offsetWidth, H = parseInt(tauCanvas.getAttribute('height'));
+  const W = tauCanvas.offsetWidth;
+  const H = tauCanvas.offsetHeight || parseInt(tauCanvas.getAttribute('height')) || 148;
   ctx.clearRect(0,0,W,H);
 
-  const pL=48,pR=14,pT=10,pB=40;
+  const pL=Math.round(Math.min(54,Math.max(36,W*0.072))),pR=12,pT=14,pB=40;
   const W2=W-pL-pR, H2=H-pT-pB;
   if(W2<10||H2<10) return;
 
@@ -1761,17 +2135,19 @@ function drawTau(res){
 
   const lamArr = res.lam_um;
   const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
-  // ── X mapping: log or linear (matches specCanvas) ─────
   const lx = logScale
     ? u => pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
     : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
-  const ly = v => pT + H2*(1-v);
 
-  // y-grid
-  drawGrid(ctx,pL,pR,pT,pB,W,H,4);
+  // 8% nadmiar nad 100% — linia τ=1 nie ucinana przez ramkę
+  const OVER = 0.08;
+  const ly = v => pT + H2 * (1 - v/(1+OVER));
 
-  // x-grid
+  // ── SIATKA ──────────────────────────────────────────────
   ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
+  [0, 0.25, 0.50, 0.75, 1.0].forEach(v=>{
+    const y=ly(v); ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
+  });
   const xTicksMu = logScale
     ? [0.2,0.4,0.7,1,2,3,5,8,12]
     : [1,2,3,4,5,6,8,10,12,14];
@@ -1781,15 +2157,15 @@ function drawTau(res){
     }
   });
 
+  // ── ETYKIETY OSI Y ──────────────────────────────────────
   ctx.fillStyle=tv('--muted'); ctx.font='9px IBM Plex Mono,monospace';
   ctx.textAlign='right';
-  ['100','75','50','25','0'].forEach((v,i)=> ctx.fillText(v+'%',pL-4,pT+H2*i/4+4));
+  [['100%',1.0],['75%',0.75],['50%',0.50],['25%',0.25],['0%',0]].forEach(([lbl,v])=>
+    ctx.fillText(lbl, pL-4, ly(v)+4));
 
-  // visible + UV spectrum bar
+  // ── VIS/UV BAR + etykiety x ─────────────────────────────
   const barY=pT+H2+3, barH=7;
   drawVisibleBar(ctx,lx,pL,W2,pT,H2,barY,barH);
-
-  // x-axis labels
   ctx.fillStyle=tv('--muted'); ctx.font='9px IBM Plex Mono,monospace';
   ctx.textAlign='center';
   const xLblsMu = logScale
@@ -1799,42 +2175,149 @@ function drawTau(res){
     const x=lx(v); if(x>pL+4&&x<pL+W2-4) ctx.fillText(l,x,pT+H2+28);
   });
 
-  // det window
+  // ── OKNO DETEKTORA ───────────────────────────────────────
   const [dmin,dmax]=res.det.range;
   const x1=lx(dmin), x2=lx(dmax);
   ctx.globalAlpha=0.18; ctx.fillStyle=tv('--cyan');
   ctx.fillRect(Math.max(pL,x1),pT,Math.min(pL+W2,x2)-Math.max(pL,x1),H2);
   ctx.globalAlpha=1;
 
-  // τ fill
+  // ── τ(λ) WYPEŁNIENIE + LINIA (clipped) ──────────────────
+  ctx.save();
+  ctx.beginPath(); ctx.rect(pL,pT,W2,H2); ctx.clip();
+
   ctx.beginPath();
-  ctx.moveTo(lx(lamArr[0]),pT+H2);
+  ctx.moveTo(lx(lamArr[0]), ly(0));
   res.tau.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
-  ctx.lineTo(lx(lamArr[res.tau.length-1]),pT+H2); ctx.closePath();
+  ctx.lineTo(lx(lamArr[res.tau.length-1]), ly(0));
+  ctx.closePath();
   ctx.globalAlpha=0.22; ctx.fillStyle=tv('--cyan'); ctx.fill(); ctx.globalAlpha=1;
 
-  // τ line
   ctx.beginPath();
   res.tau.forEach((v,i)=>{ const x=lx(lamArr[i]); i===0?ctx.moveTo(x,ly(v)):ctx.lineTo(x,ly(v)); });
-  ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1.5; ctx.stroke();
+  ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1.8; ctx.stroke();
+  ctx.restore();
 
-  // τ_avg label
+  // ── ETYKIETY WEWNĘTRZNE ──────────────────────────────────
   ctx.globalAlpha=0.8; ctx.fillStyle=tv('--cyan'); ctx.font='10px IBM Plex Mono,monospace';
   ctx.textAlign='left';
-  ctx.fillText('τ̄_det = '+res.tau_avg.toFixed(3), pL+6, pT+H2-5);
+  ctx.fillText('τ̄_det = '+res.tau_avg.toFixed(3), pL+6, pT+H2-6);
   ctx.globalAlpha=1;
 
-  // window labels
   const wins=[{c:1.75,l:'1–2.5 µm'},{c:4.0,l:'3–5 µm'},{c:11.0,l:'8–14 µm'}];
-  ctx.globalAlpha=0.55; ctx.fillStyle=tv('--cyan'); ctx.font='8px IBM Plex Mono,monospace';
+  ctx.globalAlpha=0.50; ctx.fillStyle=tv('--cyan'); ctx.font='8px IBM Plex Mono,monospace';
   ctx.textAlign='center';
-  wins.forEach(w=>{
-    const xw=lx(w.c); if(xw>pL&&xw<pL+W2) ctx.fillText(w.l,xw,pT+9);
-  });
+  wins.forEach(w=>{ const xw=lx(w.c); if(xw>pL&&xw<pL+W2) ctx.fillText(w.l,xw,pT+10); });
   ctx.globalAlpha=1;
 
+  // ── RAMKA na końcu ───────────────────────────────────────
   ctx.strokeStyle=tv('--border'); ctx.lineWidth=1;
   ctx.strokeRect(pL,pT,W2,H2);
+}
+
+/* ─────────────────────────────────────────────
+   BEGINNER PRESETS
+───────────────────────────────────────────── */
+const BEG_PRESETS = {
+  beg_ideal:  {Tobj:1473,eps_real:1.00,path:0, rh:0,  co2:400,Tatm:20,detKey:'band_065', eps_assumed:1.00,windowKey:'none',windowTemp:25,windowThick:5},
+  beg_metal:  {Tobj:1373,eps_real:0.15,path:2, rh:40, co2:400,Tatm:20,detKey:'band_065', eps_assumed:0.70,windowKey:'none',windowTemp:25,windowThick:5},
+  beg_ceramic:{Tobj:1073,eps_real:0.90,path:2, rh:40, co2:400,Tatm:20,detKey:'window_35',eps_assumed:0.90,windowKey:'none',windowTemp:25,windowThick:5},
+};
+
+/* ─────────────────────────────────────────────
+   MODE SWITCHING
+───────────────────────────────────────────── */
+let expertMode = false;
+
+function toggleMode(){
+  expertMode = !expertMode;
+  applyMode();
+}
+function applyMode(){
+  const btn = document.getElementById('modeBtn');
+  if(expertMode){
+    document.body.classList.remove('beginner');
+    document.body.classList.add('expert');
+    btn.textContent = '🎓 Tryb Podstawowy';
+  } else {
+    document.body.classList.remove('expert');
+    document.body.classList.add('beginner');
+    btn.textContent = '🔬 Tryb Eksperta';
+  }
+  // tauCanvas był display:none w trybie podstawowym — czekamy jeden frame
+  // aż przeglądarka policzy layout przed rysowaniem
+  requestAnimationFrame(() => {
+    resizeCanvas(specCanvas);
+    resizeCanvas(tauCanvas);
+    scheduleUpdate();
+  });
+}
+
+/* ─────────────────────────────────────────────
+   PRESET DROPDOWN MENU
+───────────────────────────────────────────── */
+function togglePresetMenu(){
+  const dd=document.getElementById('presetDropdown');
+  const btn=document.getElementById('presetMenuBtn');
+  const open=dd.classList.toggle('open');
+  btn.classList.toggle('open',open);
+}
+function closePresets(){
+  document.getElementById('presetDropdown').classList.remove('open');
+  document.getElementById('presetMenuBtn').classList.remove('open');
+}
+// Close on outside click
+document.addEventListener('click',e=>{
+  const m=document.getElementById('presetMenu');
+  if(m&&!m.contains(e.target)) closePresets();
+});
+
+/* ─────────────────────────────────────────────
+   BEGINNER CONTROL HANDLERS
+───────────────────────────────────────────── */
+function begOnT(el){
+  const c=parseFloat(el.value);
+  slPct(el);                                                    // ← aktualizuj gradient suwaka
+  state.Tobj=Math.round(c+273.15);
+  document.getElementById('beg_num_T').value=c;
+  const sl=document.getElementById('sl_Tobj'); if(sl){sl.value=state.Tobj;slPct(sl);}
+  const nc=document.getElementById('num_Tobj_c'); if(nc) nc.value=c;
+  const kl=document.getElementById('val_Tobj_k'); if(kl) kl.textContent='= '+state.Tobj+' K';
+  scheduleUpdate();
+}
+function begOnTNum(el){
+  let c=parseFloat(el.value); if(isNaN(c)) return;
+  c=Math.max(-20,Math.min(2000,Math.round(c)));
+  el.value=c;
+  const sl=document.getElementById('beg_sl_T'); if(sl){sl.value=c; slPct(sl);}  // ← gradient
+  state.Tobj=Math.round(c+273.15);
+  scheduleUpdate();
+}
+function begSetEps(val,btnId){
+  state.eps_real=val; state.eps_assumed=val;
+  document.querySelectorAll('.eps-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(btnId).classList.add('active');
+  document.getElementById('beg_eps_val').textContent='ε = '+val.toFixed(2);
+  const sl=document.getElementById('sl_eps_real'); if(sl){sl.value=val;slPct(sl);}
+  const n=document.getElementById('num_eps_real'); if(n) n.value=val.toFixed(2);
+  const sl2=document.getElementById('sl_eps_assumed'); if(sl2){sl2.value=val;slPct(sl2);}
+  const n2=document.getElementById('num_eps_assumed'); if(n2) n2.value=val.toFixed(2);
+  scheduleUpdate();
+}
+function begSetAtm(path,btnId){
+  state.path=path; state.rh=path===0?0:50;
+  document.querySelectorAll('.atm-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(btnId).classList.add('active');
+  const sl=document.getElementById('sl_path'); if(sl){sl.value=path;slPct(sl);}
+  const vp=document.getElementById('val_path'); if(vp) vp.textContent=path+' m';
+  scheduleUpdate();
+}
+function begSetDet(key,btnId){
+  state.detKey=key;
+  document.querySelectorAll('.det-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(btnId).classList.add('active');
+  const sd=document.getElementById('sel_det'); if(sd) sd.value=key;
+  scheduleUpdate();
 }
 
 /* ─────────────────────────────────────────────
@@ -1910,32 +2393,46 @@ function updateChain(res, p){
 }
 
 function updateResults(res, p){
-  document.getElementById('r_Tind').textContent = res.T_ind_K.toFixed(0)+' K ('+res.T_ind.toFixed(0)+' °C)';
-  document.getElementById('r_Tobj').textContent = p.Tobj+' K ('+(p.Tobj-273.15).toFixed(0)+' °C)';
+  // ── Shared T indicators (used by both modes)
+  const Tind_str = res.T_ind_K.toFixed(0)+' K ('+res.T_ind.toFixed(0)+' °C)';
+  const Tobj_str = p.Tobj+' K ('+(p.Tobj-273.15).toFixed(0)+' °C)';
+  // Beginner + Expert share r_Tind (beginner), expert has r_Tind_x
+  document.getElementById('r_Tind').textContent = Tind_str;
+  const rTx = document.getElementById('r_Tind_x');
+  if(rTx) rTx.textContent = Tind_str;
 
+  // ── Beginner results
+  const rb = document.getElementById('r_Tobj_b'); if(rb) rb.textContent=Tobj_str;
+  const rb2 = document.getElementById('r_dT_b');
   const dT = res.dT;
-  const dTstr = (dT>=0?'+':'')+dT.toFixed(1)+' K';
-  const dTel = document.getElementById('r_dT');
-  dTel.textContent = dTstr;
-  dTel.className = 'rb-val '+(Math.abs(dT)<2?'g':dT>0?'r':'c');
-  document.getElementById('rb_dT').className = 'rb '+(Math.abs(dT)<2?'g':Math.abs(dT)<20?'a':'r');
-  document.getElementById('r_dT_rel').textContent = 'wzgl: '+(dT/p.Tobj*100).toFixed(2)+'%';
+  const dTstr=(dT>=0?'+':'')+dT.toFixed(1)+' K';
+  if(rb2) rb2.textContent=dTstr;
+  // traffic lights
+  const isOK=Math.abs(dT)<5, isWarn=Math.abs(dT)<30;
+  const tlg=document.getElementById('tl_g'), tly=document.getElementById('tl_y'), tlr=document.getElementById('tl_r');
+  if(tlg){ tlg.classList.toggle('on',isOK); tly.classList.toggle('on',!isOK&&isWarn); tlr.classList.toggle('on',!isWarn); }
+  const hint=document.getElementById('beg_hint');
+  if(hint) hint.textContent = isOK ? 'Pomiar dokładny — ΔT < 5 K'
+    : isWarn ? 'Błąd umiarkowany — sprawdź emisyjność'
+    : 'Duży błąd — emisyjność lub atmosfera powoduje przekłamanie';
+  const rw_b=document.getElementById('r_wien_b'); if(rw_b) rw_b.textContent=res.wien_um.toFixed(2)+' µm';
 
-  const fmt = v => (v>=0?'+':'')+v.toFixed(1)+' K';
-  const cls = v => Math.abs(v)<0.3?'ev ok':v>0?'ev pos':'ev neg';
-  document.getElementById('e_eps').textContent = fmt(res.dT_eps);
-  document.getElementById('e_eps').className = cls(res.dT_eps);
-  document.getElementById('e_atm').textContent = fmt(res.dT_atm);
-  document.getElementById('e_atm').className = cls(res.dT_atm);
-  const eWinEl = document.getElementById('e_win');
-  eWinEl.textContent = fmt(res.dT_win);
-  eWinEl.className = cls(res.dT_win);
-  document.getElementById('e_tot').textContent = fmt(dT);
-  document.getElementById('e_tot').className = cls(dT);
-
-  document.getElementById('r_tau').textContent = res.tau_avg.toFixed(3);
-  document.getElementById('r_wien').textContent= res.wien_um.toFixed(3)+' µm';
-  document.getElementById('r_sig').textContent = res.signal.toExponential(3);
+  // ── Expert results
+  document.getElementById('r_Tobj_x').textContent = Tobj_str;
+  const dTel=document.getElementById('r_dT_x');
+  dTel.textContent=dTstr;
+  dTel.className='rb-val '+(Math.abs(dT)<2?'g':dT>0?'r':'c');
+  document.getElementById('rb_dT_x').className='rb '+(Math.abs(dT)<2?'g':Math.abs(dT)<20?'a':'r');
+  document.getElementById('r_dT_rel_x').textContent='wzgl: '+(dT/p.Tobj*100).toFixed(2)+'%';
+  const fmt=v=>(v>=0?'+':'')+v.toFixed(1)+' K';
+  const cls=v=>Math.abs(v)<0.3?'ev ok':v>0?'ev pos':'ev neg';
+  document.getElementById('e_eps').textContent=fmt(res.dT_eps); document.getElementById('e_eps').className=cls(res.dT_eps);
+  document.getElementById('e_atm').textContent=fmt(res.dT_atm); document.getElementById('e_atm').className=cls(res.dT_atm);
+  const ew=document.getElementById('e_win'); ew.textContent=fmt(res.dT_win); ew.className=cls(res.dT_win);
+  document.getElementById('e_tot').textContent=fmt(dT); document.getElementById('e_tot').className=cls(dT);
+  document.getElementById('r_tau').textContent=res.tau_avg.toFixed(3);
+  document.getElementById('r_wien').textContent=res.wien_um.toFixed(3)+' µm';
+  document.getElementById('r_sig').textContent=res.signal.toExponential(3);
 }
 
 /* ─────────────────────────────────────────────
@@ -2086,13 +2583,18 @@ const PRESETS={
 };
 
 function loadPreset(name){
-  const p=PRESETS[name]; if(!p) return;
-  Object.assign(state,p);
-  document.getElementById('sel_det').value=state.detKey;
-  document.getElementById('sel_win').value=state.windowKey;
+  const p = PRESETS[name] || BEG_PRESETS[name];
+  if(!p) return;
+  Object.assign(state, p);
+  document.getElementById('sel_det').value = state.detKey;
+  document.getElementById('sel_win').value = state.windowKey;
   initSliders();
-  // trigger onWinChange to update desc + disable state
   onWinChange();
+  // Sync beginner slider
+  const bsl = document.getElementById('beg_sl_T');
+  if(bsl){ const c=Math.round(state.Tobj-273.15); bsl.value=c; }
+  const bnum = document.getElementById('beg_num_T');
+  if(bnum) bnum.value = Math.round(state.Tobj-273.15);
   scheduleUpdate();
 }
 
@@ -2102,7 +2604,8 @@ function loadPreset(name){
 let isDark = true;
 function toggleTheme(){
   isDark = !isDark;
-  document.body.className = isDark ? 'theme-dark' : 'theme-light';
+  document.body.classList.toggle('theme-dark', isDark);
+  document.body.classList.toggle('theme-light', !isDark);
   document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
   scheduleUpdate();
 }
@@ -2126,7 +2629,7 @@ function closeDocs(e){
 specCanvas.addEventListener('mousemove', e=>{
   const rect=specCanvas.getBoundingClientRect();
   const mx=e.clientX-rect.left;
-  const pL=48,pR=14;
+  const pL=Math.round(Math.min(54,Math.max(36,specCanvas.offsetWidth*0.072))),pR=12;
   const W2=specCanvas.offsetWidth-pL-pR;
   const frac=(mx-pL)/W2;
   if(frac<0||frac>1){ hideTT(); hoverFrac=null; scheduleUpdate(); return; }
@@ -2146,16 +2649,19 @@ specCanvas.addEventListener('mousemove', e=>{
   tt.style.display='block';
   tt.style.left=(e.clientX+14)+'px';
   tt.style.top=(e.clientY-55)+'px';
+  const absVal = v => v.toExponential(2)+' W·m⁻²·sr⁻¹·m⁻¹';
   const winRow = (res.winKey && res.winKey!=='none')
-    ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(3)}</span></div>`
+    ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(4)}</span></div>`
     : '';
-  tt.innerHTML=`<div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
-    <div class="tt-r"><span class="tt-l">CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
+  tt.innerHTML=`
+    <div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
+    <div class="tt-r"><span class="tt-l">L<sub>bb</sub> CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
+    <div class="tt-r" style="font-size:.65rem;color:var(--muted);margin-top:-3px"><span class="tt-l"></span><span>${absVal(res.Lbb[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber)">${pct(res.Lemit[idx])}</span></div>
-    <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(3)}</span></div>
+    <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(4)}</span></div>
     ${winRow}
-    <div class="tt-r"><span class="tt-l">Sygnał:</span><span style="color:var(--orange)">${pct(res.Ldet[idx])}</span></div>
-    <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)}%</span></div>`;
+    <div class="tt-r"><span class="tt-l">Sygnał L<sub>det</sub>:</span><span style="color:var(--signal)">${pct(res.Ldet[idx])}</span></div>
+    <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)} %</span></div>`;
   scheduleUpdate();
 });
 specCanvas.addEventListener('mouseleave',()=>{ hideTT(); hoverFrac=null; scheduleUpdate(); });
@@ -2166,8 +2672,14 @@ function hideTT(){ document.getElementById('tooltip').style.display='none'; }
 ───────────────────────────────────────────── */
 window.addEventListener('resize', ()=>scheduleUpdate());
 window.addEventListener('load', ()=>{
+  // body już ma klasę 'beginner' z HTML — nie nadpisujemy
   setupCanvas();
   initSliders();
+  // synchronizuj suwak i pole °C w trybie beginera
+  const bsl=document.getElementById('beg_sl_T');
+  if(bsl) bsl.value=Math.round(state.Tobj-273.15);
+  const bnum=document.getElementById('beg_num_T');
+  if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
 });
 </script>

@@ -1,126 +1,131 @@
-# Symulator Toru Pirometrycznego
+# Pirometria — Symulator Toru Pomiarowego
 
-**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny tor pomiarowy: obiekt → atmosfera → przesłona optyczna → detektor → procesor → wynik.
+**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny tor pomiarowy z dwoma trybami obsługi.
 
-> Materiał dydaktyczny do ćwiczeń laboratoryjnych z metrologii temperatury  
+> Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury  
 > **Mirosław Socha** · Katedra Metrologii i Elektroniki · WEAIiIB · AGH Kraków
 
 ---
 
 ## Uruchomienie
 
-Aplikacja jest **jednym samodzielnym plikiem HTML** — wystarczy otworzyć `src/symulator_pirometru.html` w przeglądarce. Nie wymaga serwera ani instalacji.
+Jeden plik HTML — otwórz `src/symulator_pirometru.html` w przeglądarce. Brak instalacji, brak serwera.
 
-Zewnętrzne zasoby ładowane przez CDN (wymagane połączenie z internetem):
-- [Google Fonts](https://fonts.google.com) — typografia (IBM Plex Sans/Mono, Playfair Display)
-- [KaTeX 0.16](https://katex.org) — renderowanie wzorów matematycznych
+---
+
+## Dwa tryby obsługi
+
+### 🎓 Tryb Podstawowy (domyślny)
+Dla studentów bez doświadczenia z pirometrią. Uproszczony interfejs:
+- Temperatura w °C (suwak + pole numeryczne)
+- 4 presetowe przyciski emisyjności (metal / stal / ceramika / CDC)
+- 3 przyciski atmosfery (brak / krótka / długa droga)
+- 3 typy pirometru (bliskie IR / środkowe / dalekie IR)
+- Jeden wykres widma z 3 krzywymi
+- Wyniki z sygnalizacją świetlną 🟢🟡🔴
+- Wbudowana dokumentacja „Jak działa pirometr?" (4 sekcje)
+
+### 🔬 Tryb Eksperta (przycisk w nagłówku)
+Pełen model fizyczny:
+- Zakres temperatury: 10 K – 12 000 K
+- 4 suwaki atmosferyczne (L, HR, CO₂, T_atm)
+- Przesłona optyczna z 6 materiałami, grubością i temperaturą
+- 7 typów detektorów
+- Dwa wykresy: widmo + transmitancja τ(λ)
+- Budżet błędów 3-składowy (Δε, ΔT_atm, ΔT_win)
+- Dokumentacja z 10 sekcjami i bibliografią (15 pozycji)
 
 ---
 
 ## Tor pomiarowy
 
 ```
-┌──────────┐   ┌───────────┐   ┌───────────┐   ┌──────────┐   ┌──────────┐   ┌────────┐
-│  Obiekt  │ → │ Atmosfera │ → │ Przesłona │ → │ Detektor │ → │ Procesor │ → │ Wynik  │
-│  T, ε    │   │ L, HR, CO₂│   │ τ_win(λ)  │   │  R(λ)    │   │ ε_zał.   │   │ T_ind  │
-└──────────┘   └───────────┘   └───────────┘   └──────────┘   └──────────┘   └────────┘
+[Obiekt T,ε] → [Atmosfera τ_atm(λ)] → [Przesłona τ_win(λ)] → [Detektor R(λ)] → [Procesor] → T_ind
 ```
 
-Sygnał na detektorze opisany ogólnym równaniem transportu promieniowania:
+Sygnał na detektorze:
 
-$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda) \cdot \left[ \tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T) + \left(1-\tau_{\mathrm{atm}}(\lambda)\right)\cdot L_{bb}(\lambda,T_{\mathrm{atm}}) \right]$$
+$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\left[\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T) + [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})\right] + [1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})$$
 
 ---
 
 ## Model fizyczny
 
-### Prawa promieniowania termicznego
+### Prawa promieniowania
 
 | Prawo | Wzór | Zastosowanie |
-|-------|------|--------------|
-| **Plancka** | $L_{bb}(\lambda,T) = \frac{2hc^2}{\lambda^5} \cdot \frac{1}{e^{hc/\lambda k_B T}-1}$ | Widmo CDC |
-| **Wiena** | $\lambda_{\max} \cdot T = 2{,}898 \times 10^{-3}\ \mathrm{m{\cdot}K}$ | Maksimum emisji |
-| **Stefana–Boltzmanna** | $M = \sigma T^4$ | Pirometr całkujący |
-| **Kirchhoffa** | $\varepsilon(\lambda,T) = \alpha(\lambda,T)$ | Emisyjność = absorpcyjność |
+|-------|------|-------------|
+| Planck | $L_{bb}(\lambda,T)=\frac{2hc^2}{\lambda^5(e^{hc/\lambda k_BT}-1)}$ | Widmo CDC |
+| Wien | $\lambda_{\max}T=2{,}898\times10^{-3}$ m·K | Szczyt emisji |
+| Stefan–Boltzmann | $M=\sigma T^4$ | Pirometr całkujący |
+| Kirchhoff | $\varepsilon=\alpha$ | Emisja = absorpcja |
 
-### Model atmosfery — Beer–Lambert (uproszczony HITRAN)
+### Atmosfera — Beer–Lambert (uproszczony HITRAN)
+12 pasm H₂O · 7 pasm CO₂ · rozpraszanie Rayleigha
 
-- **H₂O**: 12 pasm absorpcji (0.72–13.4 µm)
-- **CO₂**: 7 pasm (dominujące: 4.26 µm)
-- **Rozpraszanie Rayleigha** w zakresie widzialnym
+### Przesłona optyczna — 6 materiałów
 
-### Przesłony optyczne — 6 materiałów
+| Materiał | Zakres [µm] | τ_Fresnel | d_ref |
+|----------|------------|-----------|-------|
+| Szyba float | 0.32–2.7 | 0.91 | 4 mm |
+| Plexiglas (PMMA) | 0.35–2.8 | 0.92 | 5 mm |
+| Kwarc topiony | 0.15–4.5 | 0.945 | 5 mm |
+| Fluoryt (CaF₂) | 0.13–9.5 | 0.944 | 2 mm |
+| Selenek cynku (ZnSe) | 0.55–16 | 0.70 | 3 mm |
+| German (Ge) | 1.8–16 | 0.46 | 3 mm |
 
-| Materiał | Zakres [µm] | τ_peak | Uwagi |
-|----------|------------|--------|-------|
-| Szyba float (SiO₂) | 0.32 – 2.7 | 0.91 | pasma OH 1.4 / 1.9 µm |
-| Plexiglas (PMMA) | 0.35 – 2.8 | 0.92 | pasma C-H 1.15 / 1.41 / 1.69 / 2.18 µm |
-| Kwarc topiony | 0.15 – 4.5 | 0.945 | słabe pasmo OH 2.72 µm |
-| Fluoryt (CaF₂) | 0.13 – 9.5 | 0.944 | brak istotnych pasm |
-| Selenek cynku (ZnSe) | 0.55 – 16 | 0.70 | n ≈ 2.4, straty Fresnela |
-| German (Ge) | 1.8 – 16 | 0.46 | blokuje VIS/UV; n ≈ 4 |
-
-Model transmitancji: smoothstep na krawędziach UV/IR + gaussowskie pasma absorpcji.
+Model: `τ(λ,d) = τ_Fresnel · τ_bandpass(λ) · τ_bulk(λ,d_ref)^(d/d_ref)` + emisja własna `(1−τ)·L_bb(T_win)`
 
 ### Detektory — 7 typów
 
-| Typ | Detektor | Zakres / centrum |
-|-----|----------|-----------------|
-| Pasmowy (gauss) | Si | 0.65 µm |
-| Pasmowy (gauss) | InGaAs | 1.0 µm |
-| Pasmowy (gauss) | InGaAs | 1.6 µm |
-| Pasmowy (gauss) | InSb | 3.9 µm |
-| Okienkowy | InSb | 3 – 5 µm |
-| Okienkowy | MCT / bolometr | 8 – 14 µm |
-| Całkujący | Termostos | 1 – 18 µm |
+| Typ | Detektor | Zakres |
+|-----|----------|--------|
+| Pasmowy Si | 0.65 µm | [0.555, 0.745] µm |
+| Pasmowy InGaAs | 1.0 µm | [0.851, 1.149] µm |
+| Pasmowy InGaAs | 1.6 µm | [1.388, 1.812] µm |
+| Pasmowy InSb | 3.9 µm | [3.156, 4.644] µm |
+| Okienkowy InSb | 3–5 µm | — |
+| Okienkowy MCT | 8–14 µm | — |
+| Całkujący termostos | 1–18 µm | — |
+
+Zakresy Gaussów = ±5σ (fizycznie poprawne).
 
 ### Inwersja temperatury
+Bisekcja 72 iteracje, zakres 1–15 000 K, zbieżność < 0.01 K.
 
-Pirometr wyznacza T_ind szukając temperatury, dla której model uproszczony (τ=1, ε=ε_zał) daje ten sam sygnał co pełny tor:
-
-$$\int_0^\infty R(\lambda)\cdot\varepsilon_{\mathrm{zal}}\cdot L_{bb}(\lambda,T_{\mathrm{ind}})\,\mathrm{d}\lambda = S_{\mathrm{zmierzony}}$$
-
-Algorytm: **bisekcja 72 iteracje**, zakres 1–15 000 K, zbieżność < 0.01 K.
-
-### Budżet błędów — 3 niezależne składowe
-
-$$\Delta T = \underbrace{\Delta T_\varepsilon}_{\text{emisyjność}} + \underbrace{\Delta T_{\mathrm{atm}}}_{\text{atmosfera}} + \underbrace{\Delta T_{\mathrm{win}}}_{\text{przesłona}}$$
+### Budżet błędów
+$$\Delta T = \Delta T_\varepsilon + \Delta T_{\mathrm{atm}} + \Delta T_{\mathrm{win}}$$
 
 ---
 
-## Funkcje aplikacji
+## Funkcje interfejsu
 
 | Funkcja | Opis |
 |---------|------|
-| 🌡️ Zakres T | 10 K – 12 000 K (suwak + pole numeryczne, przelicznik °C) |
-| 📊 Skala osi λ | Liniowa (kształt z podręcznika) / logarytmiczna (UV+VIS+IR razem) |
-| 🌈 Pasek widma | UV (100–380 nm) + VIS (380–700 nm) na osi λ obu wykresów |
-| 🌙 Motyw | Ciemny / jasny (przełącznik) |
-| 📖 Dokumentacja | Panel boczny z 9 sekcjami, wzory KaTeX |
-| 🔬 Tooltip hover | Wartości L(λ), ε·B(λ), τ_atm(λ), τ_win(λ), R(λ) w dowolnym punkcie |
-| 📱 Responsywność | 3 układy: desktop (≥1100 px) · tablet · telefon |
+| Skala λ | Liniowa / logarytmiczna (przełącznik) |
+| R(λ) na wykresie | Adaptacyjna siatka 500 pkt w zakresie czułości |
+| Pasek UV+VIS | Gradient 380–700 nm na osi λ |
+| Tooltip hover | λ [µm/nm], L_bb, ε·B, τ_atm, τ_win, Sygnał, R(λ) |
+| Motywy | Ciemny / jasny |
+| Responsywność | Desktop · tablet · telefon |
+| Presety | Menu rozwijane (3 basic + 6 expert) |
 
-### Presets demonstracyjne
+---
 
-| Preset | Scenariusz | Kluczowy efekt |
-|--------|-----------|---------------|
-| Idealny | CDC, τ=1, ε_zał=ε_real | ΔT = 0 — punkt odniesienia |
-| Błąd ε | Stal polerowana ε=0.15, założono ε=0.90 | Duże ΔT_ε — błąd emisyjności |
-| Atmosfera | 25 m, HR=80%, CO₂×2 | Widoczna absorpcja 4.26 µm CO₂ |
-| Niska T | 200°C, detektor MCT 8–14 µm | Pomiar niskotemperaturowy |
-| Całkujący | Termostos, zła ε | Czułość T⁴ na emisyjność |
-| 🪟 Plexiglas | Wziernik PMMA, InGaAs 1.0 µm | ΔT_win ≈ −210 K, pasma C-H |
+## Dokumentacja wbudowana
+
+**Tryb Podstawowy:** 4 sekcje w języku potocznym z analogiami i ćwiczeniami interaktywnymi.
+
+**Tryb Eksperta:** 10 sekcji z wzorami KaTeX + bibliografia 15 pozycji [1–10 naukowe z DOI, 11–15 polskie/online].
 
 ---
 
 ## Nomenklatura
 
-| Skrót | Pełna nazwa | Angielski odpowiednik |
-|-------|------------|----------------------|
-| **CDC** | Ciało Doskonale Czarne | blackbody (BB) |
-| **CDB** | Ciało Doskonale Białe | whitebody |
-
-> ⚠️ CDC ≠ CDB — nie mylić!
+| Skrót | Znaczenie |
+|-------|-----------|
+| **CDC** | Ciało Doskonale Czarne (ang. *blackbody*, BB) |
+| **CDB** | Ciało Doskonale Białe — NIE to samo! |
 
 ---
 
@@ -129,24 +134,31 @@ $$\Delta T = \underbrace{\Delta T_\varepsilon}_{\text{emisyjność}} + \underbra
 ```
 SymulatorPirometru/
 ├── src/
-│   └── symulator_pirometru.html   # standalone aplikacja (HTML + CSS + JS)
-├── CHANGELOG.md                    # historia wersji
+│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS
+├── CHANGELOG.md
 ├── README.md
 └── .gitignore
 ```
+
+## Gałęzie
+
+| Gałąź | Język |
+|-------|-------|
+| `main` | 🇵🇱 Polski |
+| `en/english-translation` | 🇬🇧 English (v1.7.1, wymaga aktualizacji) |
 
 ---
 
 ## Historia wersji
 
-| Wersja | Najważniejsze zmiany |
-|--------|---------------------|
-| **v1.7.1** | Poprawka: zanikanie wykresów w Opera (jawna wysokość CSS canvas) |
-| v1.7.0 | Przesłona optyczna, budżet błędów 3-składowy, pole numeryczne T |
-| v1.6.0 | Poprawki KaTeX, CDC zamiast CDB |
-| v1.5.0 | Pasek UV+VIS, zakres 10–12000 K, skala log/lin, KaTeX |
-| v1.4.0 | Motyw jasny/ciemny, dokumentacja, responsywność |
-| v1.0–1.3 | Pierwsza wersja, model atmosfery, schematy, widmo VIS |
+| Wersja | Kluczowe zmiany |
+|--------|----------------|
+| **v2.0.0** | Tryb Podstawowy + Eksperta, nowa nazwa „Pirometria", menu presetów, dokumentacja dwujęzyczna, R(λ) na wykresie, poprawki zakresu Gaussów |
+| v1.10.0 | Fizycznie poprawne zakresy Gaussów (±5σ), adaptacyjna siatka R(λ) |
+| v1.9.0 | Literatura z DOI (15 pozycji), pola numeryczne T/ε |
+| v1.8.x | Przesłona: grubość Beer-Lambert + temperatura + emisja własna |
+| v1.7.x | Przesłona optyczna, budżet błędów 3-składowy |
+| v1.5.0 | Pierwsza pełna wersja z atmosferą i dokumentacją |
 
 Pełna historia: [CHANGELOG.md](CHANGELOG.md)
 
@@ -154,4 +166,4 @@ Pełna historia: [CHANGELOG.md](CHANGELOG.md)
 
 ## Licencja
 
-Materiał dydaktyczny do użytku edukacyjnego — AGH Akademia Górniczo-Hutnicza w Krakowie.
+Materiał dydaktyczny — AGH Akademia Górniczo-Hutnicza w Krakowie. Użytek edukacyjny.
