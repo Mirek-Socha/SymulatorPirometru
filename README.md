@@ -1,6 +1,6 @@
 # Pirometria — Symulator Toru Pomiarowego
 
-**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny tor pomiarowy z dwoma trybami obsługi.
+**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny tor pomiarowy z dwoma trybami obsługi i sześcioma środowiskami atmosferycznymi.
 
 > Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury  
 > **Mirosław Socha** · Katedra Metrologii i Elektroniki · WEAIiIB · AGH Kraków
@@ -16,116 +16,93 @@ Jeden plik HTML — otwórz `src/symulator_pirometru.html` w przeglądarce. Brak
 ## Dwa tryby obsługi
 
 ### 🎓 Tryb Podstawowy (domyślny)
-Dla studentów bez doświadczenia z pirometrią. Uproszczony interfejs:
-- Temperatura w °C (suwak + pole numeryczne)
+- Temperatura w °C, zakres −20 do 3480 °C
 - 4 presetowe przyciski emisyjności (metal / stal / ceramika / CDC)
-- 3 przyciski atmosfery (brak / krótka / długa droga)
+- 3 przyciski atmosfery (brak / krótka 2m / długa 20m)
 - 3 typy pirometru (bliskie IR / środkowe / dalekie IR)
-- Jeden wykres widma z 3 krzywymi
-- Wyniki z sygnalizacją świetlną 🟢🟡🔴
-- Wbudowana dokumentacja „Jak działa pirometr?" (4 sekcje)
+- Sygnalizacja świetlna ΔT 🟢🟡🔴
+- Wbudowana dokumentacja „Jak działa pirometr?" (4 sekcje z analogiami)
 
-### 🔬 Tryb Eksperta (przycisk w nagłówku)
-Pełen model fizyczny:
+### 🔬 Tryb Eksperta
 - Zakres temperatury: 10 K – 12 000 K
+- **6 środowisk atmosferycznych** (Ziemia, Mars, Wenus, woda, NH₃ MOCVD, CO₂ tech.)
 - 4 suwaki atmosferyczne (L, HR, CO₂, T_atm)
-- Przesłona optyczna z 6 materiałami, grubością i temperaturą
-- 7 typów detektorów
+- Przesłona optyczna: 6 materiałów, grubość (Beer-Lambert), temperatura (emisja własna)
+- 7 typów detektorów z wizualizacją R(λ) na wykresie
 - Dwa wykresy: widmo + transmitancja τ(λ)
 - Budżet błędów 3-składowy (Δε, ΔT_atm, ΔT_win)
-- Dokumentacja z 10 sekcjami i bibliografią (15 pozycji)
+- Dokumentacja: 11 sekcji z wzorami KaTeX + bibliografia 15 pozycji
 
 ---
 
 ## Tor pomiarowy
 
 ```
-[Obiekt T,ε] → [Atmosfera τ_atm(λ)] → [Przesłona τ_win(λ)] → [Detektor R(λ)] → [Procesor] → T_ind
+[Obiekt T,ε] → [Atmosfera P,τ(λ)] → [Przesłona τ_win(λ,d)] → [Detektor R(λ)] → [Procesor] → T_ind
 ```
 
 Sygnał na detektorze:
 
-$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\left[\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon\cdot L_{bb}(\lambda,T) + [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})\right] + [1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})$$
+$$L_{\rm det}(\lambda) = \tau_{\rm win}\!\cdot\!\Big[\tau_{\rm atm}\cdot\varepsilon\cdot L_{bb}(T) + (1-\tau_{\rm atm})\cdot L_{bb}(T_{\rm atm})\Big] + (1-\tau_{\rm win})\cdot L_{bb}(T_{\rm win})$$
+
+---
+
+## Środowiska atmosferyczne
+
+| Środowisko | Skład | Ciśnienie | Efekt dydaktyczny |
+|---|---|---|---|
+| 🌍 Ziemia | H₂O + CO₂ + O₃ | 1 atm | Model referencyjny HITRAN |
+| 🔴 Mars | 95.3% CO₂ | **0.006 atm** | Paradoks — gęsty CO₂ ale mała ilość gazu → przezroczysta |
+| 🟡 Wenus | 96.5% CO₂ + SO₂ | **92 atm**, 465°C | Pirometr widzi tylko atmosferę |
+| 💧 Woda | H₂O ciekła | 1 atm | IR blokowane po 10 cm, tylko VIS |
+| 🏭 NH₃ MOCVD | NH₃ 50% + H₂ | 0.3 atm | Reaktor GaN — okno 0.9–1.1 µm |
+| 🏭 CO₂ tech. | 100% CO₂ | 1 atm | Spawanie — InSb 3.9 µm w oknie |
+
+Model uogólniony: τ(λ) = exp(−Σ αᵢ·cᵢ·L·**P/P₀**) — czynnik ciśnienia jest kluczowy.
 
 ---
 
 ## Model fizyczny
 
 ### Prawa promieniowania
+Planck · Wien · Stefan–Boltzmann · Kirchhoff
 
-| Prawo | Wzór | Zastosowanie |
-|-------|------|-------------|
-| Planck | $L_{bb}(\lambda,T)=\frac{2hc^2}{\lambda^5(e^{hc/\lambda k_BT}-1)}$ | Widmo CDC |
-| Wien | $\lambda_{\max}T=2{,}898\times10^{-3}$ m·K | Szczyt emisji |
-| Stefan–Boltzmann | $M=\sigma T^4$ | Pirometr całkujący |
-| Kirchhoff | $\varepsilon=\alpha$ | Emisja = absorpcja |
+### Atmosfera — Beer–Lambert (uproszczony HITRAN [9])
+12 pasm H₂O · 7 pasm CO₂ · 7 pasm NH₃ · 4 pasma SO₂ · woda ciekła
 
-### Atmosfera — Beer–Lambert (uproszczony HITRAN)
-12 pasm H₂O · 7 pasm CO₂ · rozpraszanie Rayleigha
+### Przesłona — model trójskładowy
+`τ(λ,d) = τ_Fresnel · τ_bandpass(λ) · τ_bulk(λ,d_ref)^(d/d_ref)` + emisja własna `(1−τ)·L_bb(T_win)`
 
-### Przesłona optyczna — 6 materiałów
-
-| Materiał | Zakres [µm] | τ_Fresnel | d_ref |
-|----------|------------|-----------|-------|
-| Szyba float | 0.32–2.7 | 0.91 | 4 mm |
-| Plexiglas (PMMA) | 0.35–2.8 | 0.92 | 5 mm |
-| Kwarc topiony | 0.15–4.5 | 0.945 | 5 mm |
-| Fluoryt (CaF₂) | 0.13–9.5 | 0.944 | 2 mm |
-| Selenek cynku (ZnSe) | 0.55–16 | 0.70 | 3 mm |
-| German (Ge) | 1.8–16 | 0.46 | 3 mm |
-
-Model: `τ(λ,d) = τ_Fresnel · τ_bandpass(λ) · τ_bulk(λ,d_ref)^(d/d_ref)` + emisja własna `(1−τ)·L_bb(T_win)`
-
-### Detektory — 7 typów
-
-| Typ | Detektor | Zakres |
-|-----|----------|--------|
-| Pasmowy Si | 0.65 µm | [0.555, 0.745] µm |
-| Pasmowy InGaAs | 1.0 µm | [0.851, 1.149] µm |
-| Pasmowy InGaAs | 1.6 µm | [1.388, 1.812] µm |
-| Pasmowy InSb | 3.9 µm | [3.156, 4.644] µm |
-| Okienkowy InSb | 3–5 µm | — |
-| Okienkowy MCT | 8–14 µm | — |
-| Całkujący termostos | 1–18 µm | — |
-
-Zakresy Gaussów = ±5σ (fizycznie poprawne).
+### Detektory — 7 typów, zakresy ±5σ
+Si 0.65 µm · InGaAs 1.0/1.6 µm · InSb 3.9 µm · InSb 3–5 µm · MCT 8–14 µm · Termostos 1–18 µm
 
 ### Inwersja temperatury
-Bisekcja 72 iteracje, zakres 1–15 000 K, zbieżność < 0.01 K.
+Bisekcja 72 iteracje, 1–15 000 K, zbieżność < 0.01 K
 
 ### Budżet błędów
-$$\Delta T = \Delta T_\varepsilon + \Delta T_{\mathrm{atm}} + \Delta T_{\mathrm{win}}$$
+ΔT = ΔT_ε + ΔT_atm + ΔT_win
 
 ---
 
 ## Funkcje interfejsu
 
 | Funkcja | Opis |
-|---------|------|
-| Skala λ | Liniowa / logarytmiczna (przełącznik) |
-| R(λ) na wykresie | Adaptacyjna siatka 500 pkt w zakresie czułości |
-| Pasek UV+VIS | Gradient 380–700 nm na osi λ |
-| Tooltip hover | λ [µm/nm], L_bb, ε·B, τ_atm, τ_win, Sygnał, R(λ) |
-| Motywy | Ciemny / jasny |
+|---|---|
+| Skala λ | Liniowa / logarytmiczna |
+| R(λ) na wykresie | Adaptacyjna siatka 500 pkt — gładka nawet dla Gaussa 0.65 µm |
+| Pasek UV+VIS | Gradient na osi λ obu wykresów |
+| Tooltip hover | λ, L_bb [W·m⁻²·sr⁻¹·m⁻¹], ε·B, τ_atm, τ_win, sygnał, R(λ) |
+| Motywy | Ciemny / jasny (Safari/iPad: `color-scheme` + `color-scheme` na `:root`) |
 | Responsywność | Desktop · tablet · telefon |
-| Presety | Menu rozwijane (3 basic + 6 expert) |
+| Presety | Menu rozwijane (3 basic + 6 expert + 5 środowiskowych) |
 
 ---
 
 ## Dokumentacja wbudowana
 
-**Tryb Podstawowy:** 4 sekcje w języku potocznym z analogiami i ćwiczeniami interaktywnymi.
-
-**Tryb Eksperta:** 10 sekcji z wzorami KaTeX + bibliografia 15 pozycji [1–10 naukowe z DOI, 11–15 polskie/online].
-
----
-
-## Nomenklatura
-
-| Skrót | Znaczenie |
-|-------|-----------|
-| **CDC** | Ciało Doskonale Czarne (ang. *blackbody*, BB) |
-| **CDB** | Ciało Doskonale Białe — NIE to samo! |
+**Tryb Podstawowy:** 4+1 sekcji — „Jak działa pirometr?", emisyjność, atmosfera, środowiska, wykresy  
+**Tryb Eksperta:** 11 sekcji z KaTeX — tor pomiarowy, Planck, emisyjność, atmosfera, **środowiska** (nowe!), przesłona, detektory, sygnał+inwersja, słownik, informacje, literatura  
+**Bibliografia:** 15 pozycji [1–10 naukowe z DOI, 11–15 polskie/online]
 
 ---
 
@@ -142,21 +119,22 @@ SymulatorPirometru/
 
 ## Gałęzie
 
-| Gałąź | Język |
-|-------|-------|
-| `main` | 🇵🇱 Polski |
-| `en/english-translation` | 🇬🇧 English (v1.7.1, wymaga aktualizacji) |
+| Gałąź | Język | Wersja |
+|---|---|---|
+| `main` | 🇵🇱 Polski | v2.1.0 |
+| `en/english-translation` | 🇬🇧 English | v2.0.0-en (wymaga aktualizacji) |
 
 ---
 
 ## Historia wersji
 
 | Wersja | Kluczowe zmiany |
-|--------|----------------|
-| **v2.0.0** | Tryb Podstawowy + Eksperta, nowa nazwa „Pirometria", menu presetów, dokumentacja dwujęzyczna, R(λ) na wykresie, poprawki zakresu Gaussów |
-| v1.10.0 | Fizycznie poprawne zakresy Gaussów (±5σ), adaptacyjna siatka R(λ) |
-| v1.9.0 | Literatura z DOI (15 pozycji), pola numeryczne T/ε |
-| v1.8.x | Przesłona: grubość Beer-Lambert + temperatura + emisja własna |
+|---|---|
+| **v2.1.0** | 6 środowisk atmosferycznych (Mars, Wenus, woda, NH₃, CO₂), nowy atmTau z P/P₀, dokumentacja sekcja 5, naprawa WebKit/Safari/iPad, zakres T beginner do 3480°C |
+| v2.0.0 | Tryb Podstawowy + Eksperta, „Pirometria", menu presetów |
+| v1.10.0 | Poprawne zakresy Gaussów ±5σ, adaptacyjna siatka R(λ) |
+| v1.9.0 | Literatura z DOI, pola numeryczne T/ε |
+| v1.8.x | Przesłona: grubość + temperatura + emisja własna |
 | v1.7.x | Przesłona optyczna, budżet błędów 3-składowy |
 | v1.5.0 | Pierwsza pełna wersja z atmosferą i dokumentacją |
 

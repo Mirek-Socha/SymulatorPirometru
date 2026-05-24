@@ -24,6 +24,7 @@
   --shadow:rgba(0,0,0,.6);
   --plot-grid:rgba(34,34,46,.9);
   --plot-bg:#07070a;
+  color-scheme: dark;           /* ← WebKit/Safari: renderuj natywne kontrolki w trybie ciemnym */
 }
 .theme-light {
   --bg:#f5f2ea; --surf:#ece8dd; --card:#ffffff; --card2:#f9f7f2;
@@ -36,13 +37,23 @@
   --shadow:rgba(0,0,0,.15);
   --plot-grid:rgba(100,95,88,.35);
   --plot-bg:#ece8dd;
+  color-scheme: light;          /* ← WebKit/Safari: renderuj natywne kontrolki w trybie jasnym */
+}
+
+/* ─────────────────────────────────────────────
+   ROOT — color-scheme aktualizowany przez JS
+   Bez tego Safari/iPadOS renderuje button, select,
+   input w systemowym motywie niezależnie od CSS
+───────────────────────────────────────────── */
+:root{
+  color-scheme: dark;   /* JS zmienia na 'light' przy toggleTheme */
 }
 
 /* ═══════════════════════════════════════════════
-   BASE / RESET
+   RESET / BASE
 ═══════════════════════════════════════════════ */
 *{margin:0;padding:0;box-sizing:border-box}
-html{height:100%}
+html{height:100%;background:var(--bg)}
 body{
   background:var(--bg);color:var(--text);
   font-family:'IBM Plex Sans',sans-serif;font-weight:300;font-size:13px;
@@ -67,28 +78,50 @@ body{
   min-height:100vh;
 }
 
+/* Safari/iPadOS: wymuś własny rendering przycisków — bez tego system jasny motyw */
+button{
+  -webkit-appearance:none;
+  appearance:none;
+  background:var(--card2);
+  color:var(--pale);
+  border:1px solid var(--border);
+  cursor:pointer;
+  font-family:'IBM Plex Mono',monospace;
+}
+
 /* ═══════════════════════════════════════════════
    HEADER
 ═══════════════════════════════════════════════ */
 .hdr{
-  display:flex;align-items:center;flex-wrap:wrap;gap:10px;
-  padding:12px 16px;
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;
   border-bottom:1px solid var(--border);
   background:var(--surf);
   position:sticky;top:0;z-index:200;
 }
-.hdr-brand{display:flex;align-items:baseline;gap:12px;flex:1;min-width:0}
+.hdr-brand{
+  display:flex;align-items:baseline;gap:8px;
+  flex:1;min-width:0;   /* flex:1 żeby zajął dostępne miejsce, min-width:0 żeby mógł się kurczyć */
+}
 .hdr-title{
-  font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;
-  color:var(--amber);white-space:nowrap;
+  font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;
+  color:var(--amber);white-space:nowrap;flex-shrink:0;
 }
 .hdr-sub{
-  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-  color:var(--muted);letter-spacing:.12em;text-transform:uppercase;
-  display:none;
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+  color:var(--muted);letter-spacing:.1em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  min-width:0;           /* pozwól na kurczenie się */
 }
-@media(min-width:600px){.hdr-sub{display:inline}}
-.hdr-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* Ukryj subtitle poniżej 650px */
+@media(max-width:650px){ .hdr-sub{ display:none !important; } }
+/* Ukryj badge trybu na małych ekranach */
+@media(max-width:480px){ .beg-mode-badge{ display:none !important; } }
+
+.hdr-actions{
+  display:flex;align-items:center;gap:6px;
+  flex-shrink:0;         /* przyciski się nie kurczą */
+}
 .presets{display:flex;gap:4px;flex-wrap:wrap}
 .preset-btn,.icon-btn{
   font-family:'IBM Plex Mono',monospace;font-size:.65rem;letter-spacing:.06em;
@@ -100,6 +133,21 @@ body{
 .icon-btn{font-size:.85rem;letter-spacing:0;text-transform:none;padding:5px 10px}
 .icon-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
 .icon-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+/* Dokumentacja — ukryj tekst, zostaw ikonę poniżej 700px */
+@media(max-width:700px){
+  .icon-btn#docsBtn,
+  .icon-btn#docsBtnBeg{font-size:.75rem;padding:5px 7px}
+}
+/* Przycisk trybu — skróć tekst przy małej szerokości */
+.mode-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;
+  background:var(--amber);color:var(--bg);border:none;
+  cursor:pointer;transition:all .18s;white-space:nowrap;border-radius:2px;
+  box-shadow:0 0 10px rgba(245,158,11,.3);flex-shrink:0;
+}
+.mode-btn:hover{background:var(--orange);box-shadow:0 0 14px rgba(234,88,12,.4)}
+.theme-light .mode-btn{color:#fff}
 
 /* ═══════════════════════════════════════════════
    CHAIN DIAGRAM
@@ -155,7 +203,44 @@ body{
   filter:drop-shadow(0 0 2px currentColor);
 }
 .chain-arrow svg{width:28px;height:18px;overflow:visible}
+/* Safari/WebKit: elementy z var(--card) mogą pokazywać system tło */
+.ctrl-panel,.res-col,.rb,.chain-box,.docs-panel,.beg-panel,
+.preset-dropdown,.env-note,.info-box,.warn-box,.beg-key-box,
+.beg-analogy,.doc-sec,.err-tbl td,.tt{
+  -webkit-backdrop-filter:none;
+}
 .chain-box.cb-win{border-left-color:#10b981}
+
+/* ── ENVIRONMENT SELECTOR ─────────────────── */
+.env-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:5px;margin-bottom:8px;
+}
+.env-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+  font-weight:500;letter-spacing:.02em;
+  padding:7px 4px 5px;border:1px solid var(--border);
+  background:var(--card2);color:var(--pale);
+  cursor:pointer;transition:all .15s;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.env-btn span{font-size:.58rem;letter-spacing:.04em}
+.env-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.env-btn.active{
+  border-color:var(--cyan);color:var(--cyan);
+  background:rgba(6,182,212,.12);font-weight:700;
+  box-shadow:0 0 6px rgba(6,182,212,.2);
+}
+.env-note{
+  font-size:.7rem;color:var(--muted);line-height:1.55;
+  margin-bottom:6px;padding:6px 8px;
+  background:var(--card);border-left:2px solid var(--cyan);
+}
+.env-params{
+  display:flex;gap:12px;font-family:'IBM Plex Mono',monospace;
+  font-size:.68rem;color:var(--amber);margin-bottom:4px;
+}
+
 
 /* ── BEGINNER DOCUMENTATION ─────────────────── */
 .beg-doc-sec{margin-bottom:24px}
@@ -223,15 +308,7 @@ body.expert   .res-col > div.xo { display:block !important; }
 body.beginner .res-col > div.bo { display:block !important; }
 
 /* ── MODE TOGGLE BUTTON ────────────────────────── */
-.mode-btn {
-  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;
-  letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;
-  background:var(--amber);color:var(--bg);border:none;
-  cursor:pointer;transition:all .18s;white-space:nowrap;border-radius:2px;
-  box-shadow:0 0 10px rgba(245,158,11,.3);
-}
-.mode-btn:hover{background:var(--orange);box-shadow:0 0 14px rgba(234,88,12,.4)}
-.theme-light .mode-btn{color:#fff}
+/* mode-btn defined in header section above */
 
 /* ── PRESET DROPDOWN MENU ──────────────────────── */
 .preset-menu{position:relative;display:inline-block}
@@ -265,7 +342,7 @@ body.beginner .res-col > div.bo { display:block !important; }
 }
 
 /* ── BEGINNER CONTROLS ─────────────────────────── */
-.beg-panel{padding:14px 14px 16px;border-bottom:1px solid var(--border)}
+/* beg-panel defined above with ctrl-panel */
 .beg-label{
   font-family:'IBM Plex Mono',monospace;font-size:.62rem;
   letter-spacing:.2em;text-transform:uppercase;color:var(--amber);
@@ -348,12 +425,18 @@ body.beginner .res-col > div.bo { display:block !important; }
 /* ═══════════════════════════════════════════════
    MAIN LAYOUT  (3-col → 2-col → 1-col)
 ═══════════════════════════════════════════════ */
+/* ── Safari/WebKit: jawne tła — CSS vars z body.theme-X nie są dziedziczone
+   przez wszystkie elementy w taki sam sposób jak w Chrome/Firefox ── */
+html{
+  background:var(--bg);
+}
 .main-layout{
   flex:1;display:grid;
   grid-template-columns:270px 1fr 210px;
   grid-template-areas:"ctrl plots res";
   align-items:start;
   min-height:0;
+  background:var(--bg);
 }
 @media(max-width:1099px){
   .main-layout{
@@ -379,6 +462,7 @@ body.beginner .res-col > div.bo { display:block !important; }
 ═══════════════════════════════════════════════ */
 .ctrl-col{
   grid-area:ctrl;
+  background:var(--surf);            /* ← jawne tło — Safari nie dziedziczy z body */
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   height:100%;
@@ -389,8 +473,9 @@ body.beginner .res-col > div.bo { display:block !important; }
 @media(max-width:699px){
   .ctrl-col{border-right:none;border-bottom:1px solid var(--border)}
 }
-.ctrl-panel{border-bottom:1px solid var(--border);padding:12px 14px 14px}
+.ctrl-panel{border-bottom:1px solid var(--border);padding:12px 14px 14px;background:var(--surf)}
 .ctrl-panel:last-child{border-bottom:none}
+.beg-panel{padding:14px 14px 16px;border-bottom:1px solid var(--border);background:var(--surf)}
 .panel-hdr{
   font-family:'IBM Plex Mono',monospace;font-size:.62rem;
   letter-spacing:.2em;text-transform:uppercase;color:var(--amber);
@@ -421,16 +506,25 @@ input[type=range]::-webkit-slider-thumb{
   color:var(--amber);width:68px;text-align:right;flex-shrink:0;
 }
 .sl-val.cy{color:var(--cyan)}
-/* numeric text input for direct value entry */
+/* Numeric inputs — jawne tło dla Safari */
+input[type=number],input[type=text]{
+  background:var(--card);
+  color:var(--text);
+  border-color:var(--border);
+  -webkit-text-fill-color:var(--text);  /* ← Safari ignoruje color na disabled bez tego */
+}
+/* Upewnij się że sl-num też ma tło z CSS var */
 .sl-num{
   font-family:'IBM Plex Mono',monospace;font-size:.72rem;
   width:68px;flex-shrink:0;text-align:right;
   background:var(--card);border:1px solid var(--border);
   color:var(--amber);padding:2px 5px;
   outline:none;transition:border-color .15s;
+  -webkit-text-fill-color:var(--amber);
+  border-radius:0;
 }
-.sl-num:focus{border-color:var(--amber);background:var(--card2)}
-.sl-num.cy{color:var(--cyan)}
+.sl-num:focus{border-color:var(--amber);background:var(--card2);-webkit-text-fill-color:var(--amber)}
+.sl-num.cy{color:var(--cyan);-webkit-text-fill-color:var(--cyan)}
 .sl-num::-webkit-outer-spin-button,.sl-num::-webkit-inner-spin-button{-webkit-appearance:none}
 .sl-num[type=number]{-moz-appearance:textfield}
 /* compact secondary label (°C conversion, ε hint) */
@@ -444,8 +538,16 @@ select{
   color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:.7rem;
   padding:6px 8px;outline:none;cursor:pointer;margin-bottom:8px;
   transition:border-color .15s;
+  -webkit-appearance:none;        /* ← wymuś CSS styling na Safari/iPadOS */
+  appearance:none;
+  border-radius:0;                /* Safari lubi zaokrąglać bez tego */
 }
 select:focus{border-color:var(--cyan)}
+/* Safari/WebKit: option dziedziczy z select, ale jawne deklaracje są bezpieczniejsze */
+option{
+  background:var(--card);
+  color:var(--text);
+}
 .sel-lbl{
   font-family:'IBM Plex Mono',monospace;font-size:.65rem;
   color:var(--pale);margin-bottom:3px;
@@ -458,6 +560,7 @@ select:focus{border-color:var(--cyan)}
   grid-area:plots;
   display:flex;flex-direction:column;
   border-right:1px solid var(--border);
+  background:var(--bg);              /* ← jawne tło */
 }
 @media(max-width:699px){.plots-col{border-right:none}}
 .plot-hdr{
@@ -465,6 +568,7 @@ select:focus{border-color:var(--cyan)}
   letter-spacing:.15em;text-transform:uppercase;color:var(--amber);
   padding:8px 14px 4px;display:flex;align-items:center;gap:8px;
   border-bottom:1px solid var(--border);
+  background:var(--surf);            /* ← jawne tło */
 }
 .plot-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
 canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
@@ -483,6 +587,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 .res-col{
   grid-area:res;
   padding:12px;display:flex;flex-direction:column;gap:10px;
+  background:var(--surf);            /* ← jawne tło */
 }
 @media(max-width:1099px){
   .res-col{
@@ -698,6 +803,12 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <button class="preset-drop-item" onclick="loadPreset('beg_ideal');closePresets()">⬜ CDC — wzorzec idealny</button>
         <button class="preset-drop-item" onclick="loadPreset('beg_metal');closePresets()">🏭 Stal w piecu</button>
         <button class="preset-drop-item" onclick="loadPreset('beg_ceramic');closePresets()">🏺 Ceramika</button>
+        <div class="preset-drop-sep xo">Środowiska</div>
+        <button class="preset-drop-item xo" onclick="setEnv('mars');loadPreset('mars_basic');closePresets()">🔴 Mars — CO₂ niskociśnieniowy</button>
+        <button class="preset-drop-item xo" onclick="setEnv('venus');loadPreset('venus_basic');closePresets()">🟡 Wenus — atmosfera 92 atm</button>
+        <button class="preset-drop-item xo" onclick="setEnv('water');loadPreset('water_basic');closePresets()">💧 Pod wodą — tylko okno VIS</button>
+        <button class="preset-drop-item xo" onclick="setEnv('nh3_mocvd');loadPreset('nh3_basic');closePresets()">🏭 NH₃ MOCVD — reaktor GaN</button>
+        <button class="preset-drop-item xo" onclick="setEnv('co2_industrial');loadPreset('co2ind_basic');closePresets()">🏭 CO₂ tech. — spawanie MIG/MAG</button>
         <div class="preset-drop-sep xo">Tryb eksperta</div>
         <button class="preset-drop-item xo" onclick="loadPreset('ideal');closePresets()">⬜ Idealny (τ=1, ε=1)</button>
         <button class="preset-drop-item xo" onclick="loadPreset('emissivity');closePresets()">⚠ Błąd emisyjności</button>
@@ -794,14 +905,14 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="beg-label">📡 Temperatura obiektu</div>
       <div class="sl-row">
         <span class="sl-name">T</span>
-        <input type="range" id="beg_sl_T" min="-20" max="2000" step="50" value="1000"
+        <input type="range" id="beg_sl_T" min="-20" max="3480" step="50" value="1000"
                oninput="begOnT(this)">
         <input type="number" id="beg_num_T" class="sl-num"
-               min="-20" max="2000" step="1" value="1000"
+               min="-20" max="3480" step="1" value="1000"
                title="Wpisz T w °C"
                onchange="begOnTNum(this)" onkeydown="if(event.key==='Enter')begOnTNum(this)">
       </div>
-      <div class="sl-secondary">°C — zakres −20 do 2000 °C</div>
+      <div class="sl-secondary">°C — zakres −20 do 3480 °C</div>
     </div>
 
     <!-- EMISYJNOŚĆ PRESET -->
@@ -890,6 +1001,42 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       </div>
     </div>
 
+
+    <!-- ŚRODOWISKO — panel eksperta -->
+    <div class="ctrl-panel" id="envPanel">
+      <div class="panel-hdr re">🌐 Środowisko / atmosfera</div>
+      <div class="env-grid">
+        <button class="env-btn active" id="env_earth"
+                onclick="setEnv('earth')" title="Standardowa atmosfera ziemska">
+          🌍<span>Ziemia</span>
+        </button>
+        <button class="env-btn" id="env_mars"
+                onclick="setEnv('mars')" title="95.3% CO₂, 0.006 atm">
+          🔴<span>Mars</span>
+        </button>
+        <button class="env-btn" id="env_venus"
+                onclick="setEnv('venus')" title="96.5% CO₂, 92 atm, 465°C">
+          🟡<span>Wenus</span>
+        </button>
+        <button class="env-btn" id="env_water"
+                onclick="setEnv('water')" title="Woda ciekła — tylko okno VIS">
+          💧<span>Woda</span>
+        </button>
+        <button class="env-btn" id="env_nh3_mocvd"
+                onclick="setEnv('nh3_mocvd')" title="Reaktor MOCVD GaN — NH₃">
+          🏭<span>NH₃</span>
+        </button>
+        <button class="env-btn" id="env_co2_industrial"
+                onclick="setEnv('co2_industrial')" title="CO₂ techniczny — spawanie">
+          🏭<span>CO₂ tech.</span>
+        </button>
+      </div>
+      <div class="env-note" id="env_note">Model atmosfery ziemskiej wg HITRAN.</div>
+      <div class="env-params" id="env_params">
+        <span>P = 1.00 atm</span><span>T<sub>atm</sub> = 20 °C</span>
+      </div>
+    </div>
+
     <!-- ATMOSFERA -->
     <div class="ctrl-panel">
       <div class="panel-hdr re">🌫 Atmosfera / tor opt.</div>
@@ -956,6 +1103,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <option value="window_814">Okienkowy 8–14 µm – MCT/bolom.</option>
         <option value="total">Całkujący 1–18 µm – termostos</option>
       </select>
+      <div id="det_env_hint" style="display:none;font-size:.68rem;color:var(--amber);padding:4px 0 8px;font-family:'IBM Plex Mono',monospace"></div>
       <div class="sl-row">
         <span class="sl-name w90">ε<sub>zakładana</sub></span>
         <input type="range" id="sl_eps_assumed" min="0.02" max="1.00" step="0.01" value="0.70"
@@ -1144,6 +1292,30 @@ bo krótkie fale lepiej przenikają przez powietrze.</div>
 </div>
 
 <!-- Sekcja 4 -->
+
+<div class="beg-doc-sec">
+<h2>3b. Środowiska — pirometria poza Ziemią</h2>
+<p>Symulator pozwala zbadać jak wyglądałby pomiar pirometryczny w <b>zupełnie innych atmosferach</b>.
+Każde środowisko zmienia skład gazu i ciśnienie — a tym samym transmitancję τ(λ) i sygnał na detektorze.</p>
+
+<div class="beg-analogy">Wyobraź sobie pirometr na misji kosmicznej. Czy zadziałałby na Marsie?
+Na Wenus? A co z pomiarem temperatury spawania przez tarczę gazu osłonowego CO₂? 
+Przełącz do <b>Trybu Eksperta</b> i sprawdź — odpowiedź jest zaskakująca!</div>
+
+<h3>Kluczowe obserwacje</h3>
+<p><b>Mars:</b> Mimo że powietrze to prawie czysty CO₂ (95%), ciśnienie jest 170 razy mniejsze niż na Ziemi.
+Wykresy τ(λ) pokazują atmosferę <i>zaskakująco przezroczystą</i> — prawo Beer-Lamberta liczy ilość gazu,
+nie jego stężenie.</p>
+<p><b>Wenus:</b> Ciśnienie 92 atm i temperatura 465°C. Atmosfera sama emituje tyle promieniowania
+że pirometr „widzi" głównie gorący gaz — nie obiekt. ΔT jest ogromne i zawsze na plus.</p>
+<p><b>Pod wodą:</b> Woda pochłania podczerwień dramatycznie. Po 10 cm nie ma już żadnego sygnału
+przy λ > 2 µm. Jedyną szansą jest zakres widzialny — detektor Si przy 0.65 µm.</p>
+
+<div class="beg-key-box"><b>💡 Ćwiczenie:</b> Przejdź do Trybu Eksperta → panel „🌐 Środowisko" →
+wybierz kolejno Ziemię, Marsa i Wenus przy tej samej odległości 1 m.
+Obserwuj jak zmienia się wykres τ(λ) i błąd ΔT.</div>
+</div>
+
 <div class="beg-doc-sec">
 <h2>4. Jak czytać wykresy?</h2>
 <h3>Wykres widma promieniowania</h3>
@@ -1240,9 +1412,106 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 <p>Ta emisja jest <b>dodawana</b> do sygnału obiektu. Powoduje to przeszacowanie temperatury (pirometr "widzi" cieplejszą atmosferę).</p>
 </div>
 
-<!-- ──── 5. PRZESŁONA OPTYCZNA ────────────────── -->
+
+<!-- ──── 5. ŚRODOWISKA ATMOSFERYCZNE ──────────────────────────── -->
 <div class="doc-sec">
-<h2>5. Przesłona optyczna — model kompletny</h2>
+<h2>5. Środowiska atmosferyczne — model uogólniony</h2>
+
+<p>Symulator modeluje sześć różnych środowisk, w których może pracować pirometr.
+Każde środowisko definiuje skład gazowy i ciśnienie, które razem wyznaczają
+transmitancję spektralną τ(λ) zgodnie z uogólnionym prawem Beer-Lamberta:</p>
+
+<div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_i \alpha_i(\lambda) \cdot c_i \cdot L \cdot \frac{P}{P_0}\right)$$</div>
+
+<p>Czynnik <b>P/P₀</b> (ciśnienie względem ziemskiego) jest kluczowy — atmosfera marsjańska ma
+95% CO₂, ale ciśnienie 170× mniejsze niż ziemskie, więc efektywna gęstość kolumnowa gazu
+jest porównywalna z kilkuprocentowym CO₂ na Ziemi.</p>
+
+<h3>🌍 Ziemia — model referencyjny</h3>
+<p>Uproszczony model pasmowy oparty na danych HITRAN <span class="cite">[9]</span>:
+12 pasm H₂O (0.72–13.4 µm), 7 pasm CO₂ (dominujące: 4.26 µm), pasmo O₃ (9.6 µm).
+Trzy okna pirometryczne: 0.8–1.3 µm, 3–5 µm, 8–14 µm.</p>
+
+<h3>🔴 Mars — paradoks gęstości optycznej</h3>
+<p>Skład: 95.3% CO₂, 2.7% N₂, 1.6% Ar, śladowo H₂O. Ciśnienie: 0.006 atm (600 Pa).</p>
+<div class="fml-math">$$\tau_{\mathrm{Mars}}(4.26\,\mu\mathrm{m}) \gg \tau_{\mathrm{Ziemia}}(4.26\,\mu\mathrm{m}) \quad \text{przy tym samym } L$$</div>
+<p>Mimo stężenia CO₂ 2400× wyższego niż na Ziemi, pasmo 4.26 µm na Marsie jest słabsze
+dla tej samej odległości geometrycznej. Wynik pokazuje, że właściwą miarą absorpcji jest
+<b>kolumnowa ilość gazu</b> [mol/m²], nie stężenie molowe.</p>
+<div class="info-box">Eksperyment: ustaw L = 10 m i porównaj τ(4.26 µm) dla Ziemi i Marsa.
+Ziemia (400 ppm CO₂, 1 atm): τ ≈ 0.85. Mars (953 000 ppm CO₂, 0.006 atm): τ ≈ 0.94.
+Atmosfera marsjańska jest <i>bardziej przezroczysta</i> — mimo bogatego CO₂!</div>
+
+<h3>🟡 Wenus — piekło pirometryczne</h3>
+<p>Skład: 96.5% CO₂, 3.5% N₂, ~150 ppm SO₂. Ciśnienie: 92 atm. T_atm = 465°C.</p>
+<p>Dwa efekty nakładają się:</p>
+<ol style="font-size:.82rem;color:var(--pale);line-height:1.9;padding-left:1.4em">
+  <li><b>Absorpcja totalna</b> — pasmo CO₂ przy 4.26 µm nieprzezroczyste już po kilkudziesięciu centymetrach.
+  Pasma SO₂ przy 4.0 i 7.3 µm blokują kolejne zakresy.</li>
+  <li><b>Emisja własna atmosfery</b> — gorący gaz (465°C) emituje intensywnie w zakresie IR.
+  Sygnał na detektorze pochodzi głównie z atmosfery, nie z obiektu.</li>
+</ol>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda)\approx [1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}}) \quad \text{(obiekt niewidoczny)}$$</div>
+<div class="warn-box">Pomiar pirometryczny na powierzchni Wenus jest praktycznie niemożliwy metodami IR.
+Historycznie sondy Venera używały termometrów kontaktowych i radarów.</div>
+
+<h3>💧 Woda ciekła — odcięcie IR</h3>
+<p>Woda pochłania podczerwień niezwykle silnie — silnymi drganiami O-H (stretching i bending).
+Współczynnik absorpcji α(λ) rośnie o kilka rzędów wielkości między 0.5 a 2.5 µm:</p>
+<table class="beg-eps-table">
+  <tr><th>Zakres λ</th><th>α [m⁻¹]</th><th>τ przy L = 0.1 m</th><th>Uwaga</th></tr>
+  <tr><td>0.45–0.65 µm (VIS)</td><td>0.02–0.08</td><td>~99%</td><td>Okno widzialne — morze jest niebieskie</td></tr>
+  <tr><td>0.9–1.0 µm</td><td>4–15</td><td>67–22%</td><td>Silna absorpcja</td></tr>
+  <tr><td>1.45 µm (pasmo OH)</td><td>300</td><td>&lt;0.01%</td><td>Praktycznie zerowa transmisja</td></tr>
+  <tr><td>&gt; 2.5 µm</td><td>&gt;200</td><td>≈0</td><td>Totalne odcięcie</td></tr>
+</table>
+<p>Jedynym sensownym wyborem detektora w wodzie jest <b>Si 0.65 µm</b>. Stąd kamery podwodne
+i sonary optyczne pracują w zakresie VIS, nie IR.</p>
+
+<h3>🏭 NH₃ — reaktory MOCVD wzrostu GaN</h3>
+<p>W reaktorach MOCVD do wzrostu GaN (diody LED, lasery niebieskie, tranzystory HEMT)
+stosuje się mieszaninę: 30–60% NH₃ + 40–70% H₂, ciśnienie 100–900 mbar.</p>
+<p><b>H₂</b> jest optycznie przezroczysty (cząsteczka homonuklearna, brak momentu dipolowego →
+brak aktywnych pasm IR). <b>NH₃</b> ma bogate widmo wibracyjne:</p>
+<table class="beg-eps-table">
+  <tr><th>λ [µm]</th><th>Drganie</th><th>Siła</th></tr>
+  <tr><td>0.97</td><td>N-H stretch (3. harmoniczna)</td><td>umiarkowana</td></tr>
+  <tr><td>1.52</td><td>N-H stretch (2. harmoniczna)</td><td>umiarkowana</td></tr>
+  <tr><td>2.97</td><td>N-H stretch fundamentalne</td><td><b>bardzo silna</b></td></tr>
+  <tr><td>6.15</td><td>N-H bend fundamentalne</td><td><b>bardzo silna</b></td></tr>
+</table>
+<p>Okna pirometryczne w NH₃: <b>0.85–1.1 µm</b> (przemysłowy standard dla MOCVD GaN)
+i ~3.4 µm (rzadziej, wymaga filtrów). Dlatego wszystkie komercyjne pirometry do
+reaktorów GaN (Veeco, Aixtron) używają detektora <b>InGaAs 0.95–1.0 µm</b>.</p>
+<div class="info-box">Eksperyment dydaktyczny: ustaw NH₃ MOCVD, detektor InSb 3.9 µm i obserwuj
+dramatyczny spadek τ przy 2.97 µm. Zmień na InGaAs 1.0 µm — okno otwarte, pomiar możliwy.
+To właśnie ten wybór zadecydował o jakości miliardów chipów LED.</div>
+
+<h3>🏭 CO₂ techniczny — spawanie MIG/MAG</h3>
+<p>Spawanie MIG/MAG używa 100% CO₂ (lub mieszanin Ar+CO₂) jako gazu osłonowego.
+Przy krótkich drogach (0.2–0.5 m) i ciśnieniu 1 atm pasmo CO₂ przy 4.26 µm jest
+całkowicie nieprzezroczyste.</p>
+<p>Pirometry do monitorowania temperatury jeziorka spawalniczego (1400–1700°C) muszą
+pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb 3.9 µm</b>
+— dokładnie w luce między pasmami 2.69 µm i 4.26 µm CO₂.</p>
+<div class="fml-math">$$\tau_{\mathrm{CO_2}}(3.9\,\mu\mathrm{m}) \approx 0.85 \quad \text{vs} \quad \tau_{\mathrm{CO_2}}(4.26\,\mu\mathrm{m}) \approx 0.001$$</div>
+
+<h3>Podsumowanie — dobór detektora vs środowisko</h3>
+<table class="beg-eps-table">
+  <tr><th>Środowisko</th><th>Zablokowane λ</th><th>Optymalny detektor</th></tr>
+  <tr><td>🌍 Ziemia (sucha)</td><td>1.4, 1.9, 2.7, 4.26, 6–8 µm (H₂O+CO₂)</td><td>dowolny w oknie</td></tr>
+  <tr><td>🔴 Mars</td><td>4.26 µm (słabo), 2.7 µm</td><td>InSb 3–5 µm lub Si</td></tr>
+  <tr><td>🟡 Wenus</td><td>praktycznie cały IR</td><td>niemożliwe</td></tr>
+  <tr><td>💧 Woda</td><td>wszystko &gt; 1.1 µm</td><td>Si 0.65 µm</td></tr>
+  <tr><td>🏭 NH₃ MOCVD</td><td>2.97, 6.15 µm (NH₃)</td><td>InGaAs 1.0 µm</td></tr>
+  <tr><td>🏭 CO₂ tech.</td><td>2.69, 4.26 µm (CO₂)</td><td>InSb 3.9 µm</td></tr>
+</table>
+
+</div><!-- /doc-sec 5 -->
+
+<!-- ──── 6. PRZESŁONA OPTYCZNA ────────────────── -->
+<div class="doc-sec">
+<h2>6. Przesłona optyczna — model kompletny</h2>
 <p>Okno optyczne wprowadza trzy niezależne efekty fizyczne, które symulator modeluje łącznie:</p>
 <ol style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em;margin-bottom:8px">
   <li><b>Tłumienie transmisyjne</b> τ_win(λ) — zależy od materiału i grubości</li>
@@ -1304,7 +1573,7 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 
 <!-- ──── 6. DETEKTOR ──────────────────────── -->
 <div class="doc-sec">
-<h2>6. Modele funkcji odpowiedzi detektora R(λ)</h2>
+<h2>7. Modele funkcji odpowiedzi detektora R(λ)</h2>
 
 <h3>Pirometr pasmowy (gauss)</h3>
 <div class="fml-math">$$R(\lambda) = R_p\cdot\exp\!\left[-\frac{1}{2}\left(\frac{\lambda-\lambda_c}{\sigma}\right)^{\!2}\right], \qquad \sigma = \frac{\Delta\lambda}{2{,}355}$$</div>
@@ -1322,7 +1591,7 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 
 <!-- ──── 7. SYGNAŁ I INWERSJA ─────────────── -->
 <div class="doc-sec">
-<h2>7. Całkowanie sygnału i inwersja temperatury</h2>
+<h2>8. Całkowanie sygnału i inwersja temperatury</h2>
 <h3>Sygnał detektora</h3>
 <p>Całkowity sygnał elektryczny (proporcjonalny do mocy) detektora z toru optycznego:</p>
 <div class="fml-math">$$S = \int_{0}^{\infty} R(\lambda)\cdot L_{\mathrm{det}}(\lambda)\,\mathrm{d}\lambda$$</div>
@@ -1341,9 +1610,9 @@ $$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}(\text{pelny model}) - T_{\mathrm{in
 $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </div>
 
-<!-- ──── 8. SŁOWNIK ───────────────────────── -->
+<!-- ──── 9. SŁOWNIK ───────────────────────── -->
 <div class="doc-sec">
-<h2>8. Słownik symboli</h2>
+<h2>9. Słownik symboli</h2>
 <table class="sym-tbl">
   <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
   <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — polski skrót; odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε&nbsp;=&nbsp;1</td><td>—</td></tr>
@@ -1372,14 +1641,14 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 
 <!-- ──── 9. AUTOR I WERSJA ─────────────────── -->
 <div class="doc-sec">
-<h2>9. Informacje o aplikacji</h2>
+<h2>10. Informacje o aplikacji</h2>
 <table class="sym-tbl">
   <tr><th>Pole</th><th>Wartość</th></tr>
   <tr><td>Autor</td><td><b>Mirosław Socha</b></td></tr>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.0.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.1.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1388,9 +1657,9 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </div>
 
 
-<!-- ──── 10. LITERATURA ─────────────────── -->
+<!-- ──── 11. LITERATURA ─────────────────── -->
 <div class="doc-sec">
-<h2>10. Literatura i źródła</h2>
+<h2>11. Literatura i źródła</h2>
 <p>Podstawy fizyczne i algorytmiczne symulatora opierają się na następujących publikacjach:</p>
 
 <ol class="bib-list">
@@ -1561,44 +1830,199 @@ function planck(lam, T_K){
   return (2*h_*cL*cL) / (Math.pow(lam,5) * (Math.exp(x) - 1));
 }
 
-function atmTau(lam_m, pathLen, rh_pct, co2_ppm){
+function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
   if(pathLen <= 0) return 1.0;
   const u = lam_m * 1e6; // µm
+
+  // Pobierz aktywne środowisko (lub override)
+  const env = env_override || ENVS[currentEnv] || ENVS.earth;
+  const P   = env.P_atm;   // ciśnienie [atm] — skaluje Beer-Lambert
+
   let tau = 1.0;
 
-  // Rayleigh
-  tau *= Math.exp(-2e-5 * Math.pow(0.55/Math.max(u,0.4), 4) * pathLen);
+  // ── WODA CIEKŁA (specjalny model) ──────────────────────────────
+  if(env.h2o_pure){
+    // Współczynniki absorpcji wody [1/m] (uproszczone, dane literaturowe)
+    // Okno VIS: 0.4–0.7 µm: α ≈ 0.01–0.5 /m
+    // Bliskie IR: silna absorpcja
+    const alpha_water = (() => {
+      if(u < 0.40) return 50.0;
+      if(u < 0.50) return 0.05;
+      if(u < 0.60) return 0.02;
+      if(u < 0.70) return 0.08;
+      if(u < 0.90) return 0.80;
+      if(u < 1.00) return 4.00;
+      if(u < 1.20) return 15.0;
+      if(u < 1.40) return 8.00;
+      if(u < 1.50) return 300.0;   // pasmo OH 1.45 µm
+      if(u < 1.80) return 40.0;
+      if(u < 1.90) return 500.0;   // pasmo OH 1.9 µm
+      if(u < 2.50) return 200.0;
+      return 1000.0;  // λ>2.5 µm: totalna absorpcja
+    })();
+    return Math.max(0, Math.exp(-alpha_water * pathLen));
+  }
 
-  // H2O (12 bands)
-  const pw = (rh_pct/100) * pathLen * 0.01;
+  // ── RAYLEIGH (skaluje z ciśnieniem) ───────────────────────────
+  tau *= Math.exp(-2e-5 * Math.pow(0.55/Math.max(u,0.4), 4) * pathLen * P);
+
+  // ── H2O ───────────────────────────────────────────────────────
+  const eff_rh  = env.h2o_pure ? 0 : (env.rh_pct !== undefined ? env.rh_pct : rh_pct);
+  const pw = (eff_rh/100) * pathLen * 0.01 * P;
   const h2o = [
     {c:.725,w:.06,s:.8},{c:.820,w:.045,s:.6},{c:.940,w:.09,s:2.0},
     {c:1.14,w:.10,s:2.5},{c:1.38,w:.18,s:7.0},{c:1.88,w:.22,s:9.0},
     {c:2.68,w:.30,s:11.0},{c:3.17,w:.24,s:4.5},{c:5.35,w:.65,s:5.0},
     {c:6.30,w:1.60,s:18.0},{c:11.7,w:1.50,s:3.5},{c:13.4,w:.9,s:2.5}
   ];
-  h2o.forEach(b=>{
-    const od = b.s * pw * Math.exp(-Math.pow((u-b.c)/(b.w/2.2), 2));
-    tau *= Math.exp(-Math.max(0, od));
+  if(pw > 0) h2o.forEach(b=>{
+    tau *= Math.exp(-Math.max(0, b.s*pw*Math.exp(-Math.pow((u-b.c)/(b.w/2.2),2))));
   });
 
-  // CO2 (7 bands)
-  const cp = (co2_ppm/400) * pathLen * 0.0012;
-  const co2 = [
+  // ── CO2 ───────────────────────────────────────────────────────
+  const eff_co2 = env.co2_ppm !== undefined ? env.co2_ppm : co2_ppm;
+  const cp = (eff_co2/400) * pathLen * 0.0012 * P;
+  const co2b = [
     {c:2.01,w:.09,s:1.2},{c:2.69,w:.16,s:3.5},{c:4.26,w:.30,s:28.0},
     {c:4.82,w:.14,s:2.5},{c:9.40,w:.28,s:2.2},{c:10.4,w:.26,s:1.8},
     {c:14.9,w:4.0,s:9.0}
   ];
-  co2.forEach(b=>{
-    const od = b.s * cp * Math.exp(-Math.pow((u-b.c)/(b.w/2.2), 2));
-    tau *= Math.exp(-Math.max(0, od));
+  if(cp > 0) co2b.forEach(b=>{
+    tau *= Math.exp(-Math.max(0, b.s*cp*Math.exp(-Math.pow((u-b.c)/(b.w/2.2),2))));
   });
 
-  // O3
-  tau *= Math.exp(-0.5*pathLen*0.0001*Math.exp(-Math.pow((u-9.6)/0.6, 2)));
+  // ── NH3 (amoniak — reaktory MOCVD) ────────────────────────────
+  const nh3_ppm = env.nh3_ppm || 0;
+  if(nh3_ppm > 0){
+    const np = (nh3_ppm/1e6) * pathLen * P * 80;
+    const nh3b = [
+      {c:.966,w:.06, s:2.5},  // nadton N-H (3. harmoniczna)
+      {c:1.52, w:.10, s:5.0},  // nadton N-H (2. harmoniczna)
+      {c:2.00, w:.12, s:7.0},  // kombinacyjne
+      {c:2.97, w:.22, s:35.0}, // fundamentalne N-H stretch — bardzo silne
+      {c:4.00, w:.20, s:8.0},  // kombinacyjne
+      {c:6.15, w:.50, s:30.0}, // fundamentalne N-H bend — bardzo silne
+      {c:9.00, w:.80, s:12.0}, // zakres rotacyjny
+    ];
+    nh3b.forEach(b=>{
+      tau *= Math.exp(-Math.max(0, b.s*np*Math.exp(-Math.pow((u-b.c)/(b.w/2.2),2))));
+    });
+  }
+
+  // ── SO2 (ditlenek siarki — Wenus) ─────────────────────────────
+  const so2_ppm = env.so2_ppm || 0;
+  if(so2_ppm > 0){
+    const sp = (so2_ppm/1e6) * pathLen * P * 60;
+    const so2b = [
+      {c:4.00, w:.25, s:15.0}, // pasmo ν₃
+      {c:7.30, w:.50, s:20.0}, // pasmo ν₁+ν₃
+      {c:8.60, w:.60, s:18.0}, // pasmo ν₁
+      {c:19.3, w:2.0, s:8.0},  // pasmo ν₂
+    ];
+    so2b.forEach(b=>{
+      tau *= Math.exp(-Math.max(0, b.s*sp*Math.exp(-Math.pow((u-b.c)/(b.w/2.2),2))));
+    });
+  }
+
+  // ── O3 (Ziemia) ───────────────────────────────────────────────
+  if((env.co2_ppm||0) < 10000){  // tylko dla atmosfer ziemiopodobnych
+    tau *= Math.exp(-0.5*pathLen*P*0.0001*Math.exp(-Math.pow((u-9.6)/0.6,2)));
+  }
 
   return Math.max(0, Math.min(1, tau));
 }
+
+
+
+
+/* ─────────────────────────────────────────────
+   ŚRODOWISKA ATMOSFERYCZNE
+   Każde środowisko definiuje:
+   - P_atm   : ciśnienie [atm] → skaluje Beer-Lambert
+   - T_atm   : temp. atmosfery [°C] (domyślna, student może zmienić)
+   - co2_frac, h2o_frac, nh3_frac, so2_frac : ułamki molowe (0–1)
+   - rh_pct  : wilgotność względna [%] (0 = brak H2O)
+   - co2_ppm : ppm CO2 (dla wstecznej zgodności z Ziemią)
+   - L_max   : max sensowna droga optyczna [m]
+   - det_hint: sugerowany detektor
+   - note    : krótki opis dydaktyczny
+───────────────────────────────────────────── */
+const ENVS = {
+
+  earth: {
+    label:'🌍 Ziemia',
+    desc:'Standardowa atmosfera — H₂O, CO₂, O₃',
+    P_atm:1.000, T_atm:20,
+    co2_ppm:400, rh_pct:50,
+    nh3_ppm:0, so2_ppm:0, h2_frac:0, h2o_pure:false,
+    L_max:100, L_def:2,
+    det_hint:'band_065',
+    note:'Model atmosfery ziemskiej wg HITRAN. Główne składniki absorbujące: H₂O (12 pasm), CO₂ (7 pasm), O₃ (9.6 µm). Okna pirometryczne: 0.8–1.3 µm, 3–5 µm, 8–14 µm.',
+    color:'#3b82f6'
+  },
+
+  mars: {
+    label:'🔴 Mars',
+    desc:'95.3% CO₂, 0.006 atm — zaskakująco przejrzysta',
+    P_atm:0.006, T_atm:-55,
+    co2_ppm:953000, rh_pct:0.1,
+    nh3_ppm:0, so2_ppm:0, h2_frac:0, h2o_pure:false,
+    L_max:1000, L_def:10,
+    det_hint:'window_35',
+    note:'Ciśnienie 170× mniejsze niż na Ziemi. Mimo 953 000 ppm CO₂, kolumnowa gęstość gazu jest mała — τ przy 4.26 µm jest znacznie lepsze niż na Ziemi przy tej samej odległości. Wniosek: Beer-Lambert zależy od ilości gazu (c·L·P), nie tylko stężenia!',
+    color:'#ef4444'
+  },
+
+  venus: {
+    label:'🟡 Wenus',
+    desc:'96.5% CO₂, 92 atm, T_atm = 465°C — pirometr widzi atmosferę',
+    P_atm:92.0, T_atm:465,
+    co2_ppm:965000, rh_pct:0,
+    nh3_ppm:0, so2_ppm:150, h2_frac:0, h2o_pure:false,
+    L_max:10, L_def:1,
+    det_hint:'window_814',
+    note:'Ekstremalny przypadek: pasmo CO₂ przy 4.26 µm jest całkowicie nieprzezroczyste już przy kilku metrach. Atmosfera sama emituje intensywnie (T_atm = 465°C!) — pirometr widzi głównie gaz, nie obiekt. SO₂ dodaje pasma przy 4.0 i 7.3 µm.',
+    color:'#f59e0b'
+  },
+
+  water: {
+    label:'💧 Pod wodą',
+    desc:'Woda ciekła — IR całkowicie blokowane po kilku cm',
+    P_atm:1.000, T_atm:20,
+    co2_ppm:0, rh_pct:0,
+    nh3_ppm:0, so2_ppm:0, h2_frac:0, h2o_pure:true,
+    L_max:5, L_def:0.1,
+    det_hint:'band_065',
+    note:'Woda ciekła pochłania IR dramatycznie. Okno widzialne: 0.4–0.7 µm (τ ≈ 99% / m). Przy 1.45 µm: τ < 0.1% / m. Przy λ > 2 µm: absorpcja totalna. Jedyna opcja pirometryczna: Si 0.65 µm. Dlatego UV/VIS jest używane pod wodą, nie IR.',
+    color:'#06b6d4'
+  },
+
+  nh3_mocvd: {
+    label:'🏭 NH₃ MOCVD',
+    desc:'Reaktor GaN — amoniak jako gaz procesowy',
+    P_atm:0.3, T_atm:25,
+    co2_ppm:0, rh_pct:0,
+    nh3_ppm:500000, so2_ppm:0, h2_frac:0.5, h2o_pure:false,
+    L_max:1, L_def:0.2,
+    det_hint:'band_100',
+    note:'Wzrost GaN (LED, lasery, tranzystory HEMT) w reaktorach MOCVD. NH₃ blokuje IR przy 2.97 µm i 6.15 µm — okno pirometryczne przy 0.9–1.1 µm (InGaAs) jest jedyną opcją. H₂ nośnik jest optycznie przezroczysty (brak momentu dipolowego).',
+    color:'#a78bfa'
+  },
+
+  co2_industrial: {
+    label:'🏭 CO₂ tech.',
+    desc:'Gaz osłonowy spawania — 100% CO₂, 1 atm',
+    P_atm:1.000, T_atm:25,
+    co2_ppm:1000000, rh_pct:0,
+    nh3_ppm:0, so2_ppm:0, h2_frac:0, h2o_pure:false,
+    L_max:2, L_def:0.3,
+    det_hint:'band_390',
+    note:'Spawanie MIG/MAG używa 100% CO₂ jako gazu osłonowego. Pasmo 4.26 µm całkowicie zablokowane. Pirometr 3.9 µm (InSb) pracuje w "oknie" między pasmami CO₂ — dlatego to właśnie ten detektor dominuje w monitorowaniu temperatur spawania.',
+    color:'#10b981'
+  },
+};
+
+let currentEnv = 'earth';  // aktywne środowisko
 
 const WINDOWS = {
   none:        {label:'Brak przesłony',              desc:'τ = 1',                       color:'#555',    d_ref:5,  defaultThick:5,  tau_fresnel:1.000},
@@ -1721,7 +2145,11 @@ function invertTemp(target, det, eps_a){
 
 function compute(p){
   const Tobj_K = p.Tobj;
-  const Tatm_K = p.Tatm + 273.15;
+  const env     = ENVS[currentEnv] || ENVS.earth;
+  // T_atm: środowisko ustawia domyślną, ale suwak Mirka może override
+  const Tatm_K  = (currentEnv !== 'earth' && p.Tatm === (env.T_atm))
+                   ? env.T_atm + 273.15
+                   : p.Tatm + 273.15;
   const Twin_K = (p.windowTemp ?? 25) + 273.15;   // temperatura przesłony
   const thick  = p.windowThick ?? (WINDOWS[p.windowKey]?.defaultThick ?? 5);
   const det = DETS[p.detKey];
@@ -1733,7 +2161,7 @@ function compute(p){
     const lam=lams[i];
     const bb = planck(lam, Tobj_K);
     const em = p.eps_real * bb;
-    const ta = atmTau(lam, p.path, p.rh, p.co2);
+    const ta = atmTau(lam, p.path, p.rh, p.co2, env);
     const la = (1-ta)*planck(lam, Tatm_K);
     const lAfterAtm = ta*em + la;
     const tw_win = windowTau(lam, p.windowKey, thick);
@@ -2224,6 +2652,73 @@ const BEG_PRESETS = {
   beg_ceramic:{Tobj:1073,eps_real:0.90,path:2, rh:40, co2:400,Tatm:20,detKey:'window_35',eps_assumed:0.90,windowKey:'none',windowTemp:25,windowThick:5},
 };
 
+
+/* ─────────────────────────────────────────────
+   ENVIRONMENT SWITCHING
+───────────────────────────────────────────── */
+function setEnv(key){
+  currentEnv = key;
+  const env = ENVS[key] || ENVS.earth;
+
+  // Aktualizuj przyciski — querySelectorAll zamiast getElementById
+  // (odporne na duplikaty; explicit add/remove zamiast toggle(force) — Safari fix)
+  document.querySelectorAll('.env-btn').forEach(b=>{
+    const k = b.id.replace('env_','');
+    if(k===key){ b.classList.add('active'); }
+    else        { b.classList.remove('active'); }
+  });
+
+  // Aktualizuj notatkę i parametry
+  const note  = document.getElementById('env_note');
+  const prms  = document.getElementById('env_params');
+  if(note)  note.textContent = env.note || env.desc;
+  if(prms)  prms.innerHTML =
+    `<span>P = ${env.P_atm.toFixed(3)} atm</span>` +
+    `<span>T<sub>atm</sub> = ${env.T_atm} °C</span>`;
+
+  // Ustaw T_atm w state (środowisko może mieć inną domyślną)
+  state.Tatm = env.T_atm;
+  const slTatm = document.getElementById('sl_Tatm');
+  if(slTatm){ slTatm.value=env.T_atm; slPct(slTatm); }
+  const vTatm = document.getElementById('val_Tatm');
+  if(vTatm) vTatm.textContent = env.T_atm+' °C';
+
+  // Dostosuj suwak drogi L do środowiska
+  const slL = document.getElementById('sl_path');
+  if(slL){
+    slL.max = env.L_max;
+    slL.value = Math.min(state.path, env.L_max);
+    // Dla nieziemskich: ustaw sugerowaną domyślną drogę
+    if(key !== 'earth'){
+      slL.value = env.L_def;
+      state.path = env.L_def;
+    } else {
+      state.path = Math.min(state.path, env.L_max);
+    }
+    slPct(slL);
+    const vL=document.getElementById('val_path');
+    if(vL) vL.textContent = slL.value+' m';
+  }
+
+  // Zablokuj suwaki rh/co2 dla nieziemskich środowisk
+  const lockAtm = (key !== 'earth');
+  ['sl_rh','sl_co2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ el.disabled=lockAtm; el.style.opacity=lockAtm?'0.3':'1'; }
+  });
+  const rLabel=document.querySelector('[for=sl_rh], .sl-name');
+
+  // Sugerowany detektor (hint w legendzie)
+  const detHint=document.getElementById('det_env_hint');
+  if(detHint){
+    const det = DETS[env.det_hint];
+    detHint.textContent = det ? '💡 Sugerowany: '+det.label : '';
+    detHint.style.display = (key==='earth') ? 'none' : 'block';
+  }
+
+  scheduleUpdate();
+}
+
 /* ─────────────────────────────────────────────
    MODE SWITCHING
 ───────────────────────────────────────────── */
@@ -2287,7 +2782,7 @@ function begOnT(el){
 }
 function begOnTNum(el){
   let c=parseFloat(el.value); if(isNaN(c)) return;
-  c=Math.max(-20,Math.min(2000,Math.round(c)));
+  c=Math.max(-20,Math.min(3480,Math.round(c)));
   el.value=c;
   const sl=document.getElementById('beg_sl_T'); if(sl){sl.value=c; slPct(sl);}  // ← gradient
   state.Tobj=Math.round(c+273.15);
@@ -2335,8 +2830,11 @@ let logScale = false;   // false = linear (default matches "kształt z podręczn
 
 function setScale(mode){
   logScale = (mode==='log');
-  document.getElementById('btnLog').classList.toggle('active', logScale);
-  document.getElementById('btnLin').classList.toggle('active', !logScale);
+  // explicit add/remove zamiast toggle(force) — Safari fix
+  const btnLog=document.getElementById('btnLog');
+  const btnLin=document.getElementById('btnLin');
+  if(btnLog){ if(logScale) btnLog.classList.add('active'); else btnLog.classList.remove('active'); }
+  if(btnLin){ if(!logScale) btnLin.classList.add('active'); else btnLin.classList.remove('active'); }
   scheduleUpdate();
 }
 
@@ -2579,6 +3077,12 @@ const PRESETS={
   lowtemp:    {Tobj:473, eps_real:0.92,path:3, rh:40,co2:400,Tatm:20,detKey:'window_814',eps_assumed:0.92,windowKey:'none',windowTemp:25, windowThick:5},
   total:      {Tobj:1173,eps_real:0.60,path:2, rh:50,co2:400,Tatm:20,detKey:'total',    eps_assumed:1.00,windowKey:'none', windowTemp:25, windowThick:5},
   // Pomiar przez wziernik z szybą plexiglas — typowa sytuacja w piecu laboratoryjnym
+
+  mars_basic:   {Tobj:523, eps_real:0.90,path:10, rh:0,  co2:400,Tatm:-55,detKey:'window_35', eps_assumed:0.90,windowKey:'none',windowTemp:25,windowThick:5},
+  venus_basic:  {Tobj:738, eps_real:0.95,path:1,  rh:0,  co2:400,Tatm:465,detKey:'window_814',eps_assumed:0.95,windowKey:'none',windowTemp:25,windowThick:5},
+  water_basic:  {Tobj:1473,eps_real:0.80,path:0.1,rh:0,  co2:400,Tatm:20, detKey:'band_065', eps_assumed:0.80,windowKey:'none',windowTemp:25,windowThick:5},
+  nh3_basic:    {Tobj:1273,eps_real:0.85,path:0.2,rh:0,  co2:400,Tatm:25, detKey:'band_100', eps_assumed:0.85,windowKey:'caf2',windowTemp:25,windowThick:2},
+  co2ind_basic: {Tobj:1773,eps_real:0.75,path:0.3,rh:0,  co2:400,Tatm:25, detKey:'band_390', eps_assumed:0.75,windowKey:'none',windowTemp:25,windowThick:5},
   plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma', windowTemp:60,  windowThick:5},
 };
 
@@ -2606,6 +3110,8 @@ function toggleTheme(){
   isDark = !isDark;
   document.body.classList.toggle('theme-dark', isDark);
   document.body.classList.toggle('theme-light', !isDark);
+  // Safari/iPadOS: zaktualizuj color-scheme na :root
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
   document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
   scheduleUpdate();
 }
@@ -2676,6 +3182,7 @@ window.addEventListener('load', ()=>{
   setupCanvas();
   initSliders();
   // synchronizuj suwak i pole °C w trybie beginera
+  setEnv('earth');  // inicjalizuj środowisko
   const bsl=document.getElementById('beg_sl_T');
   if(bsl) bsl.value=Math.round(state.Tobj-273.15);
   const bnum=document.getElementById('beg_num_T');
