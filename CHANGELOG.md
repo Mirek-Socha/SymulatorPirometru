@@ -1,92 +1,195 @@
-# Changelog — Symulator Toru Pirometrycznego
+# Changelog — Pirometria: Symulator Toru Pomiarowego
 
-Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)
+Format: [Keep a Changelog](https://keepachangelog.com/pl/1.0.0/)  
+Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
-## [v1.7.0] — 2026-05-21 ✅ bieżąca
-
-### Dodano
-- **Przesłona optyczna** — nowy blok 3 w torze pomiarowym z 6 materiałami:
-  szyba float, Plexiglas (PMMA), kwarc topiony (SiO₂), fluoryt (CaF₂),
-  selenek cynku (ZnSe), german (Ge)
-- Spektralne modele transmitancji: smoothstep na krawędziach UV/IR
-  + gaussowskie pasma absorpcji (dane NIST/literature)
-- Budżet błędów rozszerzony do **3 składowych**: Δε, ΔT_atm, ΔT_win
-- Pole numeryczne do bezpośredniego wpisania temperatury w K (+ przelicznik °C)
-- Preset **🪟 Plexiglas** — pomiar przez wziernik PMMA, detektor InGaAs 1.0 µm
-- Krzywa τ_win(λ) na wykresie widma (przerywana, kolor per materiał)
-- Dokumentacja: sekcja 8 (teoria przesłony, wzory, tabela materiałów)
-- Dokumentacja: sekcja 9 (autor, wersja, repozytorium)
-- Nagłówek toru: dodana pozycja "Przesłona"
+## [v2.1.1] — 2026-05-24 ✅ bieżąca
 
 ### Poprawiono
-- Kursor (krzyżyk hover) na wykresie widma w skali **liniowej** —
-  używał błędnie formuły logarytmicznej; linia i dymek były rozsynchronizowane
-- Usunięty zduplikowany blok Atmosfera w schemacie blokowym
-- Schemat blokowy ma teraz poprawnie 6 bloków i 5 strzałek
+- **Suwaki RH i CO₂ nie wpływały na transmitancję atmosfery** — błąd logiczny
+  w `atmTau()`: `env.rh_pct`/`co2_ppm` z `ENVS.earth` wygrywały nad suwakami
+  (`!== undefined` zawsze true). Dla Ziemi używane są teraz wartości z suwaków;
+  dla pozostałych środowisk — wartości z ENVS (narzucone fizycznie)
+- **Suwak T_atm resetował się do 60°C po wybraniu Wenus** — `max="60"` w HTML
+  clampowało wartość 465°C. `setEnv()` dynamicznie rozszerza `min`/`max` suwaka
+  przed ustawieniem wartości; `initSliders()` respektuje bieżący zakres środowiska
+- Większe wykresy: specCanvas `clamp(200px, 54vh, 460px)`,
+  tauCanvas `clamp(100px, 22vh, 200px)`
+- Kolumna wykresów `position:sticky` w trybie Eksperta — wykresy widoczne
+  podczas scrollowania listy suwaków
 
 ---
 
-## [v1.6.0] — 2026-05-21
+## [v2.1.0] — 2026-05-24
+
+### Dodano — 6 środowisk atmosferycznych
+- Panel **🌐 Środowisko / atmosfera** w trybie Eksperta z 6 środowiskami:
+  - 🌍 **Ziemia** — model HITRAN (H₂O 12 pasm, CO₂ 7 pasm, O₃); suwaki RH/CO₂ aktywne
+  - 🔴 **Mars** — 95.3% CO₂, P = 0.006 atm; paradoks Beer-Lamberta (gęsty CO₂,
+    ale mała kolumnowa ilość gazu → atmosfera zaskakująco przejrzysta)
+  - 🟡 **Wenus** — 96.5% CO₂ + 150 ppm SO₂, P = 92 atm, T_atm = 465°C;
+    absorpcja totalna, pirometr widzi wyłącznie emisję atmosfery
+  - 💧 **Woda ciekła** — specjalny model α(λ); blokada IR po kilku cm,
+    jedyne okno: VIS 0.4–0.7 µm (detektor Si)
+  - 🏭 **NH₃ MOCVD** — reaktory wzrostu GaN; NH₃ 50% + H₂ 50%, P = 0.3 atm;
+    pasma N-H przy 2.97 i 6.15 µm, okno pirometryczne 0.9–1.1 µm (InGaAs)
+  - 🏭 **CO₂ techniczny** — spawanie MIG/MAG; 100% CO₂, P = 1 atm;
+    4.26 µm zablokowane, InSb 3.9 µm pracuje w oknie między pasmami CO₂
+- **Uogólniony model Beer-Lambert** z czynnikiem ciśnienia P/P₀:
+  τ(λ) = exp(−Σ αᵢ·cᵢ·L·P/P₀)
+- Modele pasm absorpcyjnych: NH₃ (7 pasm), SO₂ (4 pasma), woda ciekła (α tabelaryczne)
+- Presety środowiskowe w menu rozwijanym (5 nowych pozycji)
+- Hint sugerowanego detektora per środowisko
+- Dokumentacja Expert **sekcja 5**: „Środowiska atmosferyczne" — pełna fizyka z KaTeX,
+  tabele porównawcze, przykłady liczbowe, info-boxy z ćwiczeniami
+- Dokumentacja Beginner **sekcja 3b**: „Środowiska" — analogie i ćwiczenie interaktywne
+- Zakres temperatury Beginner: **−20 do 3480 °C** (krok 50°C, siatka dokładna)
+
+### Poprawiono — WebKit / Safari / iPadOS
+- `color-scheme: dark/light` na `.theme-dark/.theme-light` — natywne kontrolki
+  w odpowiednim motywie
+- `color-scheme` na `:root` aktualizowany przez JS przy `toggleTheme()`
+- `-webkit-appearance:none` na `button` i `select`
+- `-webkit-text-fill-color` na polach numerycznych (Safari ignoruje `color`)
+- Jawne `background:var(--surf/--bg)` na `.ctrl-col`, `.beg-panel`, `.ctrl-panel`,
+  `.plots-col`, `.res-col`, `.main-layout` — brak dziedziczenia z `body.theme-X`
+- `classList.toggle(name, force)` → jawne `add()`/`remove()` (bug Safari WebKit)
+- `querySelectorAll('.env-btn')` zamiast `getElementById` — odporne na duplikaty DOM
+- Usunięty zduplikowany panel środowiska
+
+### Poprawiono — UI/UX
+- Nagłówek: `flex:1; min-width:0` na `hdr-brand`, `flex-shrink:0` na `hdr-actions`
+  — eliminuje overflow i nakładanie przy wąskim ekranie, `overflow:hidden` usunięte
+
+---
+
+## [v2.0.0] — 2026-05-23
+
+### Przełomowe — dwa tryby obsługi
+
+#### 🎓 Tryb Podstawowy (domyślny)
+- Uproszczony interfejs dla studentów II roku bez doświadczenia z pirometrią
+- Temperatura w °C (suwak + pole numeryczne, krok 1°C)
+- 4 przyciski emisyjności: Metal polerowany / Stal utleniona / Ceramika / CDC
+- 3 przyciski atmosfery: Brak / Krótka (2 m) / Długa (20 m)
+- 3 typy pirometru: Bliskie IR 0.65 µm / Środkowe IR 3–5 µm / Dalekie IR 8–14 µm
+- Sygnalizacja świetlna ΔT 🟢🟡🔴 z dynamicznym hintem tekstowym
+- Dokumentacja „Jak działa pirometr?" — 4 sekcje z analogiami i ćwiczeniami
+
+#### 🔬 Tryb Eksperta
+- Pełny interfejs wersji v1.x + nowe funkcje v2.x
+- Przełącznik w nagłówku: wyróżniony żółty przycisk
+
+### Dodano
+- Nowa nazwa aplikacji: **„Pirometria"** (było „Symulator Pirometryczny")
+- Presety: menu rozwijane `☰ Presety ▾` zamiast przycisków w rzędzie
+- Presety beginner: CDC wzorzec / Stal w piecu / Ceramika
+- `<body class="theme-dark beginner">` — klasy inicjalne w HTML (brak migotania)
+- Dokumentacja: tryb Podstawowy (bo) i Eksperta (xo) w jednym panelu
 
 ### Poprawiono
-- Skrót **CDC** (Ciało Doskonale Czarne) zamiast błędnego CDB (= Białe)
-- Ostrzeżenia KaTeX: polskie litery i µ usunięte z trybu matematycznego
+- `toggleTheme()`: `classList.toggle` zamiast `className=` (zachowuje klasy trybu)
+- Duplikaty ID (`r_Tind`, `r_Tobj` itd.): panel Expert ma sufiks `_x`
+- Adaptacyjny `pL` osi Y: skaluje się z zoom przeglądarki (`W*0.072`)
+- Canvas: `offsetHeight` zamiast `getAttribute` (poprawne po `display:none`)
+- `requestAnimationFrame` w `applyMode()` — canvas po odkryciu z `display:none`
 
 ---
 
-## [v1.5.0] — 2026-05-21
-
-### Dodano
-- Pasek widma **UV** (100–380 nm) + VIS (380–700 nm) na obu wykresach
-- Zakres temperatury: **10 K – 12 000 K** (suwak w Kelwinach)
-- Przełącznik skali osi λ: **liniowa / logarytmiczna**
-- Grubsze strzałki w schemacie blokowym
-- Formuły matematyczne renderowane przez **KaTeX**
-
----
-
-## [v1.4.0] — 2026-05-21
-
-### Dodano
-- Przełącznik **motywu jasnego / ciemnego**
-- Przebudowa schematu blokowego (karty HTML + animowane strzałki)
-- Panel **dokumentacji** z 7 sekcjami merytorycznymi
-- Responsywność: 3 układy (desktop / tablet / telefon)
+## [v1.10.0] — 2026-05-23
 
 ### Poprawiono
-- `tv()` czyta CSS vars z `body` — poprawne kolory w obu motywach
-- Jawne wypełnienie tła kanwy
+- **Zakresy Gaussów** — były 3–5× za szerokie; nowe: `range = [lc-5σ, lc+5σ]`
+  gdzie σ = bw/2.355 (R przy granicach ≈ 3.7×10⁻⁶, praktycznie zero):
+  `band_065`: [0.45,1.00] → [0.555,0.745]  
+  `band_100`: [0.70,1.40] → [0.851,1.149]  
+  `band_160`: [1.20,2.10] → [1.388,1.812]  
+  `band_390`: [3.00,5.00] → [3.156,4.644]
+- **R(λ) na wykresie widma** — adaptacyjna siatka 500 pkt w zakresie czułości
+  (gęsta w `[dmin,dmax]`, rzadka poza) — gładka nawet dla Gaussa 0.65 µm
+- Sygnał na detektorze: kolor `--signal` (#c026d3) zamiast pomarańczowego
+  — wyraźnie odróżnialny od żółtego ε·B i cyjanowego T_ind
+- Legenda widma uzupełniona o emisję przesłony
+- Polskie i bezpłatne źródła online w bibliografii: pozycje [11]–[15]
+  (Minkina, GUM, BIPM SI Brochure, HITRAN on the Web, Wikipedia PL)
 
 ---
 
-## [v1.3.0] — 2026-05-21
+## [v1.9.0] — 2026-05-23
 
 ### Dodano
-- Pasek widma widzialnego z gradientem tęczy
+- **Sekcja 10 Literatura** — 10 pozycji naukowych z linkami DOI
+  (Planck, Wien, Boltzmann, Kirchhoff, DeWitt, Preston-Thomas,
+  Palik, Michalski, HITRAN2020, Modest)
+- Cytowania `[n]` przy wzorach w tekście dokumentacji
+
+### Poprawiono
+- Brakujący `</div>` panelu przesłony (detektor wypadał poza kontener)
+- Brakująca kolumna D_REF dla szyby float w tabeli okien optycznych
+- Temperatura T_obiektu: pole liczbowe w °C (krok 1°C) + przelicznik K
+- Pola numeryczne dla ε_real i ε_assumed (krok 0.01)
+- Reorganizacja dokumentacji: kolejność zgodna z torem pomiaru (9 sekcji)
 
 ---
 
-## [v1.2.0] — 2026-05-21
+## [v1.8.1] — 2026-05-22
 
-### Dodano
-- Schemat blokowy toru pomiarowego
-- Panel wyników z dekompozycją błędu
-- Tooltip hover z wartościami widmowymi
-- 5 presetów demonstracyjnych
+### Poprawiono
+- `Lwin_emit` nie było zwracane z `compute()` — `TypeError: undefined is not iterable`
+  przy zmianie temperatury przesłony
 
 ---
 
-## [v1.1.0] — 2026-05-21
+## [v1.8.0] — 2026-05-22
 
 ### Dodano
-- Model atmosfery (H₂O, CO₂, 19 pasm)
-- 7 typów detektorów
+- **Grubość przesłony** (suwak 0.5–30 mm): Beer-Lambert
+  `τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)` — absorpcja skaluje się z grubością
+- **Temperatura przesłony** (suwak 0–700°C): emisja własna
+  `L_win_emit = (1−τ_win)·L_bb(T_win)` — prawo Kirchhoffa
+- Refaktoring `windowTau()`: rozdzielenie τ_Fresnel / τ_bandpass / τ_bulk(d)
+- Krzywa emisji własnej okna na wykresie widmowym
+- Schemat blokowy: wyświetla d i T_win w bloku przesłony
+- Dokumentacja sekcja 8: pełna teoria (Beer-Lambert, emisja własna, tabela d_ref)
 
 ---
 
-## [v1.0.0] — 2026-05-21
+## [v1.7.1] — 2026-05-21
+
+### Poprawiono
+- Canvas collapse w Opera/Blink — jawna wysokość CSS + `offsetHeight`
+
+---
+
+## [v1.7.0] — 2026-05-21
 
 ### Dodano
-- Pierwsza wersja symulatora — prawa Plancka, Wien, Stefan-Boltzmann
+- **Przesłona optyczna** — blok 3 w torze z 6 materiałami:
+  szyba float, PMMA, kwarc (SiO₂), fluoryt (CaF₂), ZnSe, Ge
+- Budżet błędów: **3 składowe** Δε, ΔT_atm, ΔT_win
+- Pole numeryczne T_obiektu w K + przelicznik °C
+- Preset 🪟 Plexiglas (PMMA, InGaAs 1.0 µm)
+- Krzywa τ_win(λ) na wykresie, nagłówek toru zaktualizowany
+
+### Poprawiono
+- Crosshair hover w skali liniowej (błędna formuła log)
+- Zduplikowany blok Atmosfera w schemacie blokowym
+
+---
+
+## [v1.5.0 – v1.6.0] — 2026-05-21
+
+- v1.6.0: Skrót CDC zamiast CDB, poprawki KaTeX
+- v1.5.0: Pasek UV+VIS, zakres 10–12000 K, skala log/lin, KaTeX, responsywność
+
+---
+
+## [v1.0.0 – v1.4.0] — 2026-05-21
+
+- v1.4.0: Motyw jasny/ciemny, schemat blokowy HTML, dokumentacja 7 sekcji
+- v1.3.0: Pasek widma widzialnego
+- v1.2.0: Schemat blokowy, panel wyników, tooltip, 5 presetów
+- v1.1.0: Model atmosfery (H₂O, CO₂), 7 typów detektorów
+- v1.0.0: Pierwsza wersja — Planck, Wien, Stefan-Boltzmann, widmo CDC
