@@ -560,7 +560,14 @@ option{
   grid-area:plots;
   display:flex;flex-direction:column;
   border-right:1px solid var(--border);
-  background:var(--bg);              /* ← jawne tło */
+  background:var(--bg);
+}
+/* W trybie eksperta: wykresy pozostają widoczne podczas scrollowania suwakow */
+body.expert .plots-col{
+  position:sticky;
+  top:48px;          /* wysokość nagłówka */
+  max-height:calc(100vh - 48px);
+  overflow-y:auto;
 }
 @media(max-width:699px){.plots-col{border-right:none}}
 .plot-hdr{
@@ -1127,7 +1134,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <button class="st-btn active" id="btnLin" onclick="setScale('lin')">lin λ</button>
       </div>
     </div>
-    <canvas id="specCanvas" height="348" style="height:clamp(180px, 42vh, 348px)"></canvas>
+    <canvas id="specCanvas" height="460" style="height:clamp(200px, 54vh, 460px)"></canvas>
     <div class="legend">
       <div class="leg"><div class="leg-line" style="background:var(--muted);border-top:1px dashed currentColor"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
@@ -1139,7 +1146,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="leg"><div class="leg-fill" style="background:#10b981;opacity:.35"></div>Emisja przesłony</div>
     </div>
     <div class="plot-hdr tau-hdr xo">Transmitancja atmosferyczna τ(λ)</div>
-    <canvas id="tauCanvas" height="148" style="height:clamp(80px, 16vh, 148px)" class="xo"></canvas>
+    <canvas id="tauCanvas" height="200" style="height:clamp(100px, 22vh, 200px)" class="xo"></canvas>
   </main>
 
   <!-- ─── RESULTS ─── -->
@@ -1648,7 +1655,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.1.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.1.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1867,7 +1874,12 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
   tau *= Math.exp(-2e-5 * Math.pow(0.55/Math.max(u,0.4), 4) * pathLen * P);
 
   // ── H2O ───────────────────────────────────────────────────────
-  const eff_rh  = env.h2o_pure ? 0 : (env.rh_pct !== undefined ? env.rh_pct : rh_pct);
+  // Dla Ziemi: używaj wartości z suwaków (parametry rh_pct, co2_ppm)
+  // Dla pozostałych środowisk: używaj wartości z obiektu env (skład zdefiniowany fizycznie)
+  const isEarth = (currentEnv === 'earth' || !env_override);
+  const eff_rh  = env.h2o_pure ? 0
+                : isEarth ? rh_pct
+                : (env.rh_pct !== undefined ? env.rh_pct : rh_pct);
   const pw = (eff_rh/100) * pathLen * 0.01 * P;
   const h2o = [
     {c:.725,w:.06,s:.8},{c:.820,w:.045,s:.6},{c:.940,w:.09,s:2.0},
@@ -1880,7 +1892,8 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
   });
 
   // ── CO2 ───────────────────────────────────────────────────────
-  const eff_co2 = env.co2_ppm !== undefined ? env.co2_ppm : co2_ppm;
+  const eff_co2 = isEarth ? co2_ppm
+                : (env.co2_ppm !== undefined ? env.co2_ppm : co2_ppm);
   const cp = (eff_co2/400) * pathLen * 0.0012 * P;
   const co2b = [
     {c:2.01,w:.09,s:1.2},{c:2.69,w:.16,s:3.5},{c:4.26,w:.30,s:28.0},
@@ -2676,37 +2689,47 @@ function setEnv(key){
     `<span>P = ${env.P_atm.toFixed(3)} atm</span>` +
     `<span>T<sub>atm</sub> = ${env.T_atm} °C</span>`;
 
-  // Ustaw T_atm w state (środowisko może mieć inną domyślną)
-  state.Tatm = env.T_atm;
+  // Dostosuj suwak T_atm do zakresu środowiska
   const slTatm = document.getElementById('sl_Tatm');
-  if(slTatm){ slTatm.value=env.T_atm; slPct(slTatm); }
+  if(slTatm){
+    const tMin = Math.min(-60, env.T_atm - 10);
+    const tMax = Math.max(60,  env.T_atm + 10);
+    slTatm.min   = tMin;
+    slTatm.max   = tMax;
+    slTatm.step  = (env.T_atm > 100) ? 5 : 5;
+    slTatm.value = env.T_atm;
+    slPct(slTatm);
+  }
   const vTatm = document.getElementById('val_Tatm');
-  if(vTatm) vTatm.textContent = env.T_atm+' °C';
+  if(vTatm) vTatm.textContent = env.T_atm + ' °C';
+  state.Tatm = env.T_atm;
 
   // Dostosuj suwak drogi L do środowiska
   const slL = document.getElementById('sl_path');
   if(slL){
     slL.max = env.L_max;
-    slL.value = Math.min(state.path, env.L_max);
-    // Dla nieziemskich: ustaw sugerowaną domyślną drogę
     if(key !== 'earth'){
       slL.value = env.L_def;
       state.path = env.L_def;
     } else {
       state.path = Math.min(state.path, env.L_max);
+      slL.value  = state.path;
     }
     slPct(slL);
-    const vL=document.getElementById('val_path');
-    if(vL) vL.textContent = slL.value+' m';
+    const vL = document.getElementById('val_path');
+    if(vL) vL.textContent = slL.value + ' m';
   }
 
-  // Zablokuj suwaki rh/co2 dla nieziemskich środowisk
+  // Zablokuj RH i CO2 dla środowisk nieziemskich (mają własne składy gazowe)
+  // Dla Ziemi: zawsze odblokowane
   const lockAtm = (key !== 'earth');
   ['sl_rh','sl_co2'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){ el.disabled=lockAtm; el.style.opacity=lockAtm?'0.3':'1'; }
+    const el = document.getElementById(id);
+    if(el){
+      el.disabled     = lockAtm;
+      el.style.opacity = lockAtm ? '0.3' : '1';
+    }
   });
-  const rLabel=document.querySelector('[for=sl_rh], .sl-name');
 
   // Sugerowany detektor (hint w legendzie)
   const detHint=document.getElementById('det_env_hint');
@@ -3052,10 +3075,19 @@ function initSliders(){
       if(n) n.value=state[key].toFixed(2);
       return;
     }
+    if(key==='Tatm'){
+      const ve=document.getElementById('val_'+key);
+      const v=state[key];
+      if(parseFloat(el.max) < v) el.max = Math.ceil((v+10)/5)*5;
+      if(parseFloat(el.min) > v) el.min = Math.floor((v-10)/5)*5;
+      el.value=v; slPct(el);
+      if(ve) ve.textContent=v+' °C';
+      return;
+    }
     const ve=document.getElementById('val_'+key);
     if(ve){
       const v=state[key];
-      const labels={path:v+' m',rh:v+' %',co2:v+' ppm',Tatm:v+' °C',
+      const labels={path:v+' m',rh:v+' %',co2:v+' ppm',
         windowThick:v.toFixed(1)+' mm',windowTemp:v.toFixed(0)+' °C'};
       ve.textContent=labels[key]||v;
     }

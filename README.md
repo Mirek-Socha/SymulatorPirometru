@@ -121,7 +121,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | v2.1.0 |
+| `main` | 🇵🇱 Polski | v2.1.1 |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en (wymaga aktualizacji) |
 
 ---
@@ -130,7 +130,7 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.1.0** | 6 środowisk atmosferycznych (Mars, Wenus, woda, NH₃, CO₂), nowy atmTau z P/P₀, dokumentacja sekcja 5, naprawa WebKit/Safari/iPad, zakres T beginner do 3480°C |
+| **v2.1.1** | 6 środowisk atmosferycznych (Mars, Wenus, woda, NH₃, CO₂), nowy atmTau z P/P₀, dokumentacja sekcja 5, naprawa WebKit/Safari/iPad, zakres T beginner do 3480°C |
 | v2.0.0 | Tryb Podstawowy + Eksperta, „Pirometria", menu presetów |
 | v1.10.0 | Poprawne zakresy Gaussów ±5σ, adaptacyjna siatka R(λ) |
 | v1.9.0 | Literatura z DOI, pola numeryczne T/ε |
