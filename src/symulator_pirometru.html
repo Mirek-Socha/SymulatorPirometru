@@ -1306,7 +1306,49 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <div class="docs-panel" id="docsPanel">
   <div class="docs-top">
     <div class="docs-title xo">Dokumentacja fizyczna i algorytmiczna</div>
+
+<div class="toc xo">
+  <div class="toc-title">📋 Spis treści — Dokumentacja fizyczna</div>
+  <ol>
+    <li><a href="#doc-s1">Model toru pomiarowego</a>
+      <span class="toc-sub">Równanie transportu promieniowania · 6 bloków</span></li>
+    <li><a href="#doc-s2">Prawo Plancka — ciało doskonale czarne</a>
+      <span class="toc-sub">Wien · Stefan-Boltzmann · stałe promieniowania</span></li>
+    <li><a href="#doc-s3">Emisyjność i prawo Kirchhoffa</a>
+      <span class="toc-sub">Ciało szare · Hagen-Rubens ε(λ,T) · korekcja T</span></li>
+    <li><a href="#doc-s4">Model transmitancji atmosferycznej</a>
+      <span class="toc-sub">Beer-Lambert · H₂O, CO₂ · emisja własna</span></li>
+    <li><a href="#doc-s5">Środowiska atmosferyczne</a>
+      <span class="toc-sub">Ziemia · Mars · Wenus · Woda · NH₃ · CO₂</span></li>
+    <li><a href="#doc-s6">Przesłona optyczna</a>
+      <span class="toc-sub">Fresnel · Beer-Lambert · emisja własna · tabela materiałów</span></li>
+    <li><a href="#doc-s7">Modele detektora R(λ)</a>
+      <span class="toc-sub">Gauss · prostokąt · szerokopasmowy</span></li>
+    <li><a href="#doc-s8">Całkowanie sygnału i inwersja T</a>
+      <span class="toc-sub">Bisekcja 72 iter. · dekompozycja błędów</span></li>
+    <li><a href="#doc-s9">Słownik symboli</a>
+      <span class="toc-sub">L_bb, ε, τ, R, S, T_ind, c₂, σ …</span></li>
+    <li><a href="#doc-s10">Informacje o aplikacji</a>
+      <span class="toc-sub">Autor · wersja · repozytorium · CDN</span></li>
+    <li><a href="#doc-s11">Literatura i źródła</a>
+      <span class="toc-sub">15 pozycji [1–10 DOI, 11–15 online]</span></li>
+  </ol>
+</div>
+
+
     <div class="docs-title bo">Jak działa pirometr? — Przewodnik</div>
+
+<div class="toc toc-beg bo">
+  <div class="toc-title">📋 Przewodnik — co tu znajdziesz</div>
+  <ol>
+    <li><a href="#beg-s1">Co to jest pirometr?</a></li>
+    <li><a href="#beg-s2">Emisyjność — dlaczego materiał ma znaczenie?</a></li>
+    <li><a href="#beg-s3">Atmosfera — dlaczego odległość ma znaczenie?</a></li>
+    <li><a href="#beg-s4">Środowiska — pirometria poza Ziemią</a></li>
+    <li><a href="#beg-s5">Jak czytać wykresy?</a></li>
+  </ol>
+</div>
+
     <button class="docs-close" onclick="toggleDocs()">✕</button>
   </div>
   <div class="docs-body" id="docsBody">
@@ -1318,7 +1360,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
 <!-- Sekcja 1 -->
 <div class="beg-doc-sec">
-<h2>1. Co to jest pirometr?</h2>
+<h2 id="beg-s1">1. Co to jest pirometr?</h2>
 <p>Pirometr to termometr <b>bezdotykowy</b> — mierzy temperaturę obiektu <b>bez dotykania go</b>,
 analizując promieniowanie podczerwone (IR) emitowane przez każde ciało o temperaturze wyższej od zera bezwzględnego.</p>
 <div class="beg-analogy">Każdy obiekt „świeci" ciepłem. Im gorętszy — tym intensywniej i przy krótszych falach.
@@ -1340,7 +1382,7 @@ Przy ok. 700°C obiekt zaczyna być widoczny gołym okiem jako czerwony blask �
 
 <!-- Sekcja 2 -->
 <div class="beg-doc-sec">
-<h2>2. Emisyjność — dlaczego materiał ma znaczenie?</h2>
+<h2 id="beg-s2">2. Emisyjność — dlaczego materiał ma znaczenie?</h2>
 <p>Nie każdy obiekt emituje tyle samo ciepła przy tej samej temperaturze. <b>Emisyjność ε</b> (od 0 do 1)
 opisuje jak bardzo obiekt zbliżony jest do idealnego „ciała doskonale czarnego" (ε = 1).</p>
 <div class="beg-analogy">Wyobraź sobie nagrzaną blachę stalową i lusterko — obie w tej samej temperaturze.
@@ -1361,7 +1403,7 @@ To błąd — pirometr widzi zbyt mało promieniowania i zaniża temperaturę. Z
 
 <!-- Sekcja 3 -->
 <div class="beg-doc-sec">
-<h2>3. Atmosfera — dlaczego odległość ma znaczenie?</h2>
+<h2 id="beg-s3">3. Atmosfera — dlaczego odległość ma znaczenie?</h2>
 <p>Powietrze między pirometrem a obiektem <b>pochłania część promieniowania</b> — głównie para wodna (H₂O)
 i dwutlenek węgla (CO₂). Im dłuższa droga optyczna, tym więcej promieniowania ginie po drodze.</p>
 <div class="beg-analogy">To jak patrzenie przez mgłę — im gęstsza i dalsza, tym mniej widzisz.
@@ -1377,7 +1419,7 @@ bo krótkie fale lepiej przenikają przez powietrze.</div>
 <!-- Sekcja 4 -->
 
 <div class="beg-doc-sec">
-<h2>3b. Środowiska — pirometria poza Ziemią</h2>
+<h2 id="beg-s4">4. Środowiska — pirometria poza Ziemią</h2>
 <p>Symulator pozwala zbadać jak wyglądałby pomiar pirometryczny w <b>zupełnie innych atmosferach</b>.
 Każde środowisko zmienia skład gazu i ciśnienie — a tym samym transmitancję τ(λ) i sygnał na detektorze.</p>
 
@@ -1400,7 +1442,7 @@ Obserwuj jak zmienia się wykres τ(λ) i błąd ΔT.</div>
 </div>
 
 <div class="beg-doc-sec">
-<h2>4. Jak czytać wykresy?</h2>
+<h2 id="beg-s5">5. Jak czytać wykresy?</h2>
 <h3>Wykres widma promieniowania</h3>
 <p>Oś pozioma to długość fali λ (w mikrometrach, µm). Im krótsza fala — tym bliżej widzialnego światła (0.4 µm).
 Im dłuższa — tym głębiej w podczerwień. Oś pionowa to intensywność promieniowania.</p>
@@ -1424,7 +1466,7 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 
 <div class="xo"><!-- expert docs -->
 <!-- ──── 1. MODEL TORU ──────────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s1">
 <h2>1. Model toru pomiarowego</h2>
 <p>Pirometr mierzy temperaturę bez kontaktu z obiektem, analizując promieniowanie elektromagnetyczne. Rzeczywisty sygnał na wejściu detektora jest <b>sumą trzech składników</b> i opisany jest ogólnym równaniem transportu promieniowania:</p>
 <div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{obiekt tlumiony atmosfera}} + \underbrace{[1-\tau(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja wlasna atmosfery}} + \underbrace{\tau(\lambda)\cdot[1-\varepsilon]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{odbicia tla (pominiete)}}$$</div>
@@ -1433,7 +1475,7 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 </div>
 
 <!-- ──── 2. PRAWO PLANCKA ─────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s2">
 <h2>2. Prawo Plancka – ciało doskonale czarne</h2>
 <p>Spektralna luminancja energetyczna (radiance) ciała doskonale czarnego (CDC) w temperaturze T <span class="cite">[1,5]</span>:</p>
 <div class="fml-math">$$L_{bb}(\lambda,\, T) = \frac{2\,h\,c^{2}}{\lambda^{5}} \cdot \frac{1}{\exp\!\left(\dfrac{h c}{\lambda\, k_{B}\, T}\right) - 1} \qquad \left[\mathrm{W \cdot m^{-2} \cdot sr^{-1} \cdot m^{-1}}\right]$$</div>
@@ -1453,7 +1495,7 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 </div>
 
 <!-- ──── 3. EMISYJNOŚĆ ────────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s3">
 <h2>3. Emisyjność i prawo Kirchhoffa</h2>
 <p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze <span class="cite">[5,6]</span>:</p>
 <div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
@@ -1496,7 +1538,7 @@ zakresie. To właśnie uzasadnia pirometrię wielowidmową.</div>
 </div>
 
 <!-- ──── 4. MODEL ATMOSFERY ───────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s4">
 <h2>4. Model transmitancji atmosferycznej</h2>
 <p>Transmitancja atmosferyczna τ(λ) opisuje jaki ułamek promieniowania przechodzi przez warstwę atmosfery grubości L. Bazuje na prawie Beer-Lamberta <span class="cite">[10]</span>:</p>
 <div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_{i} k_{i}(\lambda)\cdot c_{i}\cdot L\right), \qquad k_i\text{ -- wsp. absorpcji},\quad c_i\text{ -- stezenie}$$</div>
@@ -1526,7 +1568,7 @@ zakresie. To właśnie uzasadnia pirometrię wielowidmową.</div>
 
 
 <!-- ──── 5. ŚRODOWISKA ATMOSFERYCZNE ──────────────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s5">
 <h2>5. Środowiska atmosferyczne — model uogólniony</h2>
 
 <p>Symulator modeluje sześć różnych środowisk, w których może pracować pirometr.
@@ -1622,7 +1664,7 @@ pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb
 </div><!-- /doc-sec 5 -->
 
 <!-- ──── 6. PRZESŁONA OPTYCZNA ────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s6">
 <h2>6. Przesłona optyczna — model kompletny</h2>
 <p>Okno optyczne wprowadza trzy niezależne efekty fizyczne, które symulator modeluje łącznie:</p>
 <ol style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em;margin-bottom:8px">
@@ -1683,9 +1725,9 @@ pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb
 <div class="info-box">Praktyczna wskazówka: pomiar przez szybę piekarniczą (float glass) pirometrem 0.65 µm (Si) działa poprawnie — szyba przepuszcza tę falę. Pirometr 8–14 µm (MCT/bolometr) wskaże zerowy sygnał, bo float glass jest w tym zakresie <b>całkowicie nieprzezroczysty</b>.</div>
 </div>
 
-<!-- ──── 6. DETEKTOR ──────────────────────── -->
+<!-- ──── 7. DETEKTORY ──────────────────────── -->
 <div class="doc-sec">
-<h2>7. Modele funkcji odpowiedzi detektora R(λ)</h2>
+<h2 id="doc-s7">7. Modele funkcji odpowiedzi detektora R(λ)</h2>
 
 <h3>Pirometr pasmowy (gauss)</h3>
 <div class="fml-math">$$R(\lambda) = R_p\cdot\exp\!\left[-\frac{1}{2}\left(\frac{\lambda-\lambda_c}{\sigma}\right)^{\!2}\right], \qquad \sigma = \frac{\Delta\lambda}{2{,}355}$$</div>
@@ -1701,9 +1743,9 @@ pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb
 <div class="warn-box">Pirometr całkujący: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{zal}}\,\sigma}\right)^{1/4}\). Błąd emisyjności proporcjonalny do \(T^4\) — bardzo wrażliwy!</div>
 </div>
 
-<!-- ──── 7. SYGNAŁ I INWERSJA ─────────────── -->
+<!-- ──── 8. CAŁKOWANIE ──────────────────────── -->
 <div class="doc-sec">
-<h2>8. Całkowanie sygnału i inwersja temperatury</h2>
+<h2 id="doc-s8">8. Całkowanie sygnału i inwersja temperatury</h2>
 <h3>Sygnał detektora</h3>
 <p>Całkowity sygnał elektryczny (proporcjonalny do mocy) detektora z toru optycznego:</p>
 <div class="fml-math">$$S = \int_{0}^{\infty} R(\lambda)\cdot L_{\mathrm{det}}(\lambda)\,\mathrm{d}\lambda$$</div>
@@ -1723,7 +1765,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </div>
 
 <!-- ──── 9. SŁOWNIK ───────────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s9">
 <h2>9. Słownik symboli</h2>
 <table class="sym-tbl">
   <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
@@ -1751,16 +1793,16 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 </table>
 </div>
 
-<!-- ──── 9. AUTOR I WERSJA ─────────────────── -->
+<!-- ──── 10. INFORMACJE ─────────────────────── -->
 <div class="doc-sec">
-<h2>10. Informacje o aplikacji</h2>
+<h2 id="doc-s10">10. Informacje o aplikacji</h2>
 <table class="sym-tbl">
   <tr><th>Pole</th><th>Wartość</th></tr>
   <tr><td>Autor</td><td><b>Mirosław Socha</b></td></tr>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.2.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.2.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1770,7 +1812,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 
 
 <!-- ──── 11. LITERATURA ─────────────────── -->
-<div class="doc-sec">
+<div class="doc-sec" id="doc-s11">
 <h2>11. Literatura i źródła</h2>
 <p>Podstawy fizyczne i algorytmiczne symulatora opierają się na następujących publikacjach:</p>
 

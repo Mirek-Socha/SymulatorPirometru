@@ -5,6 +5,25 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.2.1] — 2026-05-25 ✅ bieżąca
+
+### Dodano — spis treści dokumentacji
+- **Spis treści Eksperta** (2 kolumny) — 11 pozycji z podtytułami i linkami
+  kotwicowymi `#doc-s1` … `#doc-s11`; pojawia się na początku panelu dokumentacji
+- **Spis treści Beginner** — 5 pozycji z linkami kotwicowymi `#beg-s1` … `#beg-s5`
+- CSS `.toc`: cyjanowa lewa ramka, layout 2-kolumnowy (desktop) / 1-kol. (telefon)
+- Kotwice `id` dodane do wszystkich sekcji `<h2>` w obu trybach
+
+### Poprawiono — numeracja sekcji Beginner
+- Sekcja „3b. Środowiska" → poprawnie **4. Środowiska**
+- Sekcja „4. Jak czytać wykresy?" → **5. Jak czytać wykresy?**
+
+### Poprawiono — komentarze sekcji w HTML
+- Stare komentarze `<!-- 6. DETEKTOR -->`, `<!-- 7. SYGNAŁ -->`, `<!-- 9. AUTOR -->`
+  doprowadzone do zgodności z numeracją sekcji dokumentacji
+
+---
+
 ## [v2.2.0] — 2026-05-25 ✅ bieżąca
 
 ### Dodano — model emisyjności spektralnej Hagena-Rubensa
