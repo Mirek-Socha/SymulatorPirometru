@@ -343,6 +343,24 @@ body.beginner .res-col > div.bo { display:block !important; }
 
 /* ── BEGINNER CONTROLS ─────────────────────────── */
 /* beg-panel defined above with ctrl-panel */
+
+/* ── MODEL EMISYJNOŚCI ─────────────────────────────────── */
+.epsm-toggle{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px}
+.epsm-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 4px 6px;border:1px solid var(--border);
+  background:var(--card2);color:var(--pale);
+  cursor:pointer;transition:all .15s;font-size:.65rem;letter-spacing:.02em;
+}
+.epsm-btn small{font-size:.56rem;color:var(--muted);display:block;margin-top:1px}
+.epsm-btn .epsm-ico{font-size:.85rem;margin-bottom:1px}
+.epsm-btn:hover{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.epsm-btn.active{
+  border-color:var(--amber);color:var(--amber);background:var(--amber-dim);
+  font-weight:700;box-shadow:0 0 6px rgba(245,158,11,.2);
+}
+.epsm-btn.active small{color:var(--amber)}
+
 .beg-label{
   font-family:'IBM Plex Mono',monospace;font-size:.62rem;
   letter-spacing:.2em;text-transform:uppercase;color:var(--amber);
@@ -1009,6 +1027,64 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
 
+
+    <!-- MODEL EMISYJNOŚCI — tylko Expert -->
+    <div class="ctrl-panel" id="epsModePanel">
+      <div class="panel-hdr am">🌑 Model emisyjności</div>
+
+      <!-- Przełącznik modelu -->
+      <div class="epsm-toggle">
+        <button class="epsm-btn active" id="epsm_grey" onclick="setEpsModel('grey')">
+          <span class="epsm-ico">━</span> Szara<small>ε(λ) = const</small>
+        </button>
+        <button class="epsm-btn" id="epsm_hr" onclick="setEpsModel('hr')">
+          <span class="epsm-ico">╲</span> Hagen-Rubens<small>ε(λ,T) z oporności</small>
+        </button>
+      </div>
+
+      <!-- Panel specyficzny dla H-R (ukryty w grey) -->
+      <div id="hr_params" style="display:none;margin-top:8px">
+        <!-- Wybór materiału -->
+        <div class="sel-lbl">Materiał / metal</div>
+        <select id="sel_hr_mat" onchange="onHrMat(this.value)">
+          <option value="fe">Żelazo / stal węglowa</option>
+          <option value="fe_ox">Stal utleniona (Fe₂O₃)</option>
+          <option value="ti">Tytan</option>
+          <option value="ni">Nikiel</option>
+          <option value="cu">Miedź</option>
+          <option value="al">Aluminium</option>
+          <option value="w">Wolfram</option>
+          <option value="custom">Własne ρ₀ i α</option>
+        </select>
+
+        <!-- ρ₀ i α — zawsze widoczne, zablokowane przy gotowych materiałach -->
+        <div class="sl-row">
+          <span class="sl-name">ρ₀</span>
+          <input type="range" id="sl_rho0" min="0.5" max="200" step="0.5" value="10.1"
+                 oninput="onHrSlider(this,'rho0')">
+          <span class="sl-val" id="val_rho0">10.1 µΩ·cm</span>
+        </div>
+        <div class="sl-row">
+          <span class="sl-name">α</span>
+          <input type="range" id="sl_alpha_hr" min="0.0001" max="0.020" step="0.0001" value="0.0065"
+                 oninput="onHrSlider(this,'alpha')">
+          <span class="sl-val" id="val_alpha_hr">6.5×10⁻³ /K</span>
+        </div>
+
+        <!-- Nota informacyjna o materiale -->
+        <div class="env-note" id="hr_mat_note" style="margin-top:6px">
+          Klasyczna H-R: ε rośnie z T, maleje z λ
+        </div>
+
+        <!-- ε_assumed: w H-R pirometr nadal zakłada szarość -->
+        <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
+          ⚠ Procesor pirometru nadal zakłada ε_zał = const.<br>
+          Błąd pochodzi z niespójności ε(λ) ≠ ε_zał.
+        </div>
+      </div>
+
+    </div>
+
     <!-- ŚRODOWISKO — panel eksperta -->
     <div class="ctrl-panel" id="envPanel">
       <div class="panel-hdr re">🌐 Środowisko / atmosfera</div>
@@ -1382,7 +1458,36 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 <p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze <span class="cite">[5,6]</span>:</p>
 <div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
 <p>Zgodnie z prawem Kirchhoffa <span class="cite">[4]</span>: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
-<div class="warn-box">Symulator przyjmuje model ciała szarego (ε = const w całym zakresie λ). Dla metali rzeczywistość jest bardziej złożona – ε zależy silnie od λ i T.</div>
+<div class="warn-box">Domyślny model symulatora to ciało szare (ε = const). Tryb Eksperta oferuje drugi model — <b>Hagen-Rubens</b> — opisujący realistyczną emisyjność metali jako funkcję λ i T.</div>
+
+<h3>Model Hagena-Rubensa — emisyjność spektralna metali</h3>
+<p>Dla metali w zakresie długich fal (λ ≫ głębokość wnikania) emisyjność wynika z teorii elektronowej.
+Korzystając z równań Fresnela przy dużej przewodności elektrycznej <span class="cite">[5,8]</span>:</p>
+<div class="fml-math">$$\varepsilon(\lambda, T) \approx 0.365\sqrt{\frac{\rho(T)}{\lambda}} - 0.0667\frac{\rho(T)}{\lambda} + 0.006\left(\frac{\rho(T)}{\lambda}\right)^{3/2}$$</div>
+<p>gdzie ρ(T) [µΩ·cm] to oporność elektryczna w temperaturze T, λ [µm]. Zależność od T:</p>
+<div class="fml-math">$$\rho(T) = \rho_0\left[1 + \alpha(T - T_0)\right], \quad T_0 = 293\,\mathrm{K}$$</div>
+<p>Kluczowe właściwości modelu H-R:</p>
+<ul style="font-size:.82rem;color:var(--pale);line-height:1.9;padding-left:1.4em">
+  <li><b>ε maleje z λ</b> (∝ 1/√λ dla dużych λ) — metale są lepszymi emiterami przy krótkich falach</li>
+  <li><b>ε rośnie z T</b> — bo oporność elektryczna metali rośnie z temperaturą</li>
+  <li><b>Ważność:</b> λ &gt; ~1 µm; przy krótkich falach (VIS) wymagane poprawki Drudego</li>
+</ul>
+<div class="info-box">Dydaktyczny eksperyment: wybierz materiał Fe (stal), ustaw detektor Si 0.65 µm
+i obserwuj ε(0.65 µm, T) ≈ 0.35. Zmień na MCT 8–14 µm — ε(10 µm, T) ≈ 0.12.
+Ten sam obiekt, ta sama T, ale pirometr z ε_zał = 0.70 popełnia inny błąd w każdym
+zakresie. To właśnie uzasadnia pirometrię wielowidmową.</div>
+
+<table class="beg-eps-table">
+  <tr><th>Materiał</th><th>ρ₀ [µΩ·cm]</th><th>α [10⁻³/K]</th><th>ε(1 µm, 1000K)</th><th>ε(10 µm, 1000K)</th></tr>
+  <tr><td>Żelazo / stal</td><td>10.1</td><td>6.5</td><td>~0.35</td><td>~0.13</td></tr>
+  <tr><td>Tytan</td><td>43.1</td><td>3.8</td><td>~0.55</td><td>~0.22</td></tr>
+  <tr><td>Nikiel</td><td>6.9</td><td>6.8</td><td>~0.29</td><td>~0.10</td></tr>
+  <tr><td>Wolfram</td><td>5.4</td><td>4.8</td><td>~0.26</td><td>~0.09</td></tr>
+  <tr><td>Miedź</td><td>1.72</td><td>4.3</td><td>~0.10</td><td>~0.03</td></tr>
+  <tr><td>Aluminium</td><td>2.65</td><td>4.2</td><td>~0.12</td><td>~0.04</td></tr>
+</table>
+<p style="font-size:.75rem;color:var(--muted)">Dane ρ₀ i α: CRC Handbook, Kaye &amp; Laby Tables; wartości ε obliczone z H-R w T=1000 K.</p>
+
 <h3>Korekcja temperatury (pirometr monochromatyczny)</h3>
 <p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
@@ -1655,7 +1760,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.1.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.2.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1960,6 +2065,85 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
    - det_hint: sugerowany detektor
    - note    : krótki opis dydaktyczny
 ───────────────────────────────────────────── */
+
+/* ─────────────────────────────────────────────────────────────────
+   MODEL EMISYJNOŚCI SPEKTRALNEJ
+   ─────────────────────────────────────────────────────────────────
+
+   Dwa modele:
+   'grey'  — ciało szare: ε(λ,T) = ε_real = const  (dotychczasowy)
+   'hr'    — Hagen-Rubens: ε(λ,T) z oporności elektrycznej ρ(T)
+
+   Hagen-Rubens (długie fale, λ >> penetration depth):
+     ε(λ,T) ≈ 0.365·√(ρ/λ) − 0.0667·(ρ/λ)
+   gdzie ρ [µΩ·cm], λ [µm]. Ważność: λ > ~1 µm dla metali.
+   Przy krótkich λ (VIS): poprawka krzywej Fresnela — model
+   przechodzi płynnie na wartość Fresnela (n,k).
+
+   Zależność od T: ρ(T) = ρ₀·[1 + α·(T − T₀)]
+   T₀ = 293 K (20°C), α = temp. wsp. oporności [1/K]
+
+   Ref: Hagen & Rubens (1903); Seifter et al. (2003);
+        Arnold, Appl. Opt. 23 (1984)
+──────────────────────────────────────────────────────────────────── */
+
+let currentEpsModel = 'grey';  // 'grey' | 'hr'
+
+/* Materiały do modelu Hagena-Rubensa
+   ρ₀ [µΩ·cm] @ 20°C, α [1/K], ε_const — dla porównania
+   Źródło: Kaye & Laby, CRC Handbook, Michalski [8] */
+const HR_MATERIALS = {
+  fe_ox:  {label:'Stal utleniona (zgorzelina)',short:'Fe₂O₃',
+           rho0:1e5, alpha:5e-4,  note:'Tlenki — quasi-niemetaliczne, ε wysoka i słabo zależna od λ'},
+  fe:     {label:'Żelazo czyste / stal węglowa',short:'Fe',
+           rho0:10.1, alpha:6.5e-3, note:'Klasyczna H-R: ε rośnie z T, maleje z λ'},
+  ti:     {label:'Tytan',short:'Ti',
+           rho0:43.1, alpha:3.8e-3, note:'Wysoka oporność → wyższa ε niż metale szlachetne'},
+  ni:     {label:'Nikiel',short:'Ni',
+           rho0:6.9,  alpha:6.8e-3, note:'Silna zależność T, pow. Curie zmienia trend'},
+  cu:     {label:'Miedź',short:'Cu',
+           rho0:1.72, alpha:4.3e-3, note:'Niska ε, minimum przy ~10 µm (anomalny skin effect)'},
+  al:     {label:'Aluminium',short:'Al',
+           rho0:2.65, alpha:4.2e-3, note:'Bardzo niska ε w IR (0.02–0.06)'},
+  w:      {label:'Wolfram',short:'W',
+           rho0:5.39, alpha:4.8e-3, note:'Żarówki, wzorce lamp — dobrze zmierzone'},
+  custom: {label:'Własna (rho₀ i α ręcznie)',short:'custom',
+           rho0:10.0, alpha:5.0e-3, note:'Wpisz parametry ρ₀ i α ręcznie'}
+};
+let hrMaterialKey = 'fe';
+
+/* Oporność w temperaturze T [K] → ρ [µΩ·cm] */
+function rhoT(mat, T_K){
+  const rho0 = mat.rho0, alpha = mat.alpha;
+  const T0 = 293;
+  return rho0 * (1 + alpha*(T_K - T0));
+}
+
+/* Hagen-Rubens: ε(λ,ρ) — λ [µm], ρ [µΩ·cm]
+   Wzór: ε ≈ 0.365·√(ρ/λ) − 0.0667·(ρ/λ) + 0.006·(ρ/λ)^1.5
+   Poprawka: clamp do [0.001, 0.999] */
+function hagenRubens(lam_um, rho_uOhm_cm){
+  const x = rho_uOhm_cm / lam_um;
+  const sqx = Math.sqrt(x);
+  let eps = 0.365*sqx - 0.0667*x + 0.006*x*sqx;
+  return Math.max(0.001, Math.min(0.999, eps));
+}
+
+/* Główna funkcja emisyjności: zwraca ε dla λ [m], T [K], state */
+function epsSpectral(lam_m, T_K, p){
+  if(currentEpsModel === 'grey') return p.eps_real;
+  // Hagen-Rubens
+  const mat = HR_MATERIALS[hrMaterialKey] || HR_MATERIALS.fe;
+  const rho = rhoT(mat, T_K);
+  const lam_um = lam_m * 1e6;
+  return hagenRubens(lam_um, rho);
+}
+
+/* Tablica ε(λ) dla całej siatki lam[] — dla wykresów */
+function epsArray(T_K, p){
+  return lams.map(lam => epsSpectral(lam, T_K, p));
+}
+
 const ENVS = {
 
   earth: {
@@ -2167,13 +2351,14 @@ function compute(p){
   const thick  = p.windowThick ?? (WINDOWS[p.windowKey]?.defaultThick ?? 5);
   const det = DETS[p.detKey];
 
-  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[];
+  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[], Eps=[];
   let signal=0, tw=0, ts=0, twww=0;
 
   for(let i=0;i<=N;i++){
     const lam=lams[i];
     const bb = planck(lam, Tobj_K);
-    const em = p.eps_real * bb;
+    const epsSp = epsSpectral(lam, Tobj_K, p);  // ε(λ,T) — grey lub H-R
+    const em = epsSp * bb;
     const ta = atmTau(lam, p.path, p.rh, p.co2, env);
     const la = (1-ta)*planck(lam, Tatm_K);
     const lAfterAtm = ta*em + la;
@@ -2182,7 +2367,7 @@ function compute(p){
     const lwe = (1 - tw_win) * planck(lam, Twin_K);
     const ld  = tw_win * lAfterAtm + lwe;
     const r   = detResp(lam, det);
-    Lbb.push(bb); Lemit.push(em); tau.push(ta);
+    Lbb.push(bb); Lemit.push(em); tau.push(ta); Eps.push(epsSp);
     Latm.push(la); Lwin.push(tw_win); Lwin_emit.push(lwe); Ldet.push(ld); R.push(r);
     signal += r*ld*DL;
     if(r>0.01){ tw+=r; ts+=ta*r; twww+=tw_win*r; }
@@ -2194,7 +2379,7 @@ function compute(p){
   // 1. Tylko błąd emisyjności (τ_atm=1, τ_win=1)
   let sig_eps=0;
   for(let i=0;i<=N;i++)
-    sig_eps += detResp(lams[i],det)*p.eps_real*planck(lams[i],Tobj_K)*DL;
+    sig_eps += detResp(lams[i],det)*epsSpectral(lams[i],Tobj_K,p)*planck(lams[i],Tobj_K)*DL;
   const T_eps_K = invertTemp(sig_eps, det, p.eps_assumed);
 
   // 2. Emisyjność + atmosfera (τ_win=1)
@@ -2202,7 +2387,7 @@ function compute(p){
   for(let i=0;i<=N;i++){
     const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2);
     const la=(1-ta)*planck(lam,p.Tatm+273.15);
-    sig_atm += detResp(lam,det)*(ta*p.eps_real*planck(lam,Tobj_K)+la)*DL;
+    sig_atm += detResp(lam,det)*(ta*epsSpectral(lam,Tobj_K,p)*planck(lam,Tobj_K)+la)*DL;
   }
   const T_atm_K = invertTemp(sig_atm, det, p.eps_assumed);
 
@@ -2215,7 +2400,7 @@ function compute(p){
   const Tobj_C  = Tobj_K  - 273.15;
 
   return {
-    Lbb, Lemit, tau, Latm, Lwin, Lwin_emit, Ldet, R,
+    Lbb, Lemit, tau, Latm, Lwin, Lwin_emit, Ldet, R, Eps,
     lam_um: lams.map(x=>x*1e6),
     T_ind: T_ind_C, T_ind_K,
     Tobj_C, Tobj_K,
@@ -2448,6 +2633,34 @@ function drawSpec(res, p){
     const maxR  = Math.max(...Rvals, 0.01);
     const Rzone = Rz;                                  // górna strefa [pT .. pT+Rz]
     const ryR   = r => pT + Rzone*(1 - r/maxR);       // r=maxR→pT (szczyt), r=0→pT+Rzone (baza)
+    const ryEps = e => pT + Rzone*(1 - Math.min(e, 1));   // ε ∈ [0,1] → pełna strefa Rzone
+
+    // ── ε(λ) w górnej strefie — model Hagena-Rubensa ────────────────
+    if(res.Eps && currentEpsModel === 'hr'){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
+      ctx.strokeStyle = tv('--amber');
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 3]);
+      ctx.beginPath();
+      let epsMoved = false;
+      for(let i=0; i<res.Eps.length; i++){
+        const xu = res.lam_um[i];
+        if(xu < lamMin || xu > lamMax) continue;
+        const lxe = lx(xu);
+        if(lxe < pL || lxe > pL+W2) continue;
+        const ey = ryEps(res.Eps[i]); // ε ∈ [0,1] → pełna strefa Rzone
+        if(!epsMoved){ ctx.moveTo(lxe, ey); epsMoved = true; }
+        else ctx.lineTo(lxe, ey);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      // etykieta ε(λ)
+      ctx.fillStyle = tv('--amber'); ctx.globalAlpha = 0.85;
+      ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
+      ctx.fillText('ε(λ)', pL + 4, pT + 10); ctx.globalAlpha = 1;
+    }
 
     // ── Strefa R(λ) clipped do [pT .. pT+Rzone] ────────────────────────
     ctx.save();
@@ -2665,6 +2878,73 @@ const BEG_PRESETS = {
   beg_ceramic:{Tobj:1073,eps_real:0.90,path:2, rh:40, co2:400,Tatm:20,detKey:'window_35',eps_assumed:0.90,windowKey:'none',windowTemp:25,windowThick:5},
 };
 
+
+
+/* ─────────────────────────────────────────────
+   EMISSIVITY MODEL SWITCHING
+───────────────────────────────────────────── */
+function setEpsModel(model){
+  currentEpsModel = model;
+  // Przyciski
+  document.querySelectorAll('.epsm-btn').forEach(b=>{
+    const k = b.id.replace('epsm_','');
+    if(k===model) b.classList.add('active'); else b.classList.remove('active');
+  });
+  // Pokaż/ukryj parametry H-R
+  const hrDiv = document.getElementById('hr_params');
+  if(hrDiv) hrDiv.style.display = (model==='hr') ? 'block' : 'none';
+
+  // Zablokuj suwak eps_real gdy H-R (jest nadpisany przez model)
+  const slEps = document.getElementById('sl_eps_real');
+  const numEps = document.getElementById('num_eps_real');
+  const lockEps = (model==='hr');
+  if(slEps){ slEps.disabled=lockEps; slEps.style.opacity=lockEps?'0.3':'1'; }
+  if(numEps){ numEps.disabled=lockEps; numEps.style.opacity=lockEps?'0.3':'1'; }
+
+  // Legenda
+  const legEps = document.getElementById('leg_eps');
+  if(legEps) legEps.style.display = (model==='hr') ? 'inline-flex' : 'none';
+  scheduleUpdate();
+}
+
+function onHrMat(key){
+  hrMaterialKey = key;
+  const mat = HR_MATERIALS[key];
+  if(!mat) return;
+  const isCustom = (key==='custom');
+  // Aktualizuj suwaki ρ₀ i α
+  const slR=document.getElementById('sl_rho0'),   vR=document.getElementById('val_rho0');
+  const slA=document.getElementById('sl_alpha_hr'),vA=document.getElementById('val_alpha_hr');
+  if(!isCustom){
+    if(slR){ slR.value=mat.rho0; slR.disabled=true; slR.style.opacity='0.4'; slPct(slR); }
+    if(slA){ slA.value=mat.alpha; slA.disabled=true; slA.style.opacity='0.4'; slPct(slA); }
+  } else {
+    if(slR){ slR.disabled=false; slR.style.opacity='1'; }
+    if(slA){ slA.disabled=false; slA.style.opacity='1'; }
+  }
+  if(vR) vR.textContent = mat.rho0.toFixed(1)+' µΩ·cm';
+  if(vA) vA.textContent = (mat.alpha*1000).toFixed(2)+'×10⁻³ /K';
+  const note = document.getElementById('hr_mat_note');
+  if(note) note.textContent = mat.note || '';
+  scheduleUpdate();
+}
+
+function onHrSlider(el, param){
+  slPct(el);
+  const mat = HR_MATERIALS['custom'];
+  const v = parseFloat(el.value);
+  if(param==='rho0'){
+    mat.rho0 = v;
+    const vEl=document.getElementById('val_rho0');
+    if(vEl) vEl.textContent = v.toFixed(1)+' µΩ·cm';
+  } else {
+    mat.alpha = v;
+    const vEl=document.getElementById('val_alpha_hr');
+    if(vEl) vEl.textContent = (v*1000).toFixed(2)+'×10⁻³ /K';
+  }
+  hrMaterialKey = 'custom';
+  scheduleUpdate();
+}
 
 /* ─────────────────────────────────────────────
    ENVIRONMENT SWITCHING

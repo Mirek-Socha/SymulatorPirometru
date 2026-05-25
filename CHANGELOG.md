@@ -5,6 +5,50 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.2.0] — 2026-05-25 ✅ bieżąca
+
+### Dodano — model emisyjności spektralnej Hagena-Rubensa
+
+Dotychczasowy model zakładał ciało szare: ε(λ,T) = const.
+Nowy model Hagena-Rubensa opisuje rzeczywistą emisyjność metali jako
+funkcję długości fali i temperatury, wyprowadzoną z teorii elektronowej.
+
+#### Model fizyczny
+Wzór Hagena-Rubensa (dla λ >> głębokość wnikania, metale):
+
+  ε(λ,T) ≈ 0.365·√(ρ(T)/λ) − 0.0667·(ρ(T)/λ)
+
+gdzie ρ(T) = ρ₀·[1 + α·(T − 293 K)] [µΩ·cm], λ [µm].
+
+Ref: Hagen & Rubens (1903); Seifter et al. (2003); Arnold, Appl.Opt. 23 (1984).
+
+Kluczowe właściwości fizyczne modelu H-R:
+- ε maleje z długością fali (∝ 1/√λ dla dużych λ) — odwrotnie niż intuicja
+- ε rośnie z temperaturą (ρ(T) rośnie liniowo)
+- Efekt dydaktyczny: pirometr Si 0.65 µm i MCT 8-14 µm widzą inną ε
+  tego samego obiektu → różne ΔT przy tym samym ε_zał
+
+#### Nowy panel UI „🌑 Model emisyjności" (Tryb Eksperta)
+- Przełącznik: [━ Szara ε=const] / [╲ Hagen-Rubens ε(λ,T)]
+- Selektor 8 materiałów (Fe, Fe₂O₃, Ti, Ni, Cu, Al, W, Custom)
+  z tabelarycznymi danymi ρ₀ i α (źródło: CRC Handbook, Kaye & Laby)
+- Suwaki ρ₀ [µΩ·cm] i α [1/K] aktywne dla trybu Custom
+- Suwak ε_real zablokowany w trybie H-R (ε wyznaczane z modelu)
+- Nota o materiale i ostrzeżenie o błędzie ε_zał ≠ ε(λ)
+
+#### Krzywa ε(λ) na wykresie widmowym
+- Bursztynowa przerywana krzywa ε(λ) w górnej strefie wykresu (razem z R(λ))
+- Mapowanie: ε ∈ [0,1] → pełna strefa Rzone (ryEps)
+- Pojawia się tylko w trybie H-R; etykieta „ε(λ)" po lewej stronie
+- Pozycja w legendzie widma: „ε(λ) H-R"
+
+#### Refaktoring compute()
+- eps_real (scalar) → epsSpectral(lam, T_K, p) zwracająca ε(λ,T)
+- Tablica Eps[] dodana do wyników compute() dla rysowania krzywej
+- Dekompozycja błędów (sig_eps, sig_atm) używa epsSpectral()
+
+---
+
 ## [v2.1.1] — 2026-05-24 ✅ bieżąca
 
 ### Poprawiono

@@ -28,6 +28,7 @@ Jeden plik HTML — otwórz `src/symulator_pirometru.html` w przeglądarce. Brak
 - **6 środowisk atmosferycznych** (Ziemia, Mars, Wenus, woda, NH₃ MOCVD, CO₂ tech.)
 - 4 suwaki atmosferyczne (L, HR, CO₂, T_atm)
 - Przesłona optyczna: 6 materiałów, grubość (Beer-Lambert), temperatura (emisja własna)
+- **2 modele emisyjności**: szara ε=const / Hagen-Rubens ε(λ,T) z oporności elektrycznej
 - 7 typów detektorów z wizualizacją R(λ) na wykresie
 - Dwa wykresy: widmo + transmitancja τ(λ)
 - Budżet błędów 3-składowy (Δε, ΔT_atm, ΔT_win)
@@ -92,6 +93,7 @@ Bisekcja 72 iteracje, 1–15 000 K, zbieżność < 0.01 K
 | R(λ) na wykresie | Adaptacyjna siatka 500 pkt — gładka nawet dla Gaussa 0.65 µm |
 | Pasek UV+VIS | Gradient na osi λ obu wykresów |
 | Tooltip hover | λ, L_bb [W·m⁻²·sr⁻¹·m⁻¹], ε·B, τ_atm, τ_win, sygnał, R(λ) |
+| Model ε(λ) | Szara / Hagen-Rubens; 8 materiałów z danymi ρ₀,α; krzywa ε(λ) na wykresie |
 | Motywy | Ciemny / jasny (Safari/iPad: `color-scheme` + `color-scheme` na `:root`) |
 | Responsywność | Desktop · tablet · telefon |
 | Presety | Menu rozwijane (3 basic + 6 expert + 5 środowiskowych) |
@@ -121,7 +123,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | v2.1.1 |
+| `main` | 🇵🇱 Polski | v2.2.0 |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en (wymaga aktualizacji) |
 
 ---
