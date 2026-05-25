@@ -63,6 +63,7 @@ L_det(λ) = τ_win(λ) · [ τ_atm(λ)·ε(λ,T)·L_bb(λ,T_obj)
 |---|---|---|
 | **Szara** | ε(λ,T) = const | suwak ε_real |
 | **Hagen-Rubens** | ε(λ,T) ≈ 0.365√(ρ/λ) − 0.0667(ρ/λ) | ρ₀ [µΩ·cm], α [K⁻¹], 8 materiałów |
+| **Wielomianowy** | ε(λ) = a₀ + a₁λ + a₂λ² z danych TPRC | 9 presetów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃, Custom) |
 
 Model H-R: ε maleje z λ i rośnie z T — metale emitują lepiej przy krótkich falach. Krzywa ε(λ) widoczna na wykresie widmowym (bursztynowa przerywana).
 
@@ -153,7 +154,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v2.2.3** |
+| `main` | 🇵🇱 Polski | **v2.3.0** |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en *(wymaga aktualizacji)* |
 
 ---
@@ -162,7 +163,8 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.2.3** | Równanie toru wieloliniowe (KaTeX aligned), fix overflow przy druku PDF |
+| **v2.3.0** | Model wielomianowy ε(λ) z TPRC: 8 materiałów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃) |
+| v2.2.3 | Równanie toru wieloliniowe (KaTeX aligned), fix overflow przy druku PDF |
 | v2.2.2 | Aktualizacja dokumentacji: tor z τ_win, budżet 3-składowy, słownik 26 poz. |
 | v2.2.1 | Spis treści z linkami, numeracja sekcji Beginner poprawiona |
 | v2.2.0 | Model emisyjności Hagena-Rubensa ε(λ,T), 8 materiałów, krzywa ε(λ) |

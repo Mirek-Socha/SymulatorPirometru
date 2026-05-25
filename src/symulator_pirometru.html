@@ -1044,13 +1044,65 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="panel-hdr am">🌑 Model emisyjności</div>
 
       <!-- Przełącznik modelu -->
-      <div class="epsm-toggle">
+      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr 1fr">
         <button class="epsm-btn active" id="epsm_grey" onclick="setEpsModel('grey')">
           <span class="epsm-ico">━</span> Szara<small>ε(λ) = const</small>
         </button>
         <button class="epsm-btn" id="epsm_hr" onclick="setEpsModel('hr')">
           <span class="epsm-ico">╲</span> Hagen-Rubens<small>ε(λ,T) z oporności</small>
         </button>
+        <button class="epsm-btn" id="epsm_poly" onclick="setEpsModel('poly')">
+          <span class="epsm-ico">∿</span> Wielomianowy<small>ε(λ) = a₀+a₁λ+a₂λ²</small>
+        </button>
+      </div>
+
+      <!-- Panel poly params -->
+      <div id="poly_params" style="display:none;margin-top:8px">
+        <div class="sel-lbl">Materiał / dane literaturowe</div>
+        <select id="sel_poly_mat" onchange="onPolyMat(this.value)">
+          <option value="w">Wolfram (W)  [De Vos 1954, CRC]</option>
+          <option value="mo">Molibden (Mo)  [TPRC Vol.7, Cagran 2005]</option>
+          <option value="ti">Tytan (Ti)  [TPRC Vol.7]</option>
+          <option value="fe">Żelazo (Fe)  [Ward 1956, TPRC Vol.7]</option>
+          <option value="ni">Nikiel (Ni)  [Ward 1956, TPRC Vol.7]</option>
+          <option value="graphite">Grafit (C)  [TPRC Vol.8]</option>
+          <option value="sic">Węglik krzemu (SiC)  [NIST, TPRC Vol.8]</option>
+          <option value="al2o3">Tlenek glinu Al₂O₃  [TPRC Vol.8]</option>
+          <option value="custom">Własne a₀, a₁, a₂</option>
+        </select>
+
+        <!-- Współczynniki — readonly dla presetów, edytowalne dla custom -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin:6px 0">
+          <div>
+            <div class="sel-lbl">a₀</div>
+            <input type="number" id="poly_a0" class="sl-num" style="width:100%;text-align:left"
+                   step="0.001" min="0" max="1" value="0.497"
+                   onchange="onPolyCoeff()">
+          </div>
+          <div>
+            <div class="sel-lbl">a₁ [µm⁻¹]</div>
+            <input type="number" id="poly_a1" class="sl-num" style="width:100%;text-align:left"
+                   step="0.001" min="-1" max="1" value="-0.076"
+                   onchange="onPolyCoeff()">
+          </div>
+          <div>
+            <div class="sel-lbl">a₂ [µm⁻²]</div>
+            <input type="number" id="poly_a2" class="sl-num" style="width:100%;text-align:left"
+                   step="0.0001" min="-0.1" max="0.1" value="0.0052"
+                   onchange="onPolyCoeff()">
+          </div>
+        </div>
+
+        <div class="env-note" id="poly_note" style="margin-top:4px">
+          Dane: De Vos (1954), CRC 60th ed. — wolfram ~1600 K
+        </div>
+        <div class="env-note" id="poly_range" style="margin-top:2px;border-left-color:var(--muted)">
+          Zakres: λ = 0.5–5.0 µm · T = 1200–3000 K
+        </div>
+        <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
+          ⚠ Model niezależny od T — ε(λ) = const w temperaturze.
+          Procesor nadal zakłada ε_zał = const.
+        </div>
       </div>
 
       <!-- Panel specyficzny dla H-R (ukryty w grey) -->
@@ -1571,6 +1623,36 @@ zakresie. To właśnie uzasadnia pirometrię wielowidmową.</div>
 </table>
 <p style="font-size:.75rem;color:var(--muted)">Dane ρ₀ i α: CRC Handbook, Kaye &amp; Laby Tables; wartości ε obliczone z H-R w T=1000 K.</p>
 
+<h3>Model wielomianowy — ε(λ) z danych literaturowych</h3>
+<p>Dla wielu materiałów emisyjność spektralną dobrze aproksymuje wielomian drugiego stopnia
+dopasowany do danych tabelarycznych z TPRC <span class="cite">[A,B]</span>:</p>
+<div class="fml-math">$$\varepsilon(\lambda) = a_0 + a_1\cdot\lambda + a_2\cdot\lambda^2, \qquad \lambda\;[\mu\mathrm{m}], \quad \varepsilon \in [0.01,\, 0.99]$$</div>
+<p>Model jest niezależny od temperatury (ε = f(λ) tylko) — dopasowanie jest ważne w podanym
+zakresie λ i T. Poza zakresem wynik jest ekstrapolowany i może być mniej dokładny.</p>
+
+<table class="beg-eps-table">
+  <tr><th>Materiał</th><th>a₀</th><th>a₁ [µm⁻¹]</th><th>a₂ [µm⁻²]</th><th>Zakres λ [µm]</th><th>Źródło</th></tr>
+  <tr><td>Wolfram (W)</td><td>0.497</td><td>−0.076</td><td>+0.0052</td><td>0.5–5.0</td><td>De Vos (1954), CRC</td></tr>
+  <tr><td>Molibden (Mo)</td><td>0.425</td><td>−0.060</td><td>+0.0038</td><td>0.5–8.0</td><td>TPRC Vol.7, Cagran (2005)</td></tr>
+  <tr><td>Tytan (Ti)</td><td>0.600</td><td>−0.080</td><td>+0.0028</td><td>0.5–5.0</td><td>TPRC Vol.7</td></tr>
+  <tr><td>Żelazo (Fe)</td><td>0.370</td><td>−0.038</td><td>+0.0014</td><td>0.5–8.0</td><td>Ward (1956), TPRC Vol.7</td></tr>
+  <tr><td>Nikiel (Ni)</td><td>0.310</td><td>−0.035</td><td>+0.0012</td><td>0.5–8.0</td><td>Ward (1956), TPRC Vol.7</td></tr>
+  <tr><td>Grafit (C)</td><td>0.875</td><td>−0.010</td><td>+0.0002</td><td>0.5–10.0</td><td>TPRC Vol.8</td></tr>
+  <tr><td>SiC</td><td>0.920</td><td>−0.008</td><td>+0.0003</td><td>1.0–10.0</td><td>NIST, TPRC Vol.8</td></tr>
+  <tr><td>Al₂O₃</td><td>0.220</td><td>+0.062</td><td>−0.0028</td><td>1.0–10.0</td><td>TPRC Vol.8</td></tr>
+</table>
+<p style="font-size:.75rem;color:var(--muted)">Źródła: [A] Touloukian & DeWitt, TPRC Vol.7 (1970); [B] TPRC Vol.8 (1971); De Vos, Physica 20 (1954);
+Ward, Proc.Phys.Soc.B 69 (1956); Cagran et al., Int.J.Thermophys 26 (2005); CRC Handbook 60th ed.</p>
+
+<div class="info-box"><b>Kluczowy efekt dydaktyczny — Al₂O₃:</b> współczynnik a₁ > 0 oznacza że ε <i>rośnie</i>
+z długością fali — zachowanie odwrotne niż u metali! Ceramika tlenku glinu ma ε ≈ 0.22 przy
+1 µm (detektor InGaAs) ale ε ≈ 0.90 przy 8 µm (detektor MCT). Pirometr InGaAs drastycznie
+zaniży temperaturę ceramiki, natomiast MCT może dać prawidłowy wynik przy poprawnym ε_zał.</div>
+
+<div class="warn-box">Współczynniki są dopasowaniami wielomianowymi do danych tabelarycznych —
+nie zastępują bezpośrednich pomiarów emisyjności konkretnej próbki. Emisyjność zależy od stanu
+powierzchni, utlenienia, chropowatości i historii termicznej materiału.</div>
+
 <h3>Korekcja temperatury (pirometr monochromatyczny)</h3>
 <p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
@@ -1877,7 +1959,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.2.3</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.3.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2246,14 +2328,126 @@ function hagenRubens(lam_um, rho_uOhm_cm){
   return Math.max(0.001, Math.min(0.999, eps));
 }
 
+
+/* ─────────────────────────────────────────────────────────────────
+   MODEL WIELOMIANOWY: ε(λ) = a₀ + a₁·λ + a₂·λ²
+   λ [µm], wynik ∈ [0.01, 0.99]
+
+   Dane literaturowe:
+   [A] Touloukian & DeWitt, TPRC Vol.7 — Metallic Elements (1970)
+   [B] Touloukian & DeWitt, TPRC Vol.8 — Nonmetallic Solids (1971)
+   [C] De Vos, Physica 20 (1954) — wolfram (żarówkowy)
+   [D] Ward, Proc.Phys.Soc.B 69 (1956) — Fe, Ni, Co
+   [E] Cagran et al., Int.J.Thermophys 26 (2005) — W, Mo
+   [F] CRC Handbook of Chemistry & Physics, 60th ed. (1979)
+   [G] Hanssen & Kaplan, NIST (2001) — SiC
+   [H] Michalski et al., "Pyrometry" (2001) — przegląd
+   ────────────────────────────────────────────────────────────────
+   Wyniki są dopasowaniami wielomianowymi do danych tabelarycznych;
+   każdy preset podaje zakres λ i T dla którego dopasowanie jest ważne. */
+
+let currentPolyMat = 'w';
+
+const POLY_MATERIALS = {
+  w: {
+    label:'Wolfram (W)',
+    a0: 0.497, a1:-0.076, a2: 0.0052,
+    lam_range:[0.5, 5.0], T_range:[1200,3000],
+    source:'[C,E,F]',
+    note:'Najlepiej zmierzone spośród metali (żarówki, wzorce lamp). ' +
+         'ε silnie spada z λ; minimum ok. 1.2 µm → wzrost (anomalny skin effect). ' +
+         'Dane: De Vos (1954), CRC 60th ed., Cagran (2005). ~1600 K.'
+  },
+  mo: {
+    label:'Molibden (Mo)',
+    a0: 0.425, a1:-0.060, a2: 0.0038,
+    lam_range:[0.5, 8.0], T_range:[1000,2800],
+    source:'[A,E]',
+    note:'Podobny przebieg do W, nieznacznie wyższe ε przy długich λ. ' +
+         '"Punkt x" emisyjności W i Mo przy ok. 1.27 µm (izotermalne skrzyżowanie). ' +
+         'Dane: TPRC Vol.7; Cagran (2005). ~1400 K.'
+  },
+  ti: {
+    label:'Tytan (Ti)',
+    a0: 0.600, a1:-0.080, a2: 0.0028,
+    lam_range:[0.5, 5.0], T_range:[800,1700],
+    source:'[A]',
+    note:'Wysoka ε w VIS/NIR, wyraźnie spada w IR. Silna zależność od stanu ' +
+         'powierzchni i utlenienia (ε rośnie po utlenieniu). Dane: TPRC Vol.7. ~1000 K.'
+  },
+  fe: {
+    label:'Żelazo polerowan (Fe)',
+    a0: 0.370, a1:-0.038, a2: 0.0014,
+    lam_range:[0.5, 8.0], T_range:[700,1500],
+    source:'[A,D]',
+    note:'Czyste żelazo, powierzchnia polerowana. ε rośnie z T i spada z λ ' +
+         '(typowe zachowanie metaliczne). Dane: Ward (1956), TPRC Vol.7. ~1000 K.'
+  },
+  ni: {
+    label:'Nikiel (Ni)',
+    a0: 0.310, a1:-0.035, a2: 0.0012,
+    lam_range:[0.5, 8.0], T_range:[700,1400],
+    source:'[A,D]',
+    note:'Poniżej temperatury Curie (358°C) ε może wykazywać anomalię. ' +
+         'Dane: Ward (1956), TPRC Vol.7. Zakres ważności: 700–1400 K.'
+  },
+  graphite: {
+    label:'Grafit polikrystaliczny (C)',
+    a0: 0.875, a1:-0.010, a2: 0.0002,
+    lam_range:[0.5, 10.0], T_range:[500,3000],
+    source:'[B,H]',
+    note:'Quasi-ciało doskonale czarne; ε ≈ 0.85–0.90 prawie niezależne od λ. ' +
+         'Szeroko stosowany jako wzorzec. ε słabo rośnie z T (fononowe pochłanianie). ' +
+         'Dane: TPRC Vol.8; Michalski (2001).'
+  },
+  sic: {
+    label:'Węglik krzemu (SiC)',
+    a0: 0.920, a1:-0.008, a2: 0.0003,
+    lam_range:[1.0, 10.0], T_range:[500,1700],
+    source:'[B,G]',
+    note:'Wysoka i stabilna ε w zakresie 1–10 µm; rezonans fononu przy 12 µm obniża ε. ' +
+         'Stosowany w piecach IR i jako materiał wzorcowy. ' +
+         'Dane: TPRC Vol.8; Hanssen & Kaplan (NIST, 2001).'
+  },
+  al2o3: {
+    label:'Tlenek glinu (Al₂O₃)',
+    a0: 0.22, a1: 0.062, a2:-0.0028,
+    lam_range:[1.0, 10.0], T_range:[600,1800],
+    source:'[B]',
+    note:'Niemetaliczny — ε ROŚNIE z λ (pasma fononu OH przy 2.7 µm i ~10 µm). ' +
+         'ε ≈ 0.30 przy 1 µm → 0.90 przy 8 µm (wysoka w dalekiej IR!). ' +
+         'Dane: TPRC Vol.8. ~1200 K.'
+  },
+  custom: {
+    label:'Własne a₀, a₁, a₂',
+    a0: 0.70, a1: 0.00, a2: 0.00,
+    lam_range:[0.5, 16.0], T_range:[0,15000],
+    source:'—',
+    note:'Wprowadź współczynniki wielomianu ε(λ) = a₀ + a₁·λ + a₂·λ² ręcznie. ' +
+         'Dopasuj do własnych danych pomiarowych lub literaturowych.'
+  }
+};
+
+/* Oblicza ε(λ) dla modelu wielomianowego
+   λ [µm], wynik ∈ [0.01, 0.99] */
+function polyEmissivity(lam_um, mat){
+  const e = mat.a0 + mat.a1*lam_um + mat.a2*lam_um*lam_um;
+  return Math.max(0.01, Math.min(0.99, e));
+}
+
 /* Główna funkcja emisyjności: zwraca ε dla λ [m], T [K], state */
 function epsSpectral(lam_m, T_K, p){
-  if(currentEpsModel === 'grey') return p.eps_real;
-  // Hagen-Rubens
-  const mat = HR_MATERIALS[hrMaterialKey] || HR_MATERIALS.fe;
-  const rho = rhoT(mat, T_K);
   const lam_um = lam_m * 1e6;
-  return hagenRubens(lam_um, rho);
+  if(currentEpsModel === 'grey') return p.eps_real;
+  if(currentEpsModel === 'hr'){
+    const mat = HR_MATERIALS[hrMaterialKey] || HR_MATERIALS.fe;
+    return hagenRubens(lam_um, rhoT(mat, T_K));
+  }
+  if(currentEpsModel === 'poly'){
+    const mat = POLY_MATERIALS[currentPolyMat] || POLY_MATERIALS.w;
+    return polyEmissivity(lam_um, mat);
+  }
+  return p.eps_real;
 }
 
 /* Tablica ε(λ) dla całej siatki lam[] — dla wykresów */
@@ -2753,7 +2947,7 @@ function drawSpec(res, p){
     const ryEps = e => pT + Rzone*(1 - Math.min(e, 1));   // ε ∈ [0,1] → pełna strefa Rzone
 
     // ── ε(λ) w górnej strefie — model Hagena-Rubensa ────────────────
-    if(res.Eps && currentEpsModel === 'hr'){
+    if(res.Eps && (currentEpsModel === 'hr' || currentEpsModel === 'poly')){
       ctx.save();
       ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
       ctx.strokeStyle = tv('--amber');
@@ -2776,7 +2970,10 @@ function drawSpec(res, p){
       // etykieta ε(λ)
       ctx.fillStyle = tv('--amber'); ctx.globalAlpha = 0.85;
       ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
-      ctx.fillText('ε(λ)', pL + 4, pT + 10); ctx.globalAlpha = 1;
+      const epsLbl = currentEpsModel==='poly'
+        ? `ε(λ) ${(POLY_MATERIALS[currentPolyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`
+        : 'ε(λ) H-R';
+      ctx.fillText(epsLbl, pL + 4, pT + 10); ctx.globalAlpha = 1;
     }
 
     // ── Strefa R(λ) clipped do [pT .. pT+Rzone] ────────────────────────
@@ -3162,27 +3359,62 @@ function printDocs(){
 ───────────────────────────────────────────── */
 function setEpsModel(model){
   currentEpsModel = model;
-  // Przyciski
   document.querySelectorAll('.epsm-btn').forEach(b=>{
     const k = b.id.replace('epsm_','');
     if(k===model) b.classList.add('active'); else b.classList.remove('active');
   });
-  // Pokaż/ukryj parametry H-R
-  const hrDiv = document.getElementById('hr_params');
-  if(hrDiv) hrDiv.style.display = (model==='hr') ? 'block' : 'none';
+  const hrDiv   = document.getElementById('hr_params');
+  const polyDiv = document.getElementById('poly_params');
+  if(hrDiv)   hrDiv.style.display   = (model==='hr')   ? 'block' : 'none';
+  if(polyDiv) polyDiv.style.display = (model==='poly') ? 'block' : 'none';
 
-  // Zablokuj suwak eps_real gdy H-R (jest nadpisany przez model)
-  const slEps = document.getElementById('sl_eps_real');
+  // Zablokuj suwak eps_real gdy H-R lub Poly
+  const slEps  = document.getElementById('sl_eps_real');
   const numEps = document.getElementById('num_eps_real');
-  const lockEps = (model==='hr');
-  if(slEps){ slEps.disabled=lockEps; slEps.style.opacity=lockEps?'0.3':'1'; }
+  const lockEps = (model==='hr' || model==='poly');
+  if(slEps) { slEps.disabled=lockEps; slEps.style.opacity=lockEps?'0.3':'1'; }
   if(numEps){ numEps.disabled=lockEps; numEps.style.opacity=lockEps?'0.3':'1'; }
 
   // Legenda
   const legEps = document.getElementById('leg_eps');
-  if(legEps) legEps.style.display = (model==='hr') ? 'inline-flex' : 'none';
+  if(legEps) legEps.style.display = (model!=='grey') ? 'inline-flex' : 'none';
   scheduleUpdate();
 }
+
+function onPolyMat(key){
+  currentPolyMat = key;
+  const mat = POLY_MATERIALS[key];
+  if(!mat) return;
+  const isCustom = (key==='custom');
+  // Wypełnij pola współczynników
+  ['a0','a1','a2'].forEach(c=>{
+    const el=document.getElementById('poly_'+c);
+    if(el){
+      el.value = mat[c];
+      el.readOnly = !isCustom;
+      el.style.opacity = isCustom ? '1' : '0.6';
+    }
+  });
+  const note  = document.getElementById('poly_note');
+  const range = document.getElementById('poly_range');
+  if(note)  note.textContent  = (mat.source ? 'Źródło: '+mat.source+' — ' : '') + mat.note;
+  if(range) range.textContent = `Zakres: λ = ${mat.lam_range[0]}–${mat.lam_range[1]} µm · T = ${mat.T_range[0]}–${mat.T_range[1]} K`;
+  scheduleUpdate();
+}
+
+function onPolyCoeff(){
+  // Aktualizuj custom materiał z pól
+  const mat = POLY_MATERIALS['custom'];
+  ['a0','a1','a2'].forEach(c=>{
+    const el=document.getElementById('poly_'+c);
+    if(el) mat[c] = parseFloat(el.value)||0;
+  });
+  currentPolyMat = 'custom';
+  document.getElementById('sel_poly_mat').value = 'custom';
+  scheduleUpdate();
+}
+
+
 
 function onHrMat(key){
   hrMaterialKey = key;
@@ -3772,6 +4004,7 @@ window.addEventListener('load', ()=>{
   initSliders();
   // synchronizuj suwak i pole °C w trybie beginera
   setEnv('earth');  // inicjalizuj środowisko
+  onPolyMat('w');    // inicjalizuj poly — wypełnij pola
   const bsl=document.getElementById('beg_sl_T');
   if(bsl) bsl.value=Math.round(state.Tobj-273.15);
   const bnum=document.getElementById('beg_num_T');

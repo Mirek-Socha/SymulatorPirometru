@@ -5,6 +5,50 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.3.0] — 2026-05-25 ✅ bieżąca
+
+### Dodano — model emisyjności wielomianowy
+
+Trzeci model emisyjności: **ε(λ) = a₀ + a₁·λ + a₂·λ²** (λ [µm])
+oparty na danych literaturowych z Touloukian & DeWitt TPRC Vol.7/8.
+
+#### Panel UI „∿ Wielomianowy"
+- Selektor 9 materiałów z etykietami źródeł
+- Trzy pola numeryczne: a₀, a₁ [µm⁻¹], a₂ [µm⁻²]
+- Pola są zablokowane (readonly) dla presetów; edytowalne dla trybu Custom
+- Nota literaturowa i zakres ważności (λ i T) dla każdego materiału
+
+#### Materiały (dopasowania do danych tabelarycznych):
+| Materiał | Źródło | Zachowanie ε(λ) |
+|---|---|---|
+| Wolfram (W) | De Vos (1954), CRC | maleje z λ, minimum ~1.2 µm |
+| Molibden (Mo) | TPRC Vol.7, Cagran 2005 | podobny do W |
+| Tytan (Ti) | TPRC Vol.7 | szybko spada w IR |
+| Żelazo (Fe) | Ward (1956), TPRC Vol.7 | monotoniczny spadek |
+| Nikiel (Ni) | Ward (1956), TPRC Vol.7 | podobny do Fe |
+| Grafit (C) | TPRC Vol.8 | prawie płaski ~0.85 |
+| SiC | NIST, TPRC Vol.8 | wysoki i płaski ~0.92 |
+| Al₂O₃ | TPRC Vol.8 | ROŚNIE z λ (ceramika!) |
+| Custom | — | pola a₀, a₁, a₂ edytowalne |
+
+#### Dydaktyczny efekt Al₂O₃:
+ε(1 µm) ≈ 0.28 vs ε(8 µm) ≈ 0.88 — pirometr InGaAs drastycznie zaniży T,
+natomiast MCT 8-14 µm może dać poprawny wynik. Odwrócone zachowanie względem metali.
+
+#### Implementacja:
+- `POLY_MATERIALS` — dict 9 materiałów z a0,a1,a2,lam_range,T_range,source,note
+- `polyEmissivity(lam_um, mat)` — oblicza ε, clamp [0.01,0.99]
+- `epsSpectral()` — rozszerzone o gałąź 'poly'
+- `onPolyMat(key)`, `onPolyCoeff()` — handlery UI
+- Krzywa ε(λ) na wykresie — bursztynowa przerywana (jak H-R)
+- Suwak ε_real zablokowany w trybie Poly
+
+#### Dokumentacja:
+- Sekcja 3 Expert: nowa podsekcja „Model wielomianowy" z tabelą 8 materiałów,
+  wzorem, info-boxem Al₂O₃, ostrzeżeniem o ograniczeniach
+
+---
+
 ## [v2.2.3] — 2026-05-25 ✅ bieżąca
 
 ### Poprawiono
