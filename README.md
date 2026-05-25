@@ -154,7 +154,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v2.3.0** |
+| `main` | 🇵🇱 Polski | **v2.3.1** |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en *(wymaga aktualizacji)* |
 
 ---
@@ -163,7 +163,8 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.3.0** | Model wielomianowy ε(λ) z TPRC: 8 materiałów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃) |
+| **v2.3.1** | ε(λ) w tooltipie, numer wersji w nagłówku |
+| v2.3.0 | Model wielomianowy ε(λ) z TPRC: 8 materiałów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃) |
 | v2.2.3 | Równanie toru wieloliniowe (KaTeX aligned), fix overflow przy druku PDF |
 | v2.2.2 | Aktualizacja dokumentacji: tor z τ_win, budżet 3-składowy, słownik 26 poz. |
 | v2.2.1 | Spis treści z linkami, numeracja sekcji Beginner poprawiona |

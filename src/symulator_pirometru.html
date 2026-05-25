@@ -107,6 +107,12 @@ button{
   font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;
   color:var(--amber);white-space:nowrap;flex-shrink:0;
 }
+.hdr-ver{
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+  color:var(--muted);letter-spacing:.08em;
+  align-self:flex-end;padding-bottom:2px;flex-shrink:0;
+  opacity:.7;
+}
 .hdr-sub{
   font-family:'IBM Plex Mono',monospace;font-size:.58rem;
   color:var(--muted);letter-spacing:.1em;text-transform:uppercase;
@@ -825,6 +831,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
+    <span class="hdr-ver">v2.3.1</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1959,7 +1966,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.3.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.3.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -3980,11 +3987,16 @@ specCanvas.addEventListener('mousemove', e=>{
   const winRow = (res.winKey && res.winKey!=='none')
     ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(4)}</span></div>`
     : '';
+  const epsVal  = res.Eps ? res.Eps[idx] : state.eps_real;
+  const epsLabel = currentEpsModel==='grey'  ? 'ε (szara)'
+                 : currentEpsModel==='hr'    ? 'ε(λ) H-R'
+                 : `ε(λ) ${(POLY_MATERIALS[currentPolyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
   tt.innerHTML=`
     <div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
     <div class="tt-r"><span class="tt-l">L<sub>bb</sub> CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
     <div class="tt-r" style="font-size:.65rem;color:var(--muted);margin-top:-3px"><span class="tt-l"></span><span>${absVal(res.Lbb[idx])}</span></div>
-    <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber)">${pct(res.Lemit[idx])}</span></div>
+    <div class="tt-r"><span class="tt-l">${epsLabel}:</span><span style="color:var(--amber)">${epsVal.toFixed(4)}</span></div>
+    <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber);opacity:.7">${pct(res.Lemit[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(4)}</span></div>
     ${winRow}
     <div class="tt-r"><span class="tt-l">Sygnał L<sub>det</sub>:</span><span style="color:var(--signal)">${pct(res.Ldet[idx])}</span></div>

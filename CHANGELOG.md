@@ -5,6 +5,16 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.3.1] — 2026-05-25 ✅ bieżąca
+
+### Poprawiono
+- **ε(λ) w tooltipie** — dymek hover pokazuje teraz wartość emisyjności
+  z aktywnego modelu (szary/H-R/wielomianowy) z etykietą nazwy modelu/materiału
+- **Numer wersji w nagłówku** — drobna etykieta `v2.3.x` obok tytułu
+  (IBM Plex Mono, wyszarzona, wyrównana do dolnej krawędzi tytułu)
+
+---
+
 ## [v2.3.0] — 2026-05-25 ✅ bieżąca
 
 ### Dodano — model emisyjności wielomianowy
