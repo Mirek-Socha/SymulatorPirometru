@@ -705,10 +705,21 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   .docs-overlay.open .docs-panel{transform:translateY(0)}
 }
 .docs-top{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 18px 12px;border-bottom:1px solid var(--border);
-  flex-shrink:0;
+  display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;
+  padding:14px 16px 10px;border-bottom:1px solid var(--border);
+  flex-shrink:0;background:var(--surf);
 }
+.docs-top-actions{
+  display:flex;align-items:center;gap:6px;
+  margin-left:auto;flex-shrink:0;align-self:center;
+}
+.docs-action-btn{
+  font-family:'IBM Plex Mono',monospace;font-size:.63rem;
+  letter-spacing:.05em;padding:4px 9px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.docs-action-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
 .docs-title{
   font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;
   color:var(--amber);
@@ -1349,7 +1360,11 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   </ol>
 </div>
 
-    <button class="docs-close" onclick="toggleDocs()">✕</button>
+    <div class="docs-top-actions">
+      <button class="docs-action-btn" onclick="openDocsWindow()" title="Otwórz w nowym oknie">⧉ Nowe okno</button>
+      <button class="docs-action-btn" onclick="printDocs()" title="Drukuj / eksport PDF">🖨 Drukuj</button>
+      <button class="docs-close" onclick="toggleDocs()">✕</button>
+    </div>
   </div>
   <div class="docs-body" id="docsBody">
 
@@ -1468,10 +1483,31 @@ odkryjesz pełny model fizyczny: transmitancję atmosfery, przesłony optyczne, 
 <!-- ──── 1. MODEL TORU ──────────────────────── -->
 <div class="doc-sec" id="doc-s1">
 <h2>1. Model toru pomiarowego</h2>
-<p>Pirometr mierzy temperaturę bez kontaktu z obiektem, analizując promieniowanie elektromagnetyczne. Rzeczywisty sygnał na wejściu detektora jest <b>sumą trzech składników</b> i opisany jest ogólnym równaniem transportu promieniowania:</p>
-<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{obiekt tlumiony atmosfera}} + \underbrace{[1-\tau(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja wlasna atmosfery}} + \underbrace{\tau(\lambda)\cdot[1-\varepsilon]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{odbicia tla (pominiete)}}$$</div>
-<p style="font-size:.75rem;color:var(--muted);margin-top:2px">gdzie: „tłumiony" = τ·ε·L<sub>bb</sub>, emisja atmosfery = (1−τ)·L<sub>bb</sub>(T<sub>atm</sub>), odbicia tła – pominięte</p>
-<p>W symulatorze odbicia tła są pominięte (przyjmujemy T_tła = T_atm). Procesor pirometru zakłada, że detektor widzi wyłącznie ciało szare o emisyjności ε_zał., co prowadzi do błędów gdy τ ≠ 1 lub ε_real ≠ ε_zał.</p>
+<p>Pirometr mierzy temperaturę bez kontaktu z obiektem, analizując promieniowanie elektromagnetyczne.
+Sygnał na wejściu detektora uwzględnia <b>sześć bloków</b> toru i jest sumą trzech składników
+fizycznych <span class="cite">[5,8]</span>:</p>
+
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[\,\underbrace{\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon(\lambda,T)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{promieniowanie obiektu tłumione atmosferą}} + \underbrace{[1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja własna atmosfery}}\Bigr] + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja własna przesłony}}$$</div>
+
+<p style="font-size:.75rem;color:var(--muted);margin-top:2px">
+τ_atm(λ) — transmitancja atmosfery · τ_win(λ) — transmitancja przesłony ·
+ε(λ,T) — emisyjność obiektu (model szary: const; model H-R: f(λ,T)) ·
+odbicia tła pominięte (T_tła ≈ T_atm)
+</p>
+
+<p>Procesor pirometru zakłada uproszczony model: ciało szare o emisyjności ε_zał,
+bez atmosfery i przesłony (τ = 1). Niezgodność z rzeczywistym sygnałem generuje błąd ΔT
+dekomponowany na trzy składowe (zob. sekcja 8).</p>
+
+<table class="beg-eps-table" style="margin-top:10px">
+  <tr><th>Blok</th><th>Model</th><th>Sterowany przez</th></tr>
+  <tr><td>1 · Obiekt</td><td>T_obj, ε(λ,T) lub ε_const</td><td>suwaki T, ε; panel Model emisyjności</td></tr>
+  <tr><td>2 · Atmosfera</td><td>Beer-Lambert, H₂O+CO₂+NH₃+SO₂, P/P₀</td><td>panel Środowisko + suwaki L, RH, CO₂</td></tr>
+  <tr><td>3 · Przesłona</td><td>τ_Fresnel · τ_bandpass · τ_bulk(d) + emisja T_win</td><td>panel Przesłona optyczna</td></tr>
+  <tr><td>4 · Detektor</td><td>R(λ): Gauss / prostokąt / szerokopasmowy</td><td>selektor Typ detektora</td></tr>
+  <tr><td>5 · Procesor</td><td>bisekcja 72 iter., zakres 1–15 000 K</td><td>ε_zał (stałe założenie)</td></tr>
+  <tr><td>6 · Wynik</td><td>T_ind ± ΔT (3 składowe)</td><td>panel Wyniki</td></tr>
+</table>
 </div>
 
 <!-- ──── 2. PRAWO PLANCKA ─────────────────── -->
@@ -1746,22 +1782,46 @@ pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb
 <!-- ──── 8. CAŁKOWANIE ──────────────────────── -->
 <div class="doc-sec">
 <h2 id="doc-s8">8. Całkowanie sygnału i inwersja temperatury</h2>
+
 <h3>Sygnał detektora</h3>
-<p>Całkowity sygnał elektryczny (proporcjonalny do mocy) detektora z toru optycznego:</p>
+<p>Całkowity sygnał elektryczny (proporcjonalny do mocy) na wyjściu detektora:</p>
 <div class="fml-math">$$S = \int_{0}^{\infty} R(\lambda)\cdot L_{\mathrm{det}}(\lambda)\,\mathrm{d}\lambda$$</div>
-<p>W symulatorze: grid N=480 punktów, λ ∈ [0.4, 16] µm, całkowanie metodą prostokątów.</p>
+<p>gdzie L_det(λ) to pełne równanie toru (zob. sekcja 1). W symulatorze: <b>N = 700 punktów</b>,
+λ ∈ [0.10, 16] µm, całkowanie metodą prostokątów (krok DL = (LAM_MAX − LAM_MIN)/N).</p>
+<div class="fml-math">$$S \approx \sum_{i=0}^{N} R(\lambda_i)\cdot L_{\mathrm{det}}(\lambda_i)\cdot\Delta\lambda$$</div>
 
-<h3>Inwersja temperatury (algorytm bisekcji)</h3>
-<p>Pirometr szuka T_ind taką, że model uproszczony (tylko ε_zał, τ=1) daje ten sam sygnał S <span class="cite">[5,8]</span>:</p>
-<div class="fml-math">$$\text{znajdz } T_{\mathrm{ind}}:\quad \int_{0}^{\infty} R(\lambda)\cdot\varepsilon_{\mathrm{zal}}\cdot L_{bb}(\lambda,\,T_{\mathrm{ind}})\,\mathrm{d}\lambda \;=\; S$$</div>
-<p>Algorytm: <b>bisekcja 64 iteracje</b>, zakres T ∈ [200, 6500] K, zbieżność &lt; 0.01 K.</p>
-<div class="fml-math gr">$$\mathcal{O}(72\times N_{\mathrm{grid}}) \approx 50\,400 \ \text{ewaluacji Plancka na kazde przesuniecie suwaka}$$</div>
+<h3>Inwersja temperatury — algorytm bisekcji</h3>
+<p>Procesor pirometru zakłada model uproszczony (ciało szare o emisyjności ε_zał, brak atmosfery
+i przesłony) i szuka T_ind spełniającej <span class="cite">[5,8]</span>:</p>
+<div class="fml-math">$$\text{znajdź}\;T_{\mathrm{ind}}:\quad\sum_{i=0}^{N} R(\lambda_i)\cdot\varepsilon_{\mathrm{zał}}\cdot L_{bb}(\lambda_i,\,T_{\mathrm{ind}})\cdot\Delta\lambda \;=\; S$$</div>
+<p>Algorytm: <b>bisekcja, 72 iteracje</b>, zakres T ∈ [1, 15 000] K, zbieżność &lt; 0.01 K.
+Złożoność obliczeniowa: ∼72 × (N+1) ≈ 50 700 ewaluacji prawa Plancka na każde przesunięcie suwaka.</p>
 
-<h3>Dekompozycja błędu</h3>
-<p>Błąd całkowity rozkładamy na dwie niezależne składowe:</p>
-<div class="fml-math">$$\Delta T_{\varepsilon} = T_{\mathrm{ind}}(\varepsilon_{\mathrm{real}},\;\tau\!=\!1) - T_{\mathrm{obj}} \qquad \text{(tylko emisyjnosc)}$$
-$$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}(\text{pelny model}) - T_{\mathrm{ind}}(\varepsilon_{\mathrm{real}},\;\tau\!=\!1) \qquad \text{(tylko atmosfera)}$$
-$$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
+<div class="info-box"><b>Uwaga na model ε w inwersji:</b> procesor zawsze używa ε_zał = const,
+nawet jeśli wybrany jest model Hagena-Rubensa. Niezgodność ε(λ) ≠ ε_zał jest <i>celowa</i>
+— dokładnie tak działa rzeczywisty pirometr, który nie zna prawdziwego widma emisyjności obiektu.
+Ten błąd jest widoczny w składowej ΔT_ε.</div>
+
+<h3>Dekompozycja błędu — 3 niezależne składowe</h3>
+<p>Błąd całkowity ΔT = T_ind − T_obj jest rozkładany na trzy ortogonalne składowe,
+wyznaczane przez kolejne „odsłanianie" toru:</p>
+<div class="fml-math">
+$$\Delta T_{\varepsilon} = T_{\mathrm{ind}}\!\left[\varepsilon(\lambda,T),\;\tau_{\mathrm{atm}}\!=\!1,\;\tau_{\mathrm{win}}\!=\!1\right] - T_{\mathrm{obj}}$$
+$$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}\!\left[\varepsilon(\lambda,T),\;\tau_{\mathrm{atm}}(\lambda),\;\tau_{\mathrm{win}}\!=\!1\right] - T_{\mathrm{ind}}\!\left[\varepsilon,\;\tau\!=\!1,\;\tau\!=\!1\right]$$
+$$\Delta T_{\mathrm{win}} = T_{\mathrm{ind}}\!\left[\text{pełny tor}\right] - T_{\mathrm{ind}}\!\left[\varepsilon,\;\tau_{\mathrm{atm}},\;\tau_{\mathrm{win}}\!=\!1\right]$$
+$$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}} + \Delta T_{\mathrm{win}}$$
+</div>
+
+<table class="beg-eps-table">
+  <tr><th>Składowa</th><th>Co uwzględnia</th><th>Typowy znak</th></tr>
+  <tr><td>ΔT_ε</td><td>Błąd emisyjności: ε_real ≠ ε_zał (lub ε(λ) ≠ ε_zał w modelu H-R)</td><td>ujemny gdy ε_real &lt; ε_zał</td></tr>
+  <tr><td>ΔT_atm</td><td>Atmosfera: tłumienie + emisja własna gazu</td><td>ujemny (tłumienie) lub dodatni (hot gas)</td></tr>
+  <tr><td>ΔT_win</td><td>Przesłona: tłumienie τ_win + emisja własna T_win</td><td>ujemny (zimna) lub dodatni (gorąca)</td></tr>
+</table>
+
+<p>W kodzie dekompozycja wykonywana jest przez trzy oddzielne całkowania z progresywnie
+włączanymi efektami. Wyniki: <code>dT_eps</code>, <code>dT_atm</code>, <code>dT_win</code>
+w obiekcie zwracanym przez <code>compute()</code>.</p>
 </div>
 
 <!-- ──── 9. SŁOWNIK ───────────────────────── -->
@@ -1769,20 +1829,28 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
 <h2>9. Słownik symboli</h2>
 <table class="sym-tbl">
   <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
-  <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — polski skrót; odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε&nbsp;=&nbsp;1</td><td>—</td></tr>
-  <tr><td>L_bb(λ,T)</td><td>Luminancja spektralna ciała doskonale czarnego (CDC) — prawo Plancka</td><td>W·m⁻²·sr⁻¹·m⁻¹</td></tr>
-  <tr><td>ε, ε_real</td><td>Emisyjność rzeczywista obiektu</td><td>—</td></tr>
-  <tr><td>ε_zał</td><td>Emisyjność zakładana przez procesor pirometru</td><td>—</td></tr>
-  <tr><td>τ(λ)</td><td>Transmitancja spektralna atmosfery</td><td>—</td></tr>
-  <tr><td>τ̄</td><td>Śr. ważona transmitancja w oknie detektora</td><td>—</td></tr>
-  <tr><td>R(λ)</td><td>Spektralna funkcja odpowiedzi detektora</td><td>A·W⁻¹ lub V·W⁻¹</td></tr>
-  <tr><td>S</td><td>Sygnał (moc) na wyjściu detektora</td><td>W·m⁻²·sr⁻¹</td></tr>
-  <tr><td>T_obj</td><td>Temperatura termodynamiczna obiektu</td><td>°C lub K</td></tr>
-  <tr><td>T_ind</td><td>Temperatura wskazana przez pirometr</td><td>°C</td></tr>
-  <tr><td>T_J</td><td>Temperatura jasności (monochromatyczna)</td><td>°C</td></tr>
-  <tr><td>T_atm</td><td>Temperatura atmosfery wzdłuż toru</td><td>°C</td></tr>
-  <tr><td>ΔT</td><td>Błąd pomiaru: T_ind − T_obj</td><td>°C lub K</td></tr>
-  <tr><td>λ_max</td><td>Długość fali maksimum emisji (Wien)</td><td>µm</td></tr>
+  <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε = 1</td><td>—</td></tr>
+  <tr><td>L_bb(λ,T)</td><td>Spektralna luminancja ciała doskonale czarnego — prawo Plancka</td><td>W·m⁻²·sr⁻¹·m⁻¹</td></tr>
+  <tr><td>ε(λ,T)</td><td>Emisyjność spektralna obiektu — model szary: const; model H-R: funkcja λ i T</td><td>—</td></tr>
+  <tr><td>ε_real</td><td>Emisyjność rzeczywista (wartość suwaka w modelu szarym)</td><td>—</td></tr>
+  <tr><td>ε_zał</td><td>Emisyjność zakładana przez procesor pirometru (zawsze stała)</td><td>—</td></tr>
+  <tr><td>ρ₀</td><td>Oporność elektryczna metalu w T₀ = 293 K — parametr modelu H-R</td><td>µΩ·cm</td></tr>
+  <tr><td>α (H-R)</td><td>Temperaturowy współczynnik oporności — parametr modelu H-R: ρ(T)=ρ₀[1+α(T−T₀)]</td><td>K⁻¹</td></tr>
+  <tr><td>τ_atm(λ)</td><td>Spektralna transmitancja atmosfery — model Beer-Lambert z P/P₀</td><td>—</td></tr>
+  <tr><td>τ_win(λ)</td><td>Spektralna transmitancja przesłony optycznej — τ_Fresnel·τ_bandpass·τ_bulk(d)</td><td>—</td></tr>
+  <tr><td>τ̄</td><td>Średnia ważona transmitancja w oknie detektora (waga: R(λ))</td><td>—</td></tr>
+  <tr><td>R(λ)</td><td>Spektralna funkcja odpowiedzi detektora (znormalizowana)</td><td>—</td></tr>
+  <tr><td>S</td><td>Sygnał (moc) na wyjściu detektora — całka ∫R(λ)·L_det(λ)dλ</td><td>W·m⁻²·sr⁻¹</td></tr>
+  <tr><td>T_obj</td><td>Temperatura termodynamiczna obiektu mierzonego</td><td>°C lub K</td></tr>
+  <tr><td>T_ind</td><td>Temperatura wskazana przez pirometr (wynik inwersji Plancka)</td><td>°C</td></tr>
+  <tr><td>T_atm</td><td>Temperatura atmosfery wzdłuż toru optycznego</td><td>°C</td></tr>
+  <tr><td>T_win</td><td>Temperatura przesłony optycznej (wpływa na jej emisję własną)</td><td>°C</td></tr>
+  <tr><td>T_J</td><td>Temperatura jasności — T_ind przy λ = const i τ = 1</td><td>°C</td></tr>
+  <tr><td>ΔT</td><td>Błąd pomiaru: T_ind − T_obj = ΔT_ε + ΔT_atm + ΔT_win</td><td>K</td></tr>
+  <tr><td>ΔT_ε</td><td>Składowa błędu od emisyjności (bez atmosfery i przesłony)</td><td>K</td></tr>
+  <tr><td>ΔT_atm</td><td>Składowa błędu od atmosfery (tłumienie + emisja własna gazu)</td><td>K</td></tr>
+  <tr><td>ΔT_win</td><td>Składowa błędu od przesłony (tłumienie + emisja własna okna)</td><td>K</td></tr>
+  <tr><td>λ_max</td><td>Długość fali maksimum emisji (prawo Wiena: λ_max·T = b)</td><td>µm</td></tr>
   <tr><td>λ_c</td><td>Centralna długość fali detektora</td><td>µm</td></tr>
   <tr><td>c₂ = hc/k_B</td><td>Druga stała promieniowania</td><td>1.43878×10⁻² m·K</td></tr>
   <tr><td>σ</td><td>Stała Stefana–Boltzmanna</td><td>5.6704×10⁻⁸ W·m⁻²·K⁻⁴</td></tr>
@@ -1790,6 +1858,8 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>h</td><td>Stała Plancka</td><td>6.626×10⁻³⁴ J·s</td></tr>
   <tr><td>k_B</td><td>Stała Boltzmanna</td><td>1.381×10⁻²³ J·K⁻¹</td></tr>
   <tr><td>c</td><td>Prędkość światła w próżni</td><td>2.998×10⁸ m·s⁻¹</td></tr>
+  <tr><td>N = 700</td><td>Liczba punktów siatki całkowania λ ∈ [0.10, 16] µm</td><td>—</td></tr>
+  <tr><td>P/P₀</td><td>Czynnik ciśnienia w Beer-Lambert (P₀ = 1 atm = 101 325 Pa)</td><td>—</td></tr>
 </table>
 </div>
 
@@ -1802,7 +1872,7 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}}$$</div>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.2.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.2.2</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2923,6 +2993,166 @@ const BEG_PRESETS = {
 
 
 /* ─────────────────────────────────────────────
+   DOCS — NOWE OKNO I DRUKOWANIE
+───────────────────────────────────────────── */
+function buildDocsHTML(mode){
+  // mode: 'expert' | 'beginner' | 'both'
+  const body = document.getElementById('docsBody');
+  if(!body) return '';
+
+  // Zbierz treść odpowiednich sekcji
+  const isExpert = document.body.classList.contains('expert');
+  const title = isExpert
+    ? 'Pirometria — Dokumentacja fizyczna i algorytmiczna'
+    : 'Pirometria — Przewodnik: Jak działa pirometr?';
+
+  // Klonuj docsBody i usuń sekcje drugiego trybu
+  const clone = body.cloneNode(true);
+  // Usuń elementy tylko beginner (bo) w trybie expert i vice versa
+  const removeClass = isExpert ? 'bo' : 'xo';
+  clone.querySelectorAll('.'+removeClass).forEach(el=>el.remove());
+  // Pokaż wszystkie — klonowany DOM nie ma body.expert/beginner context
+  clone.querySelectorAll('.xo,.bo').forEach(el=>{
+    el.style.display='';
+  });
+
+  // KaTeX CDN urls
+  const katexCSS = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css';
+  const katexJS  = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js';
+  const katexAR  = 'https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js';
+
+  const katexInit = [
+    'renderMathInElement(document.body,{',
+    '  delimiters:[',
+    '    {left:"$$",right:"$$",display:true},',
+    '    {left:"\\\\(",right:"\\\\)",display:false}',
+    '  ],throwOnError:false',
+    '});'
+  ].join('\n');
+
+  return `<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&family=Playfair+Display:wght@700&display=swap">
+<link rel="stylesheet" href="${katexCSS}">
+<style>
+  :root{ color-scheme:light }
+  *{ margin:0; padding:0; box-sizing:border-box }
+  body{
+    font-family:'IBM Plex Sans',sans-serif;
+    background:#f9f7f2; color:#1a1a22;
+    max-width:860px; margin:0 auto;
+    padding:32px 28px 60px;
+    font-size:14px; line-height:1.7;
+  }
+  h1{ font-family:'Playfair Display',serif; font-size:1.8rem;
+      color:#b45309; margin-bottom:4px }
+  .doc-meta{ font-family:'IBM Plex Mono',monospace; font-size:.72rem;
+              color:#7a7888; margin-bottom:32px }
+  h2{ font-family:'Playfair Display',serif; font-size:1.25rem;
+      color:#b45309; margin:36px 0 10px;
+      padding-bottom:6px; border-bottom:2px solid #e0d9ce }
+  h3{ font-family:'IBM Plex Mono',monospace; font-size:.82rem;
+      letter-spacing:.08em; text-transform:uppercase;
+      color:#0e7490; margin:20px 0 8px }
+  p{ margin-bottom:10px; color:#2a2a35 }
+  p b{ color:#1a1a22 }
+  a{ color:#0e7490 }
+  table{ border-collapse:collapse; width:100%; margin:12px 0 16px; font-size:.8rem }
+  th{ background:#ece8dd; padding:6px 10px; text-align:left;
+      font-family:'IBM Plex Mono',monospace; font-size:.72rem;
+      letter-spacing:.06em; text-transform:uppercase; color:#4a4860 }
+  td{ padding:5px 10px; border-bottom:1px solid #e0d9ce; color:#2a2a35 }
+  tr:hover td{ background:#f5f2ea }
+  .fml-math{ background:#f0ece2; border-left:3px solid #b45309;
+              padding:12px 16px; margin:12px 0; overflow-x:auto }
+  .info-box{ background:#e0f2fe; border-left:3px solid #0e7490;
+             padding:10px 14px; margin:12px 0; font-size:.82rem; color:#0a3d52 }
+  .warn-box{ background:#fef9c3; border-left:3px solid #b45309;
+             padding:10px 14px; margin:12px 0; font-size:.82rem; color:#713f12 }
+  .cite{ font-size:.72rem; color:#7a7888; vertical-align:super }
+  ol.lit{ padding-left:1.4em; font-size:.8rem; color:#2a2a35 }
+  ol.lit li{ margin-bottom:6px; line-height:1.6 }
+  .toc{ background:#f0ece2; border:1px solid #d8d3c8;
+        border-left:3px solid #0e7490; padding:16px 18px; margin-bottom:28px }
+  .toc-title{ font-family:'IBM Plex Mono',monospace; font-size:.65rem;
+               letter-spacing:.15em; text-transform:uppercase; color:#0e7490; margin-bottom:10px }
+  .toc ol{ columns:2; column-gap:24px; padding-left:1.2em }
+  .toc li{ font-size:.8rem; margin-bottom:3px; break-inside:avoid }
+  .toc a{ color:#0e7490 }
+  .toc-sub{ display:block; font-size:.7rem; color:#7a7888; padding-left:.6em }
+  .beg-eps-table{ border-collapse:collapse; width:100%; margin:12px 0; font-size:.8rem }
+  .beg-eps-table th{ background:#ece8dd; padding:6px 10px;
+      font-family:'IBM Plex Mono',monospace; font-size:.7rem; text-align:left }
+  .beg-eps-table td{ padding:5px 10px; border-bottom:1px solid #e0d9ce }
+  .eps-val{ font-family:'IBM Plex Mono',monospace; color:#b45309 }
+  .beg-analogy{ background:#fef9c3; border-left:3px solid #b45309;
+                padding:10px 14px; margin:10px 0; font-size:.83rem }
+  .beg-key-box{ background:#e0f2fe; border-left:3px solid #0e7490;
+                padding:10px 14px; margin:10px 0; font-size:.83rem }
+  .win-desc{ font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:#7a7888 }
+  @media print{
+    body{ background:#fff; max-width:100%; padding:20px }
+    h2{ break-after:avoid }
+    h3{ break-after:avoid }
+    table{ page-break-inside:avoid }
+    .fml-math{ background:#f5f5f5 }
+    .no-print{ display:none !important }
+  }
+  .doc-toolbar{
+    position:sticky; top:0; z-index:100;
+    background:#f9f7f2; border-bottom:1px solid #d8d3c8;
+    padding:8px 0 10px; margin-bottom:28px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .doc-toolbar button{
+    font-family:'IBM Plex Mono',monospace; font-size:.7rem;
+    padding:5px 12px; border:1px solid #c8c3b6;
+    background:#fff; color:#4a4860; cursor:pointer; transition:all .15s;
+  }
+  .doc-toolbar button:hover{ border-color:#0e7490; color:#0e7490 }
+  .doc-toolbar span{ font-size:.68rem; color:#7a7888 }
+</style>
+</head>
+<body>
+<div class="doc-toolbar no-print">
+  <button onclick="window.print()">🖨 Drukuj / Zapisz PDF</button>
+  <button onclick="window.close()">✕ Zamknij</button>
+  <span>Drukuj → Zapisz jako PDF</span>
+</div>
+<h1>${title}</h1>
+<div class="doc-meta">Pirometria v2.2.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+${clone.innerHTML}
+<script src="${katexJS}"><\/script>
+<script src="${katexAR}" onload="${katexInit}"><\/script>
+</body></html>`;
+}
+
+function openDocsWindow(){
+  const html = buildDocsHTML();
+  const win = window.open('','_blank','width=960,height=800,scrollbars=yes,resizable=yes');
+  if(!win){ alert('Przeglądarka zablokowała popup. Zezwól na wyskakujące okna dla tej strony.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+function printDocs(){
+  const html = buildDocsHTML();
+  const win = window.open('','_blank','width=960,height=800');
+  if(!win){ alert('Przeglądarka zablokowała popup. Zezwól na wyskakujące okna dla tej strony.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  // Poczekaj na załadowanie KaTeX, potem drukuj
+  win.addEventListener('load', ()=>{ setTimeout(()=>win.print(), 800); });
+}
+
+/* ─────────────────────────────
    EMISSIVITY MODEL SWITCHING
 ───────────────────────────────────────────── */
 function setEpsModel(model){

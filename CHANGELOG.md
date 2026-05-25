@@ -5,6 +5,34 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.2.2] — 2026-05-25 ✅ bieżąca
+
+### Poprawiono — dokumentacja wbudowana
+
+**Sekcja 1 — Model toru pomiarowego:**
+- Pełne równanie L_det(λ) uwzględnia teraz τ_win (była pomijana)
+- ε(λ,T) zamiast ε (zaznaczono że to funkcja, nie stała)
+- Tabela 6 bloków toru z opisem modelu i sterowników każdego bloku
+
+**Sekcja 8 — Całkowanie sygnału i inwersja temperatury:**
+- Grid: N=480, λ 0.4–16 µm → N=700, λ 0.10–16 µm (zgodnie z kodem)
+- Bisekcja: 64 iter., T ∈ [200,6500] K → 72 iter., T ∈ [1,15000] K
+- Dekompozycja błędu: 2 składowe → **3 składowe** (ΔT_ε + ΔT_atm + ΔT_win)
+- Wzory z pełnymi warunkami dla każdej składowej
+- Tabela znaczenia i typowych znaków składowych
+- Info-box: wyjaśnienie dlaczego inwersja używa ε_zał=const nawet w modelu H-R
+- Wzór sumy całkowania dyskretnej (metoda prostokątów)
+
+**Sekcja 9 — Słownik symboli:**
+- Dodano: ε(λ,T), ρ₀, α (H-R), τ_win(λ), T_win, ΔT_ε, ΔT_atm, ΔT_win
+- Dodano: N=700 (siatka), P/P₀ (Beer-Lambert)
+- Uszczegółowiono opisy istniejących symboli
+
+**Sekcja 10 — Informacje:**
+- Wersja zaktualizowana do v2.2.2
+
+---
+
 ## [v2.2.1] — 2026-05-25 ✅ bieżąca
 
 ### Dodano — spis treści dokumentacji
