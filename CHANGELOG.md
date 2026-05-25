@@ -5,6 +5,18 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.2.3] — 2026-05-25 ✅ bieżąca
+
+### Poprawiono
+- **Równanie toru (sekcja 1)** — rozbite na 3 wyrównane linie (`aligned` KaTeX);
+  każdy składnik fizyczny (obiekt, atmosfera, przesłona) w osobnej linii z podpisem;
+  nie wychodzi poza kontener ani w panelu, ani w oknie drukowania
+- **KaTeX font-size**: 1rem → 0.93rem — lepsza czytelność przy wąskich kontenerach
+- **`overflow-x:auto` zachowane w `@media print`** — długie wzory scrollują się
+  zamiast ucinać przy druku do PDF
+
+---
+
 ## [v2.2.2] — 2026-05-25 ✅ bieżąca
 
 ### Poprawiono — dokumentacja wbudowana
