@@ -832,7 +832,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.7.0</span>
+    <span class="hdr-ver">v2.8.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -2080,7 +2080,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.7.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.8.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2258,6 +2258,28 @@ const c2  = h_*cL/kB;   // 1.43878e-2 m·K
 const LAM_MIN = 0.10e-6, LAM_MAX = 16e-6, N = 700;
 const DL = (LAM_MAX - LAM_MIN) / N;
 const lams = Array.from({length:N+1}, (_,i) => LAM_MIN + i*DL);
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG — stałe konfiguracyjne (wcześniej magic numbers)
+═══════════════════════════════════════════════════════════════════ */
+const CONFIG = {
+  // Bisekcja inwersji temperatury
+  BISECT_ITER:       72,      // iteracje — pomiar jednoobarwny (zbieżność < 0.01 K)
+  BISECT_ITER_RATIO: 80,      // iteracje — pirometria dwubarwna
+  BISECT_T_MIN:      1,       // [K] dolna granica zakresu bisekcji
+  BISECT_T_MAX:      15000,   // [K] górna granica zakresu bisekcji
+
+  // Canvas layout — marginesy i strefy
+  RZONE_FRAC:  0.22,   // ułamek wysokości canvasu na strefę R(λ) / ε(λ)
+  PL_FRAC:     0.072,  // adaptacyjny margines lewy = szerokość × PL_FRAC
+  PL_MIN:      36,     // [px] minimalny margines lewy
+  PL_MAX:      54,     // [px] maksymalny margines lewy
+  PR:          12,     // [px] margines prawy
+  PT:          14,     // [px] margines górny
+  PB:          40,     // [px] margines dolny
+  R_OVERDRAW:  1.05,   // cap normalizacji R(λ) — lekkie przekroczenie strefy
+};
+
 
 function planck(lam, T_K){
   if(T_K < 5) return 0;
@@ -2766,8 +2788,8 @@ function detResp(lam_m, det){
 
 function invertTemp(target, det, eps_a){
   if(target<=0) return 1;
-  let lo=1, hi=15000;
-  for(let it=0;it<72;it++){
+  let lo=CONFIG.BISECT_T_MIN, hi=CONFIG.BISECT_T_MAX;
+  for(let it=0;it<CONFIG.BISECT_ITER;it++){
     const Tm=(lo+hi)/2;
     let s=0;
     for(let i=0;i<=N;i++) s += detResp(lams[i],det)*eps_a*planck(lams[i],Tm)*DL;
@@ -2905,8 +2927,8 @@ function invertTempRatio(ratio_meas, det1, det2, p, env, Tatm_K, Twin_K, thick){
   if(ratio_meas<=0 || !isFinite(ratio_meas)) return null;
   // Procesor ratio zakłada τ=1, ε=1 (ε skraca się)
   const pSimple = {...p, path:0, windowKey:'none', eps_assumed:1.0};
-  let lo=1, hi=15000;
-  for(let it=0;it<80;it++){
+  let lo=CONFIG.BISECT_T_MIN, hi=CONFIG.BISECT_T_MAX;
+  for(let it=0;it<CONFIG.BISECT_ITER_RATIO;it++){
     const Tm=(lo+hi)/2;
     let s1=0, s2=0;
     for(let i=0;i<=N;i++){
@@ -3099,7 +3121,7 @@ function drawSpec(res, p){
   const H = specCanvas.offsetHeight || parseInt(specCanvas.getAttribute('height')) || 308;
   ctx.clearRect(0,0,W,H);
 
-  const pL=Math.round(Math.min(54,Math.max(36,W*0.072))),pR=12,pT=14,pB=40;
+  const pL=Math.round(Math.min(CONFIG.PL_MAX,Math.max(CONFIG.PL_MIN,W*CONFIG.PL_FRAC))),pR=CONFIG.PR,pT=CONFIG.PT,pB=CONFIG.PB;
   const W2=W-pL-pR, H2=H-pT-pB;
   if(W2<50||H2<10) return;
 
@@ -3116,10 +3138,10 @@ function drawSpec(res, p){
 
   const gMax = Math.max(...res.Lbb, 1e-30);
   // Widmo zaczyna się PONIŻEJ strefy R(λ)
-  const Rz = Math.round(H2*0.22);  // rezerwuj górne 22% na R(λ)
+  const Rz = Math.round(H2*CONFIG.RZONE_FRAC);  // rezerwuj górne 22% na R(λ)
   const specTop = pT + Rz;         // góra widma
   const specH   = H2 - Rz;         // wysokość widma
-  const ly = v => specTop + specH*(1 - Math.min(v/gMax, 1.05));
+  const ly = v => specTop + specH*(1 - Math.min(v/gMax, CONFIG.R_OVERDRAW));
 
   // y-grid — tylko strefa widma (specTop..specTop+specH)
   ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
@@ -3359,7 +3381,7 @@ function drawTau(res){
   const H = tauCanvas.offsetHeight || parseInt(tauCanvas.getAttribute('height')) || 148;
   ctx.clearRect(0,0,W,H);
 
-  const pL=Math.round(Math.min(54,Math.max(36,W*0.072))),pR=12,pT=14,pB=40;
+  const pL=Math.round(Math.min(CONFIG.PL_MAX,Math.max(CONFIG.PL_MIN,W*CONFIG.PL_FRAC))),pR=CONFIG.PR,pT=CONFIG.PT,pB=CONFIG.PB;
   const W2=W-pL-pR, H2=H-pT-pB;
   if(W2<10||H2<10) return;
 
@@ -3596,7 +3618,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v2.7.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v2.8.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -4342,7 +4364,7 @@ function closeDocs(e){
 specCanvas.addEventListener('mousemove', e=>{
   const rect=specCanvas.getBoundingClientRect();
   const mx=e.clientX-rect.left;
-  const pL=Math.round(Math.min(54,Math.max(36,specCanvas.offsetWidth*0.072))),pR=12;
+  const pL=Math.round(Math.min(CONFIG.PL_MAX,Math.max(CONFIG.PL_MIN,specCanvas.offsetWidth*CONFIG.PL_FRAC))),pR=12;
   const W2=specCanvas.offsetWidth-pL-pR;
   const frac=(mx-pL)/W2;
   if(frac<0||frac>1){ hideTT(); hoverFrac=null; scheduleUpdate(); return; }

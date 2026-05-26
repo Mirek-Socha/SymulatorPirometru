@@ -5,6 +5,31 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.8.0] — 2026-05-27 ✅ bieżąca
+
+### Zmieniono — Refactoring Faza 4: Konfiguracja
+
+Wyodrębniono `const CONFIG` — obiekt z nazwanymi stałymi zamiast magic numbers.
+
+```javascript
+const CONFIG = {
+  BISECT_ITER:       72,    // iteracje bisekcji — pomiar jednoobarwny
+  BISECT_ITER_RATIO: 80,    // iteracje bisekcji — pirometria dwubarwna
+  BISECT_T_MIN:      1,     // [K] dolna granica zakresu
+  BISECT_T_MAX:      15000, // [K] górna granica zakresu
+  RZONE_FRAC:  0.22,  // strefa R(λ)/ε(λ) = górne 22% canvasu
+  PL_FRAC:     0.072, // margines lewy adaptacyjny
+  PL_MIN:      36,    // [px] min margines lewy
+  PL_MAX:      54,    // [px] max margines lewy
+  PR: 12, PT: 14, PB: 40,  // [px] pozostałe marginesy
+  R_OVERDRAW:  1.05,  // cap normalizacji R(λ)
+};
+```
+
+9 zamian w kodzie (23 referencje `CONFIG.*`).
+Brak zmian funkcjonalnych.
+
+
 ## [v2.7.0] — 2026-05-27 ✅ bieżąca
 
 ### Zmieniono — Refactoring Faza 3: Modularyzacja
