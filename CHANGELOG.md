@@ -5,6 +5,30 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.7.0] — 2026-05-27 ✅ bieżąca
+
+### Zmieniono — Refactoring Faza 3: Modularyzacja
+
+Kod JavaScript podzielony na 8 wyraźnie oznaczonych modułów logicznych.
+Każdy moduł opatrzony separatorem `/* ═══ MODULE N ═══ */` widocznym
+w podglądzie kodu i panelu funkcji edytora.
+
+| Moduł | Linia JS | Funkcje | Opis |
+|---|---|---|---|
+| MODULE 1 — PHYSICS | 4 | planck, atmTau, rhoT, hagenRubens, polyEmissivity, epsSpectral, epsArray | Obliczenia fizyczne, czyste funkcje |
+| MODULE 1b — OPTICS | 433 | windowTau, detResp, invertTemp | Przesłona optyczna i detektor |
+| MODULE 2 — COMPUTE | 533 | compute, computeSignalForDet, invertTempRatio, computeRatio | Silnik obliczeniowy |
+| MODULE 3 — CANVAS | 729 | resizeCanvas, setupCanvas, drawVisibleBar, drawGrid, drawSpec, drawTau | Rysowanie wykresów |
+| MODULE 4 — DOCS | 1219 | buildDocsHTML, openDocsWindow, printDocs | Dokumentacja wbudowana |
+| MODULE 5 — UI EXPERT | 1383 | setEpsModel, onPolyMat, setRatioMode, setEnv, setScale, … | Handlery Tryb Eksperta |
+| MODULE 5b — UI BEGINNER | 1655 | begOnT, begOnTNum, begSetEps, begSetAtm, begSetDet | Handlery Tryb Podstawowy |
+| MODULE 6 — UPDATE LOOP | 1741 | scheduleUpdate, doUpdate, updateChain, updateResults | Pętla aktualizacji |
+| MODULE 7 — INIT | 1972 | initSliders | Inicjalizacja |
+| MODULE 8 — PRESETS & THEME | 2047 | loadPreset, toggleTheme, toggleMode, toggleDocs | Presety i UI globalne |
+
+Brak zmian funkcjonalnych — wyłącznie komentarze/separatory.
+
+
 ## [v2.6.0] — 2026-05-27 ✅ bieżąca
 
 ### Zmieniono — Refactoring Faza 2: State Management

@@ -112,7 +112,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v2.6.0** |
+| `main` | 🇵🇱 Polski | **v2.7.0** |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en *(wymaga aktualizacji)* |
 
 ---
@@ -121,7 +121,8 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.6.0** | Refactoring Faza 2: State Management — `appState` object, 8 globals → 1 obiekt |
+| **v2.7.0** | Refactoring Faza 3: Modularyzacja — 8 sekcji MODULE w JS |
+| v2.6.0 | Refactoring Faza 2: State Management — `appState` object, 8 globals → 1 obiekt |
 | v2.5.0 | Refactoring Faza 1: konsolidacja CSS/JS (−50% rozmiaru pliku), fix duplikat UI, fix KaTeX |
 | v2.4.3 | Fix KaTeX Wien S₁/S₂ (backslash, `\night`) |
 | v2.4.2 | Fix KaTeX sekcja 8: `\approx` i `\right` zdegenerowane escape |

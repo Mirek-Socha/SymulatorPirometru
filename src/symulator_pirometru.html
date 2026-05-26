@@ -832,7 +832,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.6.0</span>
+    <span class="hdr-ver">v2.7.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -2080,7 +2080,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.6.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.7.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2246,6 +2246,10 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
      JAVASCRIPT
 ═══════════════════════════════════════════ -->
 <script>
+
+/* ═══════════════════════════════════════════════════
+   MODULE 1 — PHYSICS  ·  Obliczenia fizyczne (czyste funkcje, brak DOM)
+   ═══════════════════════════════════════════════════ */
 /* ─────────────────────────────────────────────
    PHYSICS CONSTANTS & ENGINE
 ───────────────────────────────────────────── */
@@ -2672,6 +2676,10 @@ function ss(x, e0, e1){ const t=Math.max(0,Math.min(1,(x-e0)/(e1-e0))); return t
  * τ_bulk     — absorpcja objętościowa skalowana prawem Beer-Lamberta
  *              τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)
  */
+/* ═══════════════════════════════════════════════════
+   MODULE 1b — OPTICS  ·  Przesłona optyczna i detektor
+   ═══════════════════════════════════════════════════ */
+
 function windowTau(lam_m, type, thick_mm){
   if(type==='none') return 1.0;
   const u = lam_m * 1e6; // µm
@@ -2767,6 +2775,10 @@ function invertTemp(target, det, eps_a){
   }
   return (lo+hi)/2;
 }
+
+/* ═══════════════════════════════════════════════════
+   MODULE 2 — COMPUTE  ·  Silnik obliczeniowy (integracja sygnału i inwersja T)
+   ═══════════════════════════════════════════════════ */
 
 function compute(p){
   const Tobj_K = p.Tobj;
@@ -2959,6 +2971,10 @@ const specCanvas = document.getElementById('specCanvas');
 const tauCanvas  = document.getElementById('tauCanvas');
 const specCtx = specCanvas.getContext('2d');
 const tauCtx  = tauCanvas.getContext('2d');
+
+/* ═══════════════════════════════════════════════════
+   MODULE 3 — CANVAS  ·  Rysowanie wykresów (Canvas 2D)
+   ═══════════════════════════════════════════════════ */
 
 let hoverFrac = null;
 
@@ -3446,6 +3462,10 @@ const BEG_PRESETS = {
 /* ─────────────────────────────────────────────
    DOCS — NOWE OKNO I DRUKOWANIE
 ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════
+   MODULE 4 — DOCS  ·  Dokumentacja wbudowana
+   ═══════════════════════════════════════════════════ */
+
 function buildDocsHTML(mode){
   // mode: 'expert' | 'beginner' | 'both'
   const body = document.getElementById('docsBody');
@@ -3576,7 +3596,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v2.6.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v2.7.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3606,6 +3626,10 @@ function printDocs(){
 /* ─────────────────────────────
    EMISSIVITY MODEL SWITCHING
 ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════
+   MODULE 5 — UI EXPERT  ·  Handlery interfejsu — Tryb Eksperta
+   ═══════════════════════════════════════════════════ */
+
 function setEpsModel(model){
   appState.epsModel = model;
   document.querySelectorAll('.epsm-btn').forEach(b=>{
@@ -3874,6 +3898,10 @@ document.addEventListener('click',e=>{
 /* ─────────────────────────────────────────────
    BEGINNER CONTROL HANDLERS
 ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════
+   MODULE 5b — UI BEGINNER  ·  Handlery interfejsu — Tryb Podstawowy
+   ═══════════════════════════════════════════════════ */
+
 function begOnT(el){
   const c=parseFloat(el.value);
   slPct(el);                                                    // ← aktualizuj gradient suwaka
@@ -3955,6 +3983,10 @@ function setScale(mode){
   if(btnLin){ if(!appState.logScale) btnLin.classList.add('active'); else btnLin.classList.remove('active'); }
   scheduleUpdate();
 }
+
+/* ═══════════════════════════════════════════════════
+   MODULE 6 — UPDATE LOOP  ·  Pętla aktualizacji i renderowania
+   ═══════════════════════════════════════════════════ */
 
 function scheduleUpdate(){
   if(rafId) return;
@@ -4183,6 +4215,10 @@ function onWinChange(){
   scheduleUpdate();
 }
 
+/* ═══════════════════════════════════════════════════
+   MODULE 7 — INIT  ·  Inicjalizacja suwaków i event listenerów
+   ═══════════════════════════════════════════════════ */
+
 function initSliders(){
   const map=[
     ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
@@ -4253,6 +4289,10 @@ const PRESETS={
   co2ind_basic: {Tobj:1773,eps_real:0.75,path:0.3,rh:0,  co2:400,Tatm:25, detKey:'band_390', eps_assumed:0.75,windowKey:'none',windowTemp:25,windowThick:5},
   plexiglas:  {Tobj:1273,eps_real:0.80,path:1, rh:30,co2:400,Tatm:25,detKey:'band_100',eps_assumed:0.80,windowKey:'pmma', windowTemp:60,  windowThick:5},
 };
+
+/* ═══════════════════════════════════════════════════
+   MODULE 8 — PRESETS & THEME  ·  Presety, motyw, tryb, dokumentacja
+   ═══════════════════════════════════════════════════ */
 
 function loadPreset(name){
   const p = PRESETS[name] || BEG_PRESETS[name];
