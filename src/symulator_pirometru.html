@@ -831,7 +831,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.4.1</span>
+    <span class="hdr-ver">v2.4.2</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1949,23 +1949,17 @@ $$S_2 = \int R_2(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\math
 
 <h3>Przybliżenie Wiena (wąskopasmowe detektory)</h3>
 <p>Dla pirometrów pasmowych (Gauss) i spełnieniu warunku Wiena (hc/λk_BT ≫ 1):</p>
-<div class="fml-math">$$\frac{S_1}{S_2} pprox \frac{R_{\mathrm{p1}}}{R_{\mathrm{p2}}}\cdot\left(\frac{\lambda_2}{\lambda_1}
+<div class="fml-math">$$\frac{S_1}{S_2} \\approx \frac{R_{\mathrm{p1}}}{R_{\mathrm{p2}}}\cdot\left(\frac{\lambda_2}{\lambda_1}
 ight)^5 \cdot \exp\!\left[\frac{c_2}{T}\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}
 ight)
 ight]$$</div>
 <p>Inwersja analityczna (szacunkowa):</p>
-<div class="fml-math">$$T_{\mathrm{ratio}} pprox \frac{c_2\!\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}
-ight)}{\ln\!\left(\frac{S_1}{S_2}\cdot\frac{R_{\mathrm{p2}}}{R_{\mathrm{p1}}}
-ight) + 5\ln\!\left(\frac{\lambda_2}{\lambda_1}
-ight)}$$</div>
-<p style="font-size:.75rem;color:var(--muted)">c₂ = 1.43878×10⁻² m·K; λ₁ &lt; λ₂ (krótsze/dłuższe fale)</p>
-
-<h3>Błąd przy ciele selektywnym ε(λ₁) ≠ ε(λ₂)</h3>
+<div class="fml-math">$$T_{\mathrm{ratio}} \approx \frac{c_2\!\left(\dfrac{1}{\lambda_2}-\dfrac{1}{\lambda_1}\right)}{\ln\!\left(\dfrac{S_1}{S_2}\cdot\dfrac{R_{\mathrm{p2}}}{R_{\mathrm{p1}}}\right) + 5\ln\!\left(\dfrac{\lambda_2}{\lambda_1}\right)}$$</div>
+<p style="font-size:.75rem;color:var(--muted)">c₂ = 1.43878×10⁻² m·K; λ₁ &lt; λ₂ (krótsze/dłuższe fale)</p>zy ciele selektywnym ε(λ₁) ≠ ε(λ₂)</h3>
 <p>Gdy obiekt nie jest szary, stosunek zawiera dodatkowy czynnik emisyjności:</p>
 <div class="fml-math">$$\frac{S_1}{S_2} = \frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}\cdot f(T)$$</div>
-<p>Procesor ignoruje ten czynnik i wyznacza błędne T<sub>ratio</sub>. Błąd:</p>
-<div class="fml-math">$$\Delta T_{\mathrm{ratio}} pprox \frac{T^2}{c_2\!\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}
-ight)}\cdot\ln\!\frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}$$</div>
+<p><p>Procesor ignoruje ten czynnik i wyznacza błędne T<sub>ratio</sub>. Błąd:</p>
+<div class="fml-math">$$\Delta T_{\mathrm{ratio}} \approx \frac{T^2}{c_2\!\left(\dfrac{1}{\lambda_2}-\dfrac{1}{\lambda_1}\right)}\cdot\ln\!\frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}$$</div></div>
 
 <div class="info-box"><b>Eksperyment — Al₂O₃ (model wielomianowy):</b> wybierz parę Si 0.65 / InGaAs 1.0 µm.
 Przy Al₂O₃ (a₁ &gt; 0) ε(0.65 µm) ≈ 0.28 i ε(1.0 µm) ≈ 0.50 → ε₁/ε₂ ≈ 0.56. Procesor ratio
@@ -2088,7 +2082,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.4.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.4.2</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>

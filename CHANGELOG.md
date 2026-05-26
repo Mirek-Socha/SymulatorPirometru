@@ -5,6 +5,17 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.4.2] — 2026-05-26 ✅ bieżąca
+
+### Poprawiono — KaTeX sekcja 8 (formuły Wiena i ΔT_ratio)
+- **T_ratio ≈ wzór** — `\x07pprox` (BEL+pprox ze zdegenerowanego `\approx`)
+  zastąpione poprawnym `\approx`
+- **\right** — `\night` (carriage-return+ight ze zdegenerowanego `\right`)
+  zastąpione poprawnym `\right`
+- Oba bloki przepisane bezpiecznie — wzory renderują się poprawnie w KaTeX
+
+---
+
 ## [v2.4.1] — 2026-05-26 ✅ bieżąca
 
 ### Poprawiono — pirometria dwubarwna (bugfix po v2.4.0)

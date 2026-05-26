@@ -155,7 +155,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v2.4.1** |
+| `main` | 🇵🇱 Polski | **v2.4.2** |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en *(wymaga aktualizacji)* |
 
 ---
@@ -164,7 +164,8 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.4.1** | Bugfix: computeRatio(), R₂(λ) normalizacja, KaTeX Polish chars |
+| **v2.4.2** | Fix KaTeX sekcja 8: \approx i \right zdegenerowane escape |
+| v2.4.1 | Bugfix: computeRatio(), R₂(λ) normalizacja, KaTeX Polish chars |
 | v2.4.0 | Pirometria dwubarwna: S₁/S₂, T_ratio, ΔT_ratio, 3 pary przemysłowe, sekcja 8 doc |
 | v2.3.1 | ε(λ) w tooltipie, numer wersji w nagłówku |
 | v2.3.0 | Model wielomianowy ε(λ) z TPRC: 8 materiałów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃) |
