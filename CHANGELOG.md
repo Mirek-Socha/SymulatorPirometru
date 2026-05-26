@@ -5,6 +5,14 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.4.3] — 2026-05-26 ✅ bieżąca
+
+### Poprawiono
+- **KaTeX blok Wien S₁/S₂** — `\\approx` (podwójny backslash) i `\night` (CR+ight)
+  w formule `S₁/S₂ ≈ f(λ₁,λ₂,T)`; teraz renderuje poprawnie
+
+---
+
 ## [v2.4.2] — 2026-05-26 ✅ bieżąca
 
 ### Poprawiono — KaTeX sekcja 8 (formuły Wiena i ΔT_ratio)
