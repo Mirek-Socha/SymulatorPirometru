@@ -832,7 +832,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.4.1</span>
+    <span class="hdr-ver">v2.6.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -2080,7 +2080,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.4.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.6.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2267,7 +2267,7 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
   const u = lam_m * 1e6; // µm
 
   // Pobierz aktywne środowisko (lub override)
-  const env = env_override || ENVS[currentEnv] || ENVS.earth;
+  const env = env_override || ENVS[appState.env] || ENVS.earth;
   const P   = env.P_atm;   // ciśnienie [atm] — skaluje Beer-Lambert
 
   let tau = 1.0;
@@ -2301,7 +2301,7 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
   // ── H2O ───────────────────────────────────────────────────────
   // Dla Ziemi: używaj wartości z suwaków (parametry rh_pct, co2_ppm)
   // Dla pozostałych środowisk: używaj wartości z obiektu env (skład zdefiniowany fizycznie)
-  const isEarth = (currentEnv === 'earth' || !env_override);
+  const isEarth = (appState.env === 'earth' || !env_override);
   const eff_rh  = env.h2o_pure ? 0
                 : isEarth ? rh_pct
                 : (env.rh_pct !== undefined ? env.rh_pct : rh_pct);
@@ -2407,8 +2407,6 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
         Arnold, Appl. Opt. 23 (1984)
 ──────────────────────────────────────────────────────────────────── */
 
-let currentEpsModel = 'grey';  // 'grey' | 'hr' | 'poly'
-let ratioMode = false;          // false = jednobarwny, true = dwubarwny
 
 /* Materiały do modelu Hagena-Rubensa
    ρ₀ [µΩ·cm] @ 20°C, α [1/K], ε_const — dla porównania
@@ -2431,7 +2429,6 @@ const HR_MATERIALS = {
   custom: {label:'Własna (rho₀ i α ręcznie)',short:'custom',
            rho0:10.0, alpha:5.0e-3, note:'Wpisz parametry ρ₀ i α ręcznie'}
 };
-let hrMaterialKey = 'fe';
 
 /* Oporność w temperaturze T [K] → ρ [µΩ·cm] */
 function rhoT(mat, T_K){
@@ -2468,7 +2465,6 @@ function hagenRubens(lam_um, rho_uOhm_cm){
    Wyniki są dopasowaniami wielomianowymi do danych tabelarycznych;
    każdy preset podaje zakres λ i T dla którego dopasowanie jest ważne. */
 
-let currentPolyMat = 'w';
 
 const POLY_MATERIALS = {
   w: {
@@ -2560,13 +2556,13 @@ function polyEmissivity(lam_um, mat){
 /* Główna funkcja emisyjności: zwraca ε dla λ [m], T [K], state */
 function epsSpectral(lam_m, T_K, p){
   const lam_um = lam_m * 1e6;
-  if(currentEpsModel === 'grey') return p.eps_real;
-  if(currentEpsModel === 'hr'){
-    const mat = HR_MATERIALS[hrMaterialKey] || HR_MATERIALS.fe;
+  if(appState.epsModel === 'grey') return p.eps_real;
+  if(appState.epsModel === 'hr'){
+    const mat = HR_MATERIALS[appState.hrMat] || HR_MATERIALS.fe;
     return hagenRubens(lam_um, rhoT(mat, T_K));
   }
-  if(currentEpsModel === 'poly'){
-    const mat = POLY_MATERIALS[currentPolyMat] || POLY_MATERIALS.w;
+  if(appState.epsModel === 'poly'){
+    const mat = POLY_MATERIALS[appState.polyMat] || POLY_MATERIALS.w;
     return polyEmissivity(lam_um, mat);
   }
   return p.eps_real;
@@ -2652,7 +2648,6 @@ const ENVS = {
   },
 };
 
-let currentEnv = 'earth';  // aktywne środowisko
 
 const WINDOWS = {
   none:        {label:'Brak przesłony',              desc:'τ = 1',                       color:'#555',    d_ref:5,  defaultThick:5,  tau_fresnel:1.000},
@@ -2775,9 +2770,9 @@ function invertTemp(target, det, eps_a){
 
 function compute(p){
   const Tobj_K = p.Tobj;
-  const env     = ENVS[currentEnv] || ENVS.earth;
+  const env     = ENVS[appState.env] || ENVS.earth;
   // T_atm: środowisko ustawia domyślną, ale suwak Mirka może override
-  const Tatm_K  = (currentEnv !== 'earth' && p.Tatm === (env.T_atm))
+  const Tatm_K  = (appState.env !== 'earth' && p.Tatm === (env.T_atm))
                    ? env.T_atm + 273.15
                    : p.Tatm + 273.15;
   const Twin_K = (p.windowTemp ?? 25) + 273.15;   // temperatura przesłony
@@ -2866,7 +2861,6 @@ function compute(p){
 ──────────────────────────────────────────────────────────────────── */
 
 // Aktywna para detektorów
-let ratioDet2Key = 'band_100';   // domyślna λ₂
 
 // Para wstępnie zdefiniowanych par detektorów (λ₁=aktywny det., λ₂=poniżej)
 const RATIO_PAIRS = [
@@ -2917,12 +2911,12 @@ function invertTempRatio(ratio_meas, det1, det2, p, env, Tatm_K, Twin_K, thick){
 /* Rozszerzone compute() z wynikami ratio */
 function computeRatio(p){
   const base = compute(p);   // standardowy wynik jednobarwny
-  const det2 = DETS[ratioDet2Key];
+  const det2 = DETS[appState.det2Key];
   if(!det2) return {...base, ratio:null};
 
-  const env    = ENVS[currentEnv] || ENVS.earth;
+  const env    = ENVS[appState.env] || ENVS.earth;
   const Tobj_K = p.Tobj;
-  const Tatm_K = (currentEnv!=='earth'&&p.Tatm===env.T_atm)
+  const Tatm_K = (appState.env!=='earth'&&p.Tatm===env.T_atm)
                   ? env.T_atm+273.15 : p.Tatm+273.15;
   const Twin_K = (p.windowTemp??25)+273.15;
   const thick  = p.windowThick??(WINDOWS[p.windowKey]?.defaultThick??5);
@@ -2949,7 +2943,7 @@ function computeRatio(p){
   return {
     ...base,
     ratio:{
-      det2, det2Key: ratioDet2Key,
+      det2, det2Key: appState.det2Key,
       sig1, sig2, ratio_meas,
       T_ratio_K, T_ratio_C: T_ratio_K != null ? T_ratio_K-273.15 : null,
       dT_ratio,
@@ -3100,7 +3094,7 @@ function drawSpec(res, p){
   const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
 
   // ── X mapping: log or linear ─────────────
-  const lx = logScale
+  const lx = appState.logScale
     ? u => pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
     : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
 
@@ -3124,7 +3118,7 @@ function drawSpec(res, p){
 
   // x-grid: log or linear ticks
   ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
-  const xTicksMu = logScale
+  const xTicksMu = appState.logScale
     ? [0.2, 0.4, 0.7, 1, 2, 3, 5, 8, 12]
     : [1, 2, 3, 4, 5, 6, 8, 10, 12, 14];
   xTicksMu.forEach(v=>{
@@ -3146,7 +3140,7 @@ function drawSpec(res, p){
   // x-axis µm labels
   ctx.fillStyle=tv('--muted'); ctx.font='10px IBM Plex Mono,monospace';
   ctx.textAlign='center';
-  const xLblsMu = logScale
+  const xLblsMu = appState.logScale
     ? [[0.2,'0.2'],[0.4,'0.4'],[1,'1'],[2,'2'],[3,'3'],[5,'5'],[8,'8'],[12,'12 µm']]
     : [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[12,'12'],[14,'14 µm']];
   xLblsMu.forEach(([v,l])=>{
@@ -3181,7 +3175,7 @@ function drawSpec(res, p){
     const ryEps = e => pT + Rzone*(1 - Math.min(e, 1));   // ε ∈ [0,1] → pełna strefa Rzone
 
     // ── ε(λ) w górnej strefie — model Hagena-Rubensa ────────────────
-    if(res.Eps && (currentEpsModel === 'hr' || currentEpsModel === 'poly')){
+    if(res.Eps && (appState.epsModel === 'hr' || appState.epsModel === 'poly')){
       ctx.save();
       ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
       ctx.strokeStyle = tv('--amber');
@@ -3204,14 +3198,14 @@ function drawSpec(res, p){
       // etykieta ε(λ)
       ctx.fillStyle = tv('--amber'); ctx.globalAlpha = 0.85;
       ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
-      const epsLbl = currentEpsModel==='poly'
-        ? `ε(λ) ${(POLY_MATERIALS[currentPolyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`
+      const epsLbl = appState.epsModel==='poly'
+        ? `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`
         : 'ε(λ) H-R';
       ctx.fillText(epsLbl, pL + 4, pT + 10); ctx.globalAlpha = 1;
     }
 
     // ── R₂(λ) — drugi detektor (ratio mode) — zielona przerywana ────────────
-    if(ratioMode && res.ratio && res.ratio.R2){
+    if(appState.ratioMode && res.ratio && res.ratio.R2){
       const det2Rp = res.ratio.det2 ? res.ratio.det2.Rp : 1;
       ctx.save();
       ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
@@ -3330,7 +3324,7 @@ function drawSpec(res, p){
 
   // hover crosshair — uses same lx() already defined above
   if(hoverFrac!==null){
-    const lamHov = logScale
+    const lamHov = appState.logScale
       ? lamMin * Math.pow(lamMax/lamMin, hoverFrac)
       : lamMin + (lamMax-lamMin)*hoverFrac;
     const hx = lx(lamHov);
@@ -3358,7 +3352,7 @@ function drawTau(res){
 
   const lamArr = res.lam_um;
   const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
-  const lx = logScale
+  const lx = appState.logScale
     ? u => pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
     : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
 
@@ -3371,7 +3365,7 @@ function drawTau(res){
   [0, 0.25, 0.50, 0.75, 1.0].forEach(v=>{
     const y=ly(v); ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
   });
-  const xTicksMu = logScale
+  const xTicksMu = appState.logScale
     ? [0.2,0.4,0.7,1,2,3,5,8,12]
     : [1,2,3,4,5,6,8,10,12,14];
   xTicksMu.forEach(v=>{
@@ -3391,7 +3385,7 @@ function drawTau(res){
   drawVisibleBar(ctx,lx,pL,W2,pT,H2,barY,barH);
   ctx.fillStyle=tv('--muted'); ctx.font='9px IBM Plex Mono,monospace';
   ctx.textAlign='center';
-  const xLblsMu = logScale
+  const xLblsMu = appState.logScale
     ? [[0.2,'0.2'],[0.4,'0.4'],[1,'1'],[2,'2'],[3,'3'],[5,'5'],[8,'8'],[12,'12 µm']]
     : [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[12,'12'],[14,'14 µm']];
   xLblsMu.forEach(([v,l])=>{
@@ -3582,7 +3576,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v2.2.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v2.6.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3613,7 +3607,7 @@ function printDocs(){
    EMISSIVITY MODEL SWITCHING
 ───────────────────────────────────────────── */
 function setEpsModel(model){
-  currentEpsModel = model;
+  appState.epsModel = model;
   document.querySelectorAll('.epsm-btn').forEach(b=>{
     const k = b.id.replace('epsm_','');
     if(k===model) b.classList.add('active'); else b.classList.remove('active');
@@ -3637,7 +3631,7 @@ function setEpsModel(model){
 }
 
 function onPolyMat(key){
-  currentPolyMat = key;
+  appState.polyMat = key;
   const mat = POLY_MATERIALS[key];
   if(!mat) return;
   const isCustom = (key==='custom');
@@ -3664,7 +3658,7 @@ function onPolyCoeff(){
     const el=document.getElementById('poly_'+c);
     if(el) mat[c] = parseFloat(el.value)||0;
   });
-  currentPolyMat = 'custom';
+  appState.polyMat = 'custom';
   document.getElementById('sel_poly_mat').value = 'custom';
   scheduleUpdate();
 }
@@ -3672,7 +3666,7 @@ function onPolyCoeff(){
 
 
 function onHrMat(key){
-  hrMaterialKey = key;
+  appState.hrMat = key;
   const mat = HR_MATERIALS[key];
   if(!mat) return;
   const isCustom = (key==='custom');
@@ -3706,7 +3700,7 @@ function onHrSlider(el, param){
     const vEl=document.getElementById('val_alpha_hr');
     if(vEl) vEl.textContent = (v*1000).toFixed(2)+'×10⁻³ /K';
   }
-  hrMaterialKey = 'custom';
+  appState.hrMat = 'custom';
   scheduleUpdate();
 }
 
@@ -3715,7 +3709,7 @@ function onHrSlider(el, param){
    RATIO PYROMETRY UI
 ───────────────────────────────────────────── */
 function setRatioMode(enabled){
-  ratioMode = enabled;
+  appState.ratioMode = enabled;
   const btnS=document.getElementById('proc_single');
   const btnR=document.getElementById('proc_ratio');
   if(btnS){ if(!enabled) btnS.classList.add('active'); else btnS.classList.remove('active'); }
@@ -3730,7 +3724,7 @@ function setRatioMode(enabled){
 }
 
 function onDet2Change(key){
-  ratioDet2Key = key;
+  appState.det2Key = key;
   scheduleUpdate();
 }
 
@@ -3744,7 +3738,7 @@ function loadRatioPair(idx){
   }
   // Ustaw λ₂
   if(pair.d2){
-    ratioDet2Key = pair.d2;
+    appState.det2Key = pair.d2;
     const sd2=document.getElementById('sel_det2');
     if(sd2) sd2.value=pair.d2;
   }
@@ -3757,7 +3751,7 @@ function loadRatioPair(idx){
    ENVIRONMENT SWITCHING
 ───────────────────────────────────────────── */
 function setEnv(key){
-  currentEnv = key;
+  appState.env = key;
   const env = ENVS[key] || ENVS.earth;
 
   // Aktualizuj przyciski — querySelectorAll zamiast getElementById
@@ -3928,6 +3922,21 @@ function begSetDet(key,btnId){
 /* ─────────────────────────────────────────────
    UI STATE & UPDATE
 ───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════
+   APP STATE — konfiguracja UI i modeli
+   (wcześniej 8 osobnych zmiennych globalnych)
+═══════════════════════════════════════════════ */
+const appState = {
+  env:       'earth',      // aktywne środowisko atmosferyczne
+  epsModel:  'grey',       // model emisyjności: 'grey' | 'hr' | 'poly'
+  hrMat:     'fe',         // materiał Hagen-Rubens
+  polyMat:   'w',          // materiał wielomianowy
+  det2Key:   'band_100',   // drugi detektor (tryb ratio)
+  appState.ratioMode: false,        // false = jednobarwny, true = dwubarwny
+  appState.logScale:  false,        // false = liniowa, true = logarytmiczna
+  appState.isDark:    true,         // motyw ciemny
+};
+
 const state = {
   Tobj:1473, eps_real:.70, path:2, rh:50, co2:400, Tatm:20,
   detKey:'band_065', eps_assumed:.70, windowKey:'none',
@@ -3936,15 +3945,14 @@ const state = {
 
 let lastResult = null;
 let rafId = null;
-let logScale = false;   // false = linear (default matches "kształt z podręcznika")
 
 function setScale(mode){
-  logScale = (mode==='log');
+  appState.logScale = (mode==='log');
   // explicit add/remove zamiast toggle(force) — Safari fix
   const btnLog=document.getElementById('btnLog');
   const btnLin=document.getElementById('btnLin');
-  if(btnLog){ if(logScale) btnLog.classList.add('active'); else btnLog.classList.remove('active'); }
-  if(btnLin){ if(!logScale) btnLin.classList.add('active'); else btnLin.classList.remove('active'); }
+  if(btnLog){ if(appState.logScale) btnLog.classList.add('active'); else btnLog.classList.remove('active'); }
+  if(btnLin){ if(!appState.logScale) btnLin.classList.add('active'); else btnLin.classList.remove('active'); }
   scheduleUpdate();
 }
 
@@ -3956,7 +3964,7 @@ function scheduleUpdate(){
 function doUpdate(){
   setupCanvas();
   const p = {...state};
-  const res = ratioMode ? computeRatio(p) : compute(p);
+  const res = appState.ratioMode ? computeRatio(p) : compute(p);
   lastResult = res;
   drawSpec(res, p);
   drawTau(res);
@@ -4042,7 +4050,7 @@ function updateResults(res, p){
   document.getElementById('r_wien').textContent=res.wien_um.toFixed(3)+' µm';
 
   // ── WYNIKI DWUBARWNE ────────────────────────────────────────────
-  if(ratioMode && res.ratio){
+  if(appState.ratioMode && res.ratio){
     const rt = res.ratio;
     const r_rv = document.getElementById('r_ratio_val');
     const r_Tr = document.getElementById('r_Tratio');
@@ -4265,14 +4273,13 @@ function loadPreset(name){
 /* ─────────────────────────────────────────────
    THEME TOGGLE
 ───────────────────────────────────────────── */
-let isDark = true;
 function toggleTheme(){
-  isDark = !isDark;
-  document.body.classList.toggle('theme-dark', isDark);
-  document.body.classList.toggle('theme-light', !isDark);
+  appState.isDark = !appState.isDark;
+  document.body.classList.toggle('theme-dark', appState.isDark);
+  document.body.classList.toggle('theme-light', !appState.isDark);
   // Safari/iPadOS: zaktualizuj color-scheme na :root
-  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
-  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  document.documentElement.style.colorScheme = appState.isDark ? 'dark' : 'light';
+  document.getElementById('themeBtn').textContent = appState.isDark ? '🌙' : '☀️';
   scheduleUpdate();
 }
 
@@ -4304,7 +4311,7 @@ specCanvas.addEventListener('mousemove', e=>{
   const res=lastResult; if(!res) return;
   // Convert screen fraction → wavelength via current scale
   const lamMin=res.lam_um[0], lamMax=res.lam_um[res.lam_um.length-1];
-  const lamHov = logScale
+  const lamHov = appState.logScale
     ? lamMin * Math.pow(lamMax/lamMin, frac)
     : lamMin + (lamMax-lamMin)*frac;
   const idx=Math.min(Math.round((lamHov-lamMin)/(lamMax-lamMin)*N), N);
@@ -4320,9 +4327,9 @@ specCanvas.addEventListener('mousemove', e=>{
     ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(4)}</span></div>`
     : '';
   const epsVal  = res.Eps ? res.Eps[idx] : state.eps_real;
-  const epsLabel = currentEpsModel==='grey'  ? 'ε (szara)'
-                 : currentEpsModel==='hr'    ? 'ε(λ) H-R'
-                 : `ε(λ) ${(POLY_MATERIALS[currentPolyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
+  const epsLabel = appState.epsModel==='grey'  ? 'ε (szara)'
+                 : appState.epsModel==='hr'    ? 'ε(λ) H-R'
+                 : `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
   tt.innerHTML=`
     <div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
     <div class="tt-r"><span class="tt-l">L<sub>bb</sub> CDC:</span><span>${pct(res.Lbb[idx])}</span></div>

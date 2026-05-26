@@ -5,6 +5,43 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.6.0] — 2026-05-27 ✅ bieżąca
+
+### Zmieniono — Refactoring Faza 2: State Management
+
+Zgrupowanie 8 rozproszonych zmiennych globalnych w jeden obiekt `appState`:
+
+```
+// PRZED (8 osobnych let):
+let currentEnv      = 'earth';
+let currentEpsModel = 'grey';
+let hrMaterialKey   = 'fe';
+let currentPolyMat  = 'w';
+let ratioDet2Key    = 'band_100';
+let ratioMode       = false;
+let logScale        = false;
+let isDark          = true;
+
+// PO (jeden obiekt):
+const appState = {
+  env:       'earth',
+  epsModel:  'grey',
+  hrMat:     'fe',
+  polyMat:   'w',
+  det2Key:   'band_100',
+  ratioMode: false,
+  logScale:  false,
+  isDark:    true,
+};
+```
+
+Zamieniono 52 referencje w kodzie (np. `currentEnv` → `appState.env`).  
+Zostawiono jako osobne: `expertMode`, `hoverFrac`, `lastResult`, `rafId` (zmienne runtime/wewnętrzne).
+
+Brak zmian funkcjonalnych — logika aplikacji bez zmian.
+
+
+
 ## [v2.5.0] — 2026-05-27 ✅ bieżąca
 
 ### Zmieniono — Refactoring Faza 1: konsolidacja kodu
