@@ -5,6 +5,39 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.4.0] — 2026-05-26 ✅ bieżąca
+
+### Dodano — pirometria dwubarwna (stosunkowa)
+
+**Nowy tryb procesora:** panel „⚙ Tryb procesora" z przełącznikiem
+Jednobarwny / Dwubarwny (Ratio Pyrometry), dostępny w Trybie Eksperta.
+
+#### Fizyka
+- Mierzy stosunek S(λ₁)/S(λ₂) — eliminuje ε dla ciała szarego
+- Inwersja: bisekcja 80 iter. na stosunku sygnałów (zakres 1–15000 K)
+- Pełny sygnał S₁ i S₂ wyliczane przez kompletny tor (τ_atm, τ_win, ε(λ,T))
+- Procesor ratio zakłada τ=1, ε=1 do inwersji (ε skraca się przy szarym)
+- ΔT_ratio pokazuje błąd gdy ε(λ₁) ≠ ε(λ₂) — ciało selektywne
+
+#### UI
+- Selektor λ₂ (drugi detektor) niezależny od λ₁
+- 3 przyciski typowych par przemysłowych (Si/InGaAs, InGaAs 1.0/1.6, InSb/window)
+- Blok wyników: S₁/S₂, T_ratio [K/°C], ΔT_ratio [K], ε(λ₁)/ε(λ₂)
+- Krzywa R₂(λ) na wykresie widmowym — zielona przerywana
+- Legenda: wpis R₂(λ) det.2
+- Schemat blokowy: blok Procesor pokazuje tryb i nazwę λ₂
+
+#### Dokumentacja (sekcja 8 — nowa, sekcje 8–11 → 9–12)
+- Zasada fizyczna: całki S₁, S₂ i ich stosunek
+- Przybliżenie Wiena dla wąskopasmowych detektorów (wzór analityczny)
+- Błąd przy ciele selektywnym: wzór ΔT_ratio = f(ε₁/ε₂)
+- Tabela 4 typowych par przemysłowych z zakresami T i zastosowaniami
+- Warunki stosowalności i ograniczenia (lista + warn-box)
+- Info-box: eksperyment z Al₂O₃ (model wielomianowy) vs grafit
+- Spis treści zaktualizowany (12 sekcji)
+
+---
+
 ## [v2.3.1] — 2026-05-25 ✅ bieżąca
 
 ### Poprawiono

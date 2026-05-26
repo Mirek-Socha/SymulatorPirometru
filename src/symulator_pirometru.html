@@ -831,7 +831,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.3.1</span>
+    <span class="hdr-ver">v2.4.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1243,6 +1243,43 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       </div>
     </div><!-- /ctrl-panel przesłona -->
 
+    <!-- TRYB PROCESORA — tylko Expert -->
+    <div class="ctrl-panel xo" id="ratioProcPanel">
+      <div class="panel-hdr am">⚙ Tryb procesora</div>
+      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr">
+        <button class="epsm-btn active" id="proc_single" onclick="setRatioMode(false)">
+          <span class="epsm-ico">·</span> Jednobarwny<small>λ₁ → T_ind</small>
+        </button>
+        <button class="epsm-btn" id="proc_ratio" onclick="setRatioMode(true)">
+          <span class="epsm-ico">÷</span> Dwubarwny<small>S(λ₁)/S(λ₂) → T</small>
+        </button>
+      </div>
+      <div id="ratio_params" style="display:none;margin-top:8px">
+        <div class="sel-lbl">Drugi detektor λ₂</div>
+        <select id="sel_det2" onchange="onDet2Change(this.value)">
+          <option value="band_065">0.65 µm – Si</option>
+          <option value="band_100" selected>1.0 µm – InGaAs</option>
+          <option value="band_160">1.6 µm – InGaAs</option>
+          <option value="band_390">3.9 µm – InSb</option>
+          <option value="window_35">3–5 µm – InSb</option>
+          <option value="window_814">8–14 µm – MCT</option>
+          <option value="total">1–18 µm – termostos</option>
+        </select>
+        <div class="sel-lbl" style="margin-top:6px">Typowe pary przemysłowe</div>
+        <div class="ratio-pairs">
+          <button class="ratio-pair-btn" onclick="loadRatioPair(0)">Si 0.65 / InGaAs 1.0</button>
+          <button class="ratio-pair-btn" onclick="loadRatioPair(1)">InGaAs 1.0 / 1.6</button>
+          <button class="ratio-pair-btn" onclick="loadRatioPair(2)">InSb 3.9 / 3–5 µm</button>
+        </div>
+        <div class="env-note" id="ratio_note" style="margin-top:6px">
+          Stosunek S(λ₁)/S(λ₂) eliminuje ε dla ciała szarego. Przy ε(λ₁) ≠ ε(λ₂) — błąd T_ratio.
+        </div>
+        <div class="env-note" style="margin-top:3px;border-left-color:var(--amber)">
+          ⚠ λ₁ = aktywny detektor (panel poniżej). Zadbaj o λ₁ ≠ λ₂.
+        </div>
+      </div>
+    </div>
+
     <!-- DETEKTOR -->
     <div class="ctrl-panel">
       <div class="panel-hdr cy">🔬 Detektor / pirometr</div>
@@ -1361,6 +1398,22 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <tr><td class="en">Sygnał S</td><td class="ev" id="r_sig" style="color:var(--pale);font-size:.62rem">—</td></tr>
       </table>
     </div>
+
+    <!-- WYNIKI DWUBARWNE -->
+    <div class="rb xo" id="rb_ratio" style="display:none;border-color:var(--violet)">
+      <div class="rb-hdr" style="color:var(--violet)">÷ Pirometria dwubarwna</div>
+      <table class="err-tbl">
+        <tr><td class="en">S(λ₁)/S(λ₂)</td><td class="ev" id="r_ratio_val" style="color:var(--violet)">—</td></tr>
+        <tr><td class="en">T<sub>ratio</sub></td><td class="ev" id="r_Tratio" style="color:var(--violet)">—</td></tr>
+        <tr><td class="en">ΔT<sub>ratio</sub></td><td class="ev" id="r_dT_ratio">—</td></tr>
+        <tr><td class="en">ε(λ₁)/ε(λ₂)</td><td class="ev" id="r_eps_ratio" style="color:var(--amber)">—</td></tr>
+      </table>
+      <div style="font-size:.65rem;color:var(--muted);margin-top:5px;display:flex;justify-content:space-between">
+        <span>λ₁: <span id="r_lam1_lbl">—</span></span>
+        <span>λ₂: <span id="r_lam2_lbl">—</span></span>
+      </div>
+    </div>
+
     </div><!-- /expert results -->
 
   </div>
@@ -1394,13 +1447,15 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <span class="toc-sub">Fresnel · Beer-Lambert · emisja własna · tabela materiałów</span></li>
     <li><a href="#doc-s7">Modele detektora R(λ)</a>
       <span class="toc-sub">Gauss · prostokąt · szerokopasmowy</span></li>
-    <li><a href="#doc-s8">Całkowanie sygnału i inwersja T</a>
+    <li><a href="#doc-s8">Pirometria dwubarwna</a>
+      <span class="toc-sub">Stosunek S₁/S₂ · eliminacja ε · błąd selektywny · pary detektorów</span></li>
+    <li><a href="#doc-s9">Całkowanie sygnału i inwersja T</a>
       <span class="toc-sub">Bisekcja 72 iter. · dekompozycja błędów</span></li>
-    <li><a href="#doc-s9">Słownik symboli</a>
+    <li><a href="#doc-s10">Słownik symboli</a>
       <span class="toc-sub">L_bb, ε, τ, R, S, T_ind, c₂, σ …</span></li>
-    <li><a href="#doc-s10">Informacje o aplikacji</a>
+    <li><a href="#doc-s11">Informacje o aplikacji</a>
       <span class="toc-sub">Autor · wersja · repozytorium · CDN</span></li>
-    <li><a href="#doc-s11">Literatura i źródła</a>
+    <li><a href="#doc-s12">Literatura i źródła</a>
       <span class="toc-sub">15 pozycji [1–10 DOI, 11–15 online]</span></li>
   </ol>
 </div>
@@ -1873,9 +1928,76 @@ pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb
 <div class="warn-box">Pirometr całkujący: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{zal}}\,\sigma}\right)^{1/4}\). Błąd emisyjności proporcjonalny do \(T^4\) — bardzo wrażliwy!</div>
 </div>
 
-<!-- ──── 8. CAŁKOWANIE ──────────────────────── -->
+
+<!-- ──── 8. PIROMETRIA DWUBARWNA ────────────────────────── -->
+<div class="doc-sec" id="doc-s8">
+<h2>8. Pirometria dwubarwna (stosunkowa)</h2>
+
+<p>Pirometr jednobarwny wymaga znajomości emisyjności ε — nieznanej dla wielu materiałów
+w warunkach przemysłowych. Pirometria dwubarwna (ang. <i>ratio pyrometry</i>) mierzy
+<b>stosunek sygnałów</b> przy dwóch długościach fali, eliminując ε dla ciała szarego.</p>
+
+<h3>Zasada fizyczna</h3>
+<p>Sygnały przy λ₁ i λ₂ (uproszczone — bez atmosfery i przesłony) <span class="cite">[5,8]</span>:</p>
+<div class="fml-math">$$S_1 = \int R_1(\lambda)\cdotarepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$
+$$S_2 = \int R_2(\lambda)\cdotarepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$</div>
+
+<p>Dla <b>ciała szarego</b> ε(λ) = const → ε wyskakuje z całek i skraca się w stosunku:</p>
+<div class="fml-math">$$rac{S_1}{S_2} = rac{\int R_1(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda}{\int R_2(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda} = f(T) \quad 	ext{(niezależne od } arepsilon	ext{!)}$$</div>
+
+<p>Inwersja: znajdź T<sub>ratio</sub> takie że powyższy stosunek (przy ε=1) równa się zmierzonemu S₁/S₂. Algorytm: bisekcja 80 iteracji.</p>
+
+<h3>Przybliżenie Wiena (wąskopasmowe detektory)</h3>
+<p>Dla pirometrów pasmowych (Gauss) i spełnieniu warunku Wiena (hc/λk_BT ≫ 1):</p>
+<div class="fml-math">$$rac{S_1}{S_2} pprox rac{R_{\mathrm{p1}}}{R_{\mathrm{p2}}}\cdot\left(rac{\lambda_2}{\lambda_1}
+ight)^5 \cdot \exp\!\left[rac{c_2}{T}\left(rac{1}{\lambda_2}-rac{1}{\lambda_1}
+ight)
+ight]$$</div>
+<p>Inwersja analityczna (szacunkowa):</p>
+<div class="fml-math">$$T_{\mathrm{ratio}} pprox rac{c_2\!\left(rac{1}{\lambda_2}-rac{1}{\lambda_1}
+ight)}{\ln\!\left(rac{S_1}{S_2}\cdotrac{R_{\mathrm{p2}}}{R_{\mathrm{p1}}}
+ight) + 5\ln\!\left(rac{\lambda_2}{\lambda_1}
+ight)}$$</div>
+<p style="font-size:.75rem;color:var(--muted)">c₂ = 1.43878×10⁻² m·K; λ₁ &lt; λ₂ (krótsze/dłuższe fale)</p>
+
+<h3>Błąd przy ciele selektywnym ε(λ₁) ≠ ε(λ₂)</h3>
+<p>Gdy obiekt nie jest szary, stosunek zawiera dodatkowy czynnik emisyjności:</p>
+<div class="fml-math">$$rac{S_1}{S_2} = rac{arepsilon(\lambda_1)}{arepsilon(\lambda_2)}\cdot f(T)$$</div>
+<p>Procesor ignoruje ten czynnik i wyznacza błędne T<sub>ratio</sub>. Błąd:</p>
+<div class="fml-math">$$\Delta T_{\mathrm{ratio}} pprox rac{T^2}{c_2\!\left(rac{1}{\lambda_2}-rac{1}{\lambda_1}
+ight)}\cdot\ln\!rac{arepsilon(\lambda_1)}{arepsilon(\lambda_2)}$$</div>
+
+<div class="info-box"><b>Eksperyment — Al₂O₃ (model wielomianowy):</b> wybierz parę Si 0.65 / InGaAs 1.0 µm.
+Przy Al₂O₃ (a₁ &gt; 0) ε(0.65 µm) ≈ 0.28 i ε(1.0 µm) ≈ 0.50 → ε₁/ε₂ ≈ 0.56. Procesor ratio
+„widzi" za mały stosunek i zaniża T<sub>ratio</sub>. Dla grafitu (prawie szary) ΔT<sub>ratio</sub> ≈ 0.</div>
+
+<h3>Typowe pary detektorów przemysłowych</h3>
+<table class="beg-eps-table">
+  <tr><th>Para λ₁ / λ₂</th><th>Zakres T</th><th>Zastosowanie</th><th>Uwagi</th></tr>
+  <tr><td>Si 0.65 µm / InGaAs 1.0 µm</td><td>800–3500°C</td><td>Metale, piece hutnicze</td><td>Duże Δλ → wysoka czułość T</td></tr>
+  <tr><td>InGaAs 1.0 / 1.6 µm</td><td>500–1500°C</td><td>Stal, nikiel, stopy</td><td>Dobra para dla modelu H-R</td></tr>
+  <tr><td>InSb 3.9 / okno 3–5 µm</td><td>400–1200°C</td><td>Piece z gazem CO₂</td><td>Omija pasmo CO₂ 4.26 µm</td></tr>
+  <tr><td>MCT 8–12 / 10–14 µm</td><td>50–400°C</td><td>Tworzywa, ceramika</td><td>Wąskie Δλ → mała czułość T</td></tr>
+</table>
+
+<h3>Warunki stosowalności i ograniczenia</h3>
+<ul style="font-size:.82rem;color:var(--pale);line-height:1.9;padding-left:1.4em">
+  <li><b>Zakłada ciało szare</b> — dla materiałów selektywnych (szkło, ceramika, tlenki) błąd może być większy niż przy jednobarwnym z poprawnym ε</li>
+  <li><b>Wymaga tych samych warunków toru</b> — atmosfera i przesłona muszą mieć identyczną τ przy obu λ; to rzadko jest spełnione (np. pasmo CO₂ przy 4.26 µm)</li>
+  <li><b>Zmniejszona czułość na T</b> gdy Δ(1/λ) małe — pary zbliżonych długości fal mają mniejszą rozdzielczość temperaturową</li>
+  <li><b>Stosunek S₁/S₂ wymaga kalibracji</b> obu kanałów — niesymetryczne dryfy wzmocnień tworzą systematyczny błąd T</li>
+</ul>
+<div class="warn-box">W symulatorze procesor ratio zakłada τ_atm = τ_win = 1 przy obu λ.
+W rzeczywistym torze pochłanianie atmosferyczne przy λ₁ ≠ pochłanianie przy λ₂,
+co wprowadza dodatkowy błąd (zwłaszcza przy pasmo CO₂ 4.26 µm w zakresie 3–5 µm).
+Pełny model toru z atmosferą i przesłoną działa poprawnie — stosunek S₁/S₂ wyliczany
+z rzeczywistych sygnałów uwzględnia τ(λ).</div>
+
+</div><!-- /doc-sec 8 -->
+
+<!-- ──── 9. CAŁKOWANIE ──────────────────────── -->
 <div class="doc-sec">
-<h2 id="doc-s8">8. Całkowanie sygnału i inwersja temperatury</h2>
+<h2 id="doc-s9">9. Całkowanie sygnału i inwersja temperatury</h2>
 
 <h3>Sygnał detektora</h3>
 <p>Całkowity sygnał elektryczny (proporcjonalny do mocy) na wyjściu detektora:</p>
@@ -1918,7 +2040,7 @@ włączanymi efektami. Wyniki: <code>dT_eps</code>, <code>dT_atm</code>, <code>d
 w obiekcie zwracanym przez <code>compute()</code>.</p>
 </div>
 
-<!-- ──── 9. SŁOWNIK ───────────────────────── -->
+<!-- ──── 10. SŁOWNIK ───────────────────────── -->
 <div class="doc-sec" id="doc-s9">
 <h2>9. Słownik symboli</h2>
 <table class="sym-tbl">
@@ -1957,16 +2079,16 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
 </table>
 </div>
 
-<!-- ──── 10. INFORMACJE ─────────────────────── -->
+<!-- ──── 11. INFORMACJE ─────────────────────── -->
 <div class="doc-sec">
-<h2 id="doc-s10">10. Informacje o aplikacji</h2>
+<h2 id="doc-s11">11. Informacje o aplikacji</h2>
 <table class="sym-tbl">
   <tr><th>Pole</th><th>Wartość</th></tr>
   <tr><td>Autor</td><td><b>Mirosław Socha</b></td></tr>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.3.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.4.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -1975,7 +2097,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
 </div>
 
 
-<!-- ──── 11. LITERATURA ─────────────────── -->
+<!-- ──── 12. LITERATURA ─────────────────── -->
 <div class="doc-sec" id="doc-s11">
 <h2>11. Literatura i źródła</h2>
 <p>Podstawy fizyczne i algorytmiczne symulatora opierają się na następujących publikacjach:</p>
@@ -2731,6 +2853,118 @@ function compute(p){
   };
 }
 
+
+/* ─────────────────────────────────────────────────────────────────
+   PIROMETRIA DWUBARWNA (STOSUNKOWA / RATIO PYROMETRY)
+   ─────────────────────────────────────────────────────────────────
+
+   Procesor liczy stosunek sygnałów przy dwóch pasmach λ₁ i λ₂.
+   Dla ciała szarego ε(λ₁) = ε(λ₂) → ε wyskakuje z mianownika:
+
+   S₁/S₂ = ∫R₁(λ)·ε(λ)·L_bb(λ,T)dλ / ∫R₂(λ)·ε(λ)·L_bb(λ,T)dλ
+
+   Szare: S₁/S₂ = f(T) niezależne od ε → T_ratio bez znajomości ε.
+   Selektywne: ε(λ₁) ≠ ε(λ₂) → błąd T_ratio ≠ T_obj.
+
+   Inwersja: bisekcja na stosunku sygnałów z τ=1, ε=1.
+
+   Ref: DeWitt & Nutter, "Theory & Practice of Radiation Thermometry"
+        (Wiley, 1988), rozdz. 5; Michalski (2001), rozdz. 4.3.
+──────────────────────────────────────────────────────────────────── */
+
+// Aktywna para detektorów
+let ratioDet2Key = 'band_100';   // domyślna λ₂
+
+// Para wstępnie zdefiniowanych par detektorów (λ₁=aktywny det., λ₂=poniżej)
+const RATIO_PAIRS = [
+  {label:'Si 0.65 µm / InGaAs 1.0 µm',  d1:'band_065', d2:'band_100',  note:'Wysokie T (>1000°C); metale w VIS/NIR'},
+  {label:'InGaAs 1.0 µm / 1.6 µm',       d1:'band_100', d2:'band_160',  note:'Średnie T (700–1500°C); stal, nikiel'},
+  {label:'InSb 3.9 µm / okno 3–5 µm',    d1:'band_390', d2:'window_35', note:'Piece gazowe; omija CO₂ 4.26 µm'},
+  {label:'MCT 8–12 µm / 10–14 µm',        d1:'window_814',d2:'window_814',note:'Niskie T; przybliżenie wąskimi filtrami'},
+  {label:'Własna para (det. + λ₂)',       d1:null,       d2:null,        note:'Wybierz λ₁ = aktywny detektor, λ₂ poniżej'},
+];
+
+/* Oblicza sygnał S dla danego detektora, pełny tor */
+function computeSignalForDet(det, p, env, Tobj_K, Tatm_K, Twin_K, thick){
+  let sig = 0;
+  for(let i=0;i<=N;i++){
+    const lam = lams[i];
+    const epsSp = epsSpectral(lam, Tobj_K, p);
+    const ta    = atmTau(lam, p.path, p.rh, p.co2, env);
+    const la    = (1-ta)*planck(lam, Tatm_K);
+    const tw    = windowTau(lam, p.windowKey, thick);
+    const lwe   = (1-tw)*planck(lam, Twin_K);
+    const ld    = tw*(ta*epsSp*planck(lam,Tobj_K)+la) + lwe;
+    sig += detResp(lam, det)*ld*DL;
+  }
+  return sig;
+}
+
+/* Inwersja stosunkowa: znajdź T takie że S₁(T)/S₂(T) = ratio_meas
+   Używa szarego ε=1 (ε wyskakuje przy szarym), pełny tor uproszczony */
+function invertTempRatio(ratio_meas, det1, det2, p, env, Tatm_K, Twin_K, thick){
+  if(ratio_meas<=0 || !isFinite(ratio_meas)) return null;
+  // Procesor ratio zakłada τ=1, ε=1 (ε skraca się)
+  const pSimple = {...p, path:0, windowKey:'none', eps_assumed:1.0};
+  let lo=1, hi=15000;
+  for(let it=0;it<80;it++){
+    const Tm=(lo+hi)/2;
+    let s1=0, s2=0;
+    for(let i=0;i<=N;i++){
+      const lam=lams[i], bb=planck(lam,Tm);
+      s1 += detResp(lam,det1)*bb*DL;
+      s2 += detResp(lam,det2)*bb*DL;
+    }
+    const r = s2>0 ? s1/s2 : 0;
+    if(r < ratio_meas) lo=Tm; else hi=Tm;
+  }
+  return (lo+hi)/2;
+}
+
+/* Rozszerzone compute() z wynikami ratio */
+function computeRatio(p){
+  const base = compute(p);   // standardowy wynik jednobarwny
+  const det2 = DETS[ratioDet2Key];
+  if(!det2) return {...base, ratio:null};
+
+  const env    = ENVS[currentEnv] || ENVS.earth;
+  const Tobj_K = p.Tobj;
+  const Tatm_K = (currentEnv!=='earth'&&p.Tatm===env.T_atm)
+                  ? env.T_atm+273.15 : p.Tatm+273.15;
+  const Twin_K = (p.windowTemp??25)+273.15;
+  const thick  = p.windowThick??(WINDOWS[p.windowKey]?.defaultThick??5);
+
+  // Sygnał λ₂ (ten sam tor, inny detektor)
+  const sig2 = computeSignalForDet(det2, p, env, Tobj_K, Tatm_K, Twin_K, thick);
+  const sig1 = base.signal;
+  const ratio_meas = sig2>0 ? sig1/sig2 : null;
+
+  // Inwersja stosunkowa
+  let T_ratio_K = null;
+  if(ratio_meas && ratio_meas>0){
+    T_ratio_K = invertTempRatio(ratio_meas, DETS[p.detKey], det2,
+                                 p, env, Tatm_K, Twin_K, thick);
+  }
+
+  // Odpowiedź przy szarym ciele (ε₁=ε₂) — tzw. korekta K
+  // K = ln(ε(λ₁)/ε(λ₂)) wbudowane w błąd T_ratio
+  const dT_ratio = T_ratio_K != null ? T_ratio_K - Tobj_K : null;
+
+  // Sygnały R(λ₂) dla wykresu
+  const R2 = lams.map(lam => detResp(lam, det2));
+
+  return {
+    ...base,
+    ratio:{
+      det2, det2Key: ratioDet2Key,
+      sig1, sig2, ratio_meas,
+      T_ratio_K, T_ratio_C: T_ratio_K != null ? T_ratio_K-273.15 : null,
+      dT_ratio,
+      R2
+    }
+  };
+}
+
 /* ─────────────────────────────────────────────
    CANVAS RENDERING (theme-aware)
 ───────────────────────────────────────────── */
@@ -2981,6 +3215,27 @@ function drawSpec(res, p){
         ? `ε(λ) ${(POLY_MATERIALS[currentPolyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`
         : 'ε(λ) H-R';
       ctx.fillText(epsLbl, pL + 4, pT + 10); ctx.globalAlpha = 1;
+    }
+
+    // ── R₂(λ) — drugi detektor (ratio mode) — zielona przerywana ────────────
+    if(ratioMode && res.ratio && res.ratio.R2){
+      ctx.save();
+      ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
+      ctx.strokeStyle = tv('--green');
+      ctx.lineWidth = 1.5; ctx.setLineDash([3,4]);
+      ctx.beginPath(); let r2mv=false;
+      for(let i=0;i<res.ratio.R2.length;i++){
+        const lxr=lx(res.lam_um[i]);
+        if(lxr<pL||lxr>pL+W2) continue;
+        const ry2=ryR(res.ratio.R2[i]/Math.max(...res.ratio.R2.filter(v=>v>0),1));
+        if(!r2mv){ctx.moveTo(lxr,ry2);r2mv=true;}
+        else ctx.lineTo(lxr,ry2);
+      }
+      ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+      // etykieta R₂
+      ctx.fillStyle=tv('--green'); ctx.globalAlpha=0.8;
+      ctx.font='bold 8px IBM Plex Mono,monospace'; ctx.textAlign='right';
+      ctx.fillText('R₂(λ)', pL+W2-2, pT+10); ctx.globalAlpha=1;
     }
 
     // ── Strefa R(λ) clipped do [pT .. pT+Rzone] ────────────────────────
@@ -3462,6 +3717,49 @@ function onHrSlider(el, param){
   scheduleUpdate();
 }
 
+
+/* ─────────────────────────────────────────────
+   RATIO PYROMETRY UI
+───────────────────────────────────────────── */
+function setRatioMode(enabled){
+  ratioMode = enabled;
+  const btnS=document.getElementById('proc_single');
+  const btnR=document.getElementById('proc_ratio');
+  if(btnS){ if(!enabled) btnS.classList.add('active'); else btnS.classList.remove('active'); }
+  if(btnR){ if(enabled)  btnR.classList.add('active'); else btnR.classList.remove('active'); }
+  const prms=document.getElementById('ratio_params');
+  if(prms) prms.style.display = enabled ? 'block' : 'none';
+  const rb=document.getElementById('rb_ratio');
+  if(rb) rb.style.display = enabled ? 'block' : 'none';
+  const legR2=document.getElementById('leg_R2');
+  if(legR2) legR2.style.display = enabled ? 'inline-flex' : 'none';
+  scheduleUpdate();
+}
+
+function onDet2Change(key){
+  ratioDet2Key = key;
+  scheduleUpdate();
+}
+
+function loadRatioPair(idx){
+  const pair = RATIO_PAIRS[idx];
+  if(!pair) return;
+  // Ustaw λ₁
+  if(pair.d1){
+    const sd=document.getElementById('sel_det');
+    if(sd){ sd.value=pair.d1; onDetChange(); }
+  }
+  // Ustaw λ₂
+  if(pair.d2){
+    ratioDet2Key = pair.d2;
+    const sd2=document.getElementById('sel_det2');
+    if(sd2) sd2.value=pair.d2;
+  }
+  const note=document.getElementById('ratio_note');
+  if(note) note.textContent = pair.note;
+  scheduleUpdate();
+}
+
 /* ─────────────────────────────────────────────
    ENVIRONMENT SWITCHING
 ───────────────────────────────────────────── */
@@ -3749,6 +4047,47 @@ function updateResults(res, p){
   document.getElementById('e_tot').textContent=fmt(dT); document.getElementById('e_tot').className=cls(dT);
   document.getElementById('r_tau').textContent=res.tau_avg.toFixed(3);
   document.getElementById('r_wien').textContent=res.wien_um.toFixed(3)+' µm';
+
+  // ── WYNIKI DWUBARWNE ────────────────────────────────────────────
+  if(ratioMode && res.ratio){
+    const rt = res.ratio;
+    const r_rv = document.getElementById('r_ratio_val');
+    const r_Tr = document.getElementById('r_Tratio');
+    const r_dT = document.getElementById('r_dT_ratio');
+    const r_er = document.getElementById('r_eps_ratio');
+    const r_l1 = document.getElementById('r_lam1_lbl');
+    const r_l2 = document.getElementById('r_lam2_lbl');
+
+    if(r_l1) r_l1.textContent = res.det ? res.det.label : '—';
+    if(r_l2) r_l2.textContent = rt.det2 ? rt.det2.label : '—';
+
+    if(rt.ratio_meas!=null && r_rv)
+      r_rv.textContent = rt.ratio_meas.toFixed(4);
+
+    if(rt.T_ratio_C!=null){
+      if(r_Tr) r_Tr.textContent = `${rt.T_ratio_K.toFixed(1)} K (${rt.T_ratio_C.toFixed(1)} °C)`;
+      if(r_dT){
+        const dtr = rt.dT_ratio;
+        r_dT.textContent = `${dtr>=0?'+':''}${dtr.toFixed(1)} K`;
+        r_dT.style.color = Math.abs(dtr)<5 ? 'var(--green)'
+                         : Math.abs(dtr)<30 ? 'var(--amber)' : 'var(--red)';
+      }
+    }
+
+    // ε(λ₁)/ε(λ₂) — stosunek emisyjności w centrach obu detektorów
+    if(r_er && res.det && rt.det2){
+      const lam1 = res.det.lc  * 1e-6;
+      const lam2 = rt.det2.lc * 1e-6;
+      const e1 = epsSpectral(lam1, state.Tobj, state);
+      const e2 = epsSpectral(lam2, state.Tobj, state);
+      const ratio_eps = e2>0 ? e1/e2 : null;
+      if(ratio_eps!=null){
+        r_er.textContent = ratio_eps.toFixed(4);
+        r_er.style.color = Math.abs(ratio_eps-1)<0.02 ? 'var(--green)' : 'var(--amber)';
+      }
+    }
+  }
+
   document.getElementById('r_sig').textContent=res.signal.toExponential(3);
 }
 

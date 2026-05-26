@@ -35,6 +35,7 @@ Pełny model fizyczny — wszystkie parametry toru:
 - Przesłona optyczna: 6 materiałów, grubość d (Beer-Lambert), temperatura (emisja własna)
 - 7 typów detektorów z krzywą R(λ) na wykresie widmowym
 - Dwa wykresy: widmo promieniowania + transmitancja τ(λ)
+- **Tryb procesora**: Jednobarwny / Dwubarwny (ratio S₁/S₂ → T_ratio)
 - Budżet błędów 3-składowy: ΔT_ε + ΔT_atm + ΔT_win
 - Dokumentacja: 11 sekcji z wzorami KaTeX + bibliografia 15 pozycji
 - Spis treści z linkami kotwicowymi + przycisk „Otwórz w nowym oknie" + „Drukuj / PDF"
@@ -154,7 +155,7 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v2.3.1** |
+| `main` | 🇵🇱 Polski | **v2.4.0** |
 | `en/english-translation` | 🇬🇧 English | v2.0.0-en *(wymaga aktualizacji)* |
 
 ---
@@ -163,7 +164,8 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.3.1** | ε(λ) w tooltipie, numer wersji w nagłówku |
+| **v2.4.0** | Pirometria dwubarwna: S₁/S₂, T_ratio, ΔT_ratio, 3 pary przemysłowe, sekcja 8 doc |
+| v2.3.1 | ε(λ) w tooltipie, numer wersji w nagłówku |
 | v2.3.0 | Model wielomianowy ε(λ) z TPRC: 8 materiałów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃) |
 | v2.2.3 | Równanie toru wieloliniowe (KaTeX aligned), fix overflow przy druku PDF |
 | v2.2.2 | Aktualizacja dokumentacji: tor z τ_win, budżet 3-składowy, słownik 26 poz. |
