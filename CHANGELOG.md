@@ -5,6 +5,22 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.4.1] — 2026-05-26 ✅ bieżąca
+
+### Poprawiono — pirometria dwubarwna (bugfix po v2.4.0)
+- **Puste wyniki T_ratio/ΔT_ratio** — `compute(p)` zamiast `computeRatio(p)`
+  w głównej pętli update; `res.ratio` nigdy nie istniało → pole wyników puste.
+  Naprawka: `ratioMode ? computeRatio(p) : compute(p)`
+- **R₂(λ) niewidoczna na wykresie** — normalizacja `Math.max(...R2.filter())`
+  dawała inne skalowanie niż R₁; zamieniono na `R/det2.Rp` → jednolita skala [0,1]
+- **KaTeX `unicodeTextInMathMode`** — polskie znaki w formułach sekcji 8
+  (`niezależne`, `arepsilon` z uszkodzonymi `\x0b`/`\x0c` z heredoc)
+  → zamienione na ASCII + poprawne sekwencje LaTeX
+- **`ratioMode is not defined`** — deklaracja `let ratioMode = false`
+  zniknęła przy zamianie wersją przez `sed`; przywrócona
+
+---
+
 ## [v2.4.0] — 2026-05-26 ✅ bieżąca
 
 ### Dodano — pirometria dwubarwna (stosunkowa)

@@ -831,7 +831,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.4.0</span>
+    <span class="hdr-ver">v2.4.1</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1603,9 +1603,9 @@ fizycznych <span class="cite">[5,8]</span>:</p>
 
 <div class="fml-math">$$\begin{aligned}
 L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[
-  &\underbrace{\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon(\lambda,T)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{promieniowanie obiektu tłumione atmosferą}} \\
-  &+ \underbrace{[1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja własna atmosfery}}\Bigr] \\
-  &+ \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja własna przesłony}}
+  &\underbrace{\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon(\lambda,T)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{obiekt + atmosfera}} \\
+  &+ \underbrace{[1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja atm.}}\Bigr] \\
+  &+ \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja przes.}}
 \end{aligned}$$</div>
 
 <p style="font-size:.75rem;color:var(--muted);margin-top:2px">
@@ -1939,33 +1939,33 @@ w warunkach przemysłowych. Pirometria dwubarwna (ang. <i>ratio pyrometry</i>) m
 
 <h3>Zasada fizyczna</h3>
 <p>Sygnały przy λ₁ i λ₂ (uproszczone — bez atmosfery i przesłony) <span class="cite">[5,8]</span>:</p>
-<div class="fml-math">$$S_1 = \int R_1(\lambda)\cdotarepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$
-$$S_2 = \int R_2(\lambda)\cdotarepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$</div>
+<div class="fml-math">$$S_1 = \int R_1(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$
+$$S_2 = \int R_2(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$</div>
 
 <p>Dla <b>ciała szarego</b> ε(λ) = const → ε wyskakuje z całek i skraca się w stosunku:</p>
-<div class="fml-math">$$rac{S_1}{S_2} = rac{\int R_1(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda}{\int R_2(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda} = f(T) \quad 	ext{(niezależne od } arepsilon	ext{!)}$$</div>
+<div class="fml-math">$$\frac{S_1}{S_2} = \frac{\int R_1(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda}{\int R_2(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda} = f(T) \quad \text{(niezal. od } \varepsilon\text{!)}$$</div>
 
 <p>Inwersja: znajdź T<sub>ratio</sub> takie że powyższy stosunek (przy ε=1) równa się zmierzonemu S₁/S₂. Algorytm: bisekcja 80 iteracji.</p>
 
 <h3>Przybliżenie Wiena (wąskopasmowe detektory)</h3>
 <p>Dla pirometrów pasmowych (Gauss) i spełnieniu warunku Wiena (hc/λk_BT ≫ 1):</p>
-<div class="fml-math">$$rac{S_1}{S_2} pprox rac{R_{\mathrm{p1}}}{R_{\mathrm{p2}}}\cdot\left(rac{\lambda_2}{\lambda_1}
-ight)^5 \cdot \exp\!\left[rac{c_2}{T}\left(rac{1}{\lambda_2}-rac{1}{\lambda_1}
+<div class="fml-math">$$\frac{S_1}{S_2} pprox \frac{R_{\mathrm{p1}}}{R_{\mathrm{p2}}}\cdot\left(\frac{\lambda_2}{\lambda_1}
+ight)^5 \cdot \exp\!\left[\frac{c_2}{T}\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}
 ight)
 ight]$$</div>
 <p>Inwersja analityczna (szacunkowa):</p>
-<div class="fml-math">$$T_{\mathrm{ratio}} pprox rac{c_2\!\left(rac{1}{\lambda_2}-rac{1}{\lambda_1}
-ight)}{\ln\!\left(rac{S_1}{S_2}\cdotrac{R_{\mathrm{p2}}}{R_{\mathrm{p1}}}
-ight) + 5\ln\!\left(rac{\lambda_2}{\lambda_1}
+<div class="fml-math">$$T_{\mathrm{ratio}} pprox \frac{c_2\!\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}
+ight)}{\ln\!\left(\frac{S_1}{S_2}\cdot\frac{R_{\mathrm{p2}}}{R_{\mathrm{p1}}}
+ight) + 5\ln\!\left(\frac{\lambda_2}{\lambda_1}
 ight)}$$</div>
 <p style="font-size:.75rem;color:var(--muted)">c₂ = 1.43878×10⁻² m·K; λ₁ &lt; λ₂ (krótsze/dłuższe fale)</p>
 
 <h3>Błąd przy ciele selektywnym ε(λ₁) ≠ ε(λ₂)</h3>
 <p>Gdy obiekt nie jest szary, stosunek zawiera dodatkowy czynnik emisyjności:</p>
-<div class="fml-math">$$rac{S_1}{S_2} = rac{arepsilon(\lambda_1)}{arepsilon(\lambda_2)}\cdot f(T)$$</div>
+<div class="fml-math">$$\frac{S_1}{S_2} = \frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}\cdot f(T)$$</div>
 <p>Procesor ignoruje ten czynnik i wyznacza błędne T<sub>ratio</sub>. Błąd:</p>
-<div class="fml-math">$$\Delta T_{\mathrm{ratio}} pprox rac{T^2}{c_2\!\left(rac{1}{\lambda_2}-rac{1}{\lambda_1}
-ight)}\cdot\ln\!rac{arepsilon(\lambda_1)}{arepsilon(\lambda_2)}$$</div>
+<div class="fml-math">$$\Delta T_{\mathrm{ratio}} pprox \frac{T^2}{c_2\!\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}
+ight)}\cdot\ln\!\frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}$$</div>
 
 <div class="info-box"><b>Eksperyment — Al₂O₃ (model wielomianowy):</b> wybierz parę Si 0.65 / InGaAs 1.0 µm.
 Przy Al₂O₃ (a₁ &gt; 0) ε(0.65 µm) ≈ 0.28 i ε(1.0 µm) ≈ 0.50 → ε₁/ε₂ ≈ 0.56. Procesor ratio
@@ -2009,7 +2009,7 @@ z rzeczywistych sygnałów uwzględnia τ(λ).</div>
 <h3>Inwersja temperatury — algorytm bisekcji</h3>
 <p>Procesor pirometru zakłada model uproszczony (ciało szare o emisyjności ε_zał, brak atmosfery
 i przesłony) i szuka T_ind spełniającej <span class="cite">[5,8]</span>:</p>
-<div class="fml-math">$$\text{znajdź}\;T_{\mathrm{ind}}:\quad\sum_{i=0}^{N} R(\lambda_i)\cdot\varepsilon_{\mathrm{zał}}\cdot L_{bb}(\lambda_i,\,T_{\mathrm{ind}})\cdot\Delta\lambda \;=\; S$$</div>
+<div class="fml-math">$$\text{find}\;T_{\mathrm{ind}}:\quad\sum_{i=0}^{N} R(\lambda_i)\cdot\varepsilon_{\mathrm{zal}}\cdot L_{bb}(\lambda_i,\,T_{\mathrm{ind}})\cdot\Delta\lambda \;=\; S$$</div>
 <p>Algorytm: <b>bisekcja, 72 iteracje</b>, zakres T ∈ [1, 15 000] K, zbieżność &lt; 0.01 K.
 Złożoność obliczeniowa: ∼72 × (N+1) ≈ 50 700 ewaluacji prawa Plancka na każde przesunięcie suwaka.</p>
 
@@ -2024,7 +2024,7 @@ wyznaczane przez kolejne „odsłanianie" toru:</p>
 <div class="fml-math">
 $$\Delta T_{\varepsilon} = T_{\mathrm{ind}}\!\left[\varepsilon(\lambda,T),\;\tau_{\mathrm{atm}}\!=\!1,\;\tau_{\mathrm{win}}\!=\!1\right] - T_{\mathrm{obj}}$$
 $$\Delta T_{\mathrm{atm}} = T_{\mathrm{ind}}\!\left[\varepsilon(\lambda,T),\;\tau_{\mathrm{atm}}(\lambda),\;\tau_{\mathrm{win}}\!=\!1\right] - T_{\mathrm{ind}}\!\left[\varepsilon,\;\tau\!=\!1,\;\tau\!=\!1\right]$$
-$$\Delta T_{\mathrm{win}} = T_{\mathrm{ind}}\!\left[\text{pełny tor}\right] - T_{\mathrm{ind}}\!\left[\varepsilon,\;\tau_{\mathrm{atm}},\;\tau_{\mathrm{win}}\!=\!1\right]$$
+$$\Delta T_{\mathrm{win}} = T_{\mathrm{ind}}\!\left[\text{pe\l{}ny tor}\right] - T_{\mathrm{ind}}\!\left[\varepsilon,\;\tau_{\mathrm{atm}},\;\tau_{\mathrm{win}}\!=\!1\right]$$
 $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}} + \Delta T_{\mathrm{win}}$$
 </div>
 
@@ -2088,7 +2088,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.4.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.4.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2415,7 +2415,8 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
         Arnold, Appl. Opt. 23 (1984)
 ──────────────────────────────────────────────────────────────────── */
 
-let currentEpsModel = 'grey';  // 'grey' | 'hr'
+let currentEpsModel = 'grey';  // 'grey' | 'hr' | 'poly'
+let ratioMode = false;          // false = jednobarwny, true = dwubarwny
 
 /* Materiały do modelu Hagena-Rubensa
    ρ₀ [µΩ·cm] @ 20°C, α [1/K], ε_const — dla porównania
@@ -3219,6 +3220,7 @@ function drawSpec(res, p){
 
     // ── R₂(λ) — drugi detektor (ratio mode) — zielona przerywana ────────────
     if(ratioMode && res.ratio && res.ratio.R2){
+      const det2Rp = res.ratio.det2 ? res.ratio.det2.Rp : 1;
       ctx.save();
       ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
       ctx.strokeStyle = tv('--green');
@@ -3227,12 +3229,11 @@ function drawSpec(res, p){
       for(let i=0;i<res.ratio.R2.length;i++){
         const lxr=lx(res.lam_um[i]);
         if(lxr<pL||lxr>pL+W2) continue;
-        const ry2=ryR(res.ratio.R2[i]/Math.max(...res.ratio.R2.filter(v=>v>0),1));
+        const ry2=ryR(res.ratio.R2[i]/det2Rp);  // normalizacja: R/Rp → [0,1]
         if(!r2mv){ctx.moveTo(lxr,ry2);r2mv=true;}
         else ctx.lineTo(lxr,ry2);
       }
       ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-      // etykieta R₂
       ctx.fillStyle=tv('--green'); ctx.globalAlpha=0.8;
       ctx.font='bold 8px IBM Plex Mono,monospace'; ctx.textAlign='right';
       ctx.fillText('R₂(λ)', pL+W2-2, pT+10); ctx.globalAlpha=1;
@@ -3963,7 +3964,7 @@ function scheduleUpdate(){
 function doUpdate(){
   setupCanvas();
   const p = {...state};
-  const res = compute(p);
+  const res = ratioMode ? computeRatio(p) : compute(p);
   lastResult = res;
   drawSpec(res, p);
   drawTau(res);
