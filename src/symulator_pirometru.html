@@ -832,7 +832,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.8.1</span>
+    <span class="hdr-ver">v2.9.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -2085,7 +2085,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.8.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.9.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -3121,6 +3121,9 @@ function drawGrid(ctx, pL, pR, pT, pB, W, H, yN){
    DRAW SPECTRAL PLOT
 ───────────────────────────────────────────── */
 function drawSpec(res, p){
+  // Podświetlenie schematu — musi być na początku, przed KAŻDYM ctx.globalAlpha
+  const _hl = getHighlightedCurves();
+  function _alpha(id){ return _hl ? (_hl.includes(id) ? 1 : 0.10) : 1; }
   const ctx = specCtx;
   const W = specCanvas.offsetWidth;
   const H = specCanvas.offsetHeight || parseInt(specCanvas.getAttribute('height')) || 308;
@@ -3220,6 +3223,7 @@ function drawSpec(res, p){
     // ── ε(λ) w górnej strefie — model Hagena-Rubensa ────────────────
     if(res.Eps && (appState.epsModel === 'hr' || appState.epsModel === 'poly')){
       ctx.save();
+      ctx.globalAlpha = _alpha('Eps');
       ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
       ctx.strokeStyle = tv('--amber');
       ctx.lineWidth = 1.8;
@@ -3239,7 +3243,7 @@ function drawSpec(res, p){
       ctx.setLineDash([]);
       ctx.restore();
       // etykieta ε(λ)
-      ctx.fillStyle = tv('--amber'); ctx.globalAlpha = 0.85;
+      ctx.fillStyle = tv('--amber'); ctx.globalAlpha = 0.85 * _alpha('Eps');
       ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
       const epsLbl = appState.epsModel==='poly'
         ? `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`
@@ -3251,6 +3255,7 @@ function drawSpec(res, p){
     if(appState.ratioMode && res.ratio && res.ratio.R2){
       const det2Rp = res.ratio.det2 ? res.ratio.det2.Rp : 1;
       ctx.save();
+      ctx.globalAlpha = _alpha('R2');
       ctx.beginPath(); ctx.rect(pL, pT, W2, Rzone); ctx.clip();
       ctx.strokeStyle = tv('--green');
       ctx.lineWidth = 1.5; ctx.setLineDash([3,4]);
@@ -3263,7 +3268,7 @@ function drawSpec(res, p){
         else ctx.lineTo(lxr,ry2);
       }
       ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-      ctx.fillStyle=tv('--green'); ctx.globalAlpha=0.8;
+      ctx.fillStyle=tv('--green'); ctx.globalAlpha=0.8 * _alpha('R2');
       ctx.font='bold 8px IBM Plex Mono,monospace'; ctx.textAlign='right';
       ctx.fillText('R₂(λ)', pL+W2-2, pT+10); ctx.globalAlpha=1;
     }
@@ -3280,7 +3285,7 @@ function drawSpec(res, p){
     seg.forEach((u,i) => ctx.lineTo(lx(u), ryR(Rvals[i])));
     ctx.lineTo(lx(seg[seg.length-1]), pT + Rzone);
     ctx.closePath();
-    ctx.globalAlpha = 0.22; ctx.fillStyle = tv('--cyan'); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.globalAlpha = 0.22 * _alpha('R'); ctx.fillStyle = tv('--cyan'); ctx.fill(); ctx.globalAlpha = 1;
 
     // linia R(λ)
     ctx.beginPath();
@@ -3290,12 +3295,12 @@ function drawSpec(res, p){
     ctx.restore();
 
     // etykieta R(λ) — wewnątrz górnej strefy
-    ctx.globalAlpha = 0.70; ctx.fillStyle = tv('--cyan');
+    ctx.globalAlpha = 0.70 * _alpha('R'); ctx.fillStyle = tv('--cyan');
     ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'right';
     ctx.fillText('R(λ)', pL + W2 - 4, pT + 10); ctx.globalAlpha = 1;
 
     // pionowe linie granic okna detektora — od granicy strefy R do dołu wykresu
-    ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.globalAlpha=0.40;
+    ctx.setLineDash([3,4]); ctx.lineWidth=1; ctx.globalAlpha=0.40 * _alpha('R');
     ctx.strokeStyle = tv('--cyan');
     const x1=lx(dmin), x2=lx(dmax);
     if(x1>pL&&x1<pL+W2){ ctx.beginPath(); ctx.moveTo(x1,specTop); ctx.lineTo(x1,specTop+specH); ctx.stroke(); }
@@ -3304,10 +3309,12 @@ function drawSpec(res, p){
   }
 
   // helper curve
-  function curve(arr, color, lw, dashes){
+  function curve(arr, color, lw, dashes, curveId){
+    ctx.globalAlpha = curveId ? _alpha(curveId) : 1;
     ctx.beginPath(); ctx.setLineDash(dashes||[]);
     arr.forEach((v,i)=>{ const x=lx(lamArr[i]); i===0?ctx.moveTo(x,ly(v)):ctx.lineTo(x,ly(v)); });
     ctx.strokeStyle=color; ctx.lineWidth=lw; ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
   }
 
   // atmosphere fill
@@ -3315,17 +3322,18 @@ function drawSpec(res, p){
   ctx.moveTo(lx(lamArr[0]),pT+H2);
   res.Latm.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
   ctx.lineTo(lx(lamArr[res.Latm.length-1]),pT+H2); ctx.closePath();
-  ctx.globalAlpha=0.35; ctx.fillStyle=tv('--red'); ctx.fill(); ctx.globalAlpha=1;
+  ctx.globalAlpha=0.35 * _alpha('Latm'); ctx.fillStyle=tv('--red'); ctx.fill(); ctx.globalAlpha=1;
 
-  curve(res.Lbb,   tv('--muted'),   1, [4,4]);
-  curve(res.Latm,  tv('--red'),     1);
-  curve(res.Lemit, tv('--amber'),   2.0);
-  curve(res.Ldet,  tv('--signal'),  2.8);        // sygnał wynikowy — wyróżniony kolorem
-  curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4]);
+  curve(res.Lbb,   tv('--muted'),   1, [4,4], 'Lbb');
+  curve(res.Latm,  tv('--red'),     1, [], 'Latm');
+  curve(res.Lemit, tv('--amber'),   2.0, [], 'Lemit');
+  curve(res.Ldet,  tv('--signal'),  2.8, [], 'Ldet');  // sygnał wynikowy — wyróżniony
+  curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4], 'Tind');
 
   // Window transmission overlay
   if(res.winKey && res.winKey !== 'none'){
     const winColor = WINDOWS[res.winKey]?.color || '#10b981';
+    ctx.globalAlpha = _alpha('Lwin');
     ctx.beginPath(); ctx.setLineDash([2,3]);
     res.Lwin.forEach((v,i)=>{
       const x=lx(lamArr[i]);
@@ -3334,7 +3342,7 @@ function drawSpec(res, p){
     });
     ctx.strokeStyle=winColor; ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
     // Label at right edge
-    ctx.globalAlpha=0.75; ctx.fillStyle=winColor;
+    ctx.globalAlpha=0.75 * _alpha('Lwin'); ctx.fillStyle=winColor;
     ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='right';
     ctx.fillText('τ_win', pL+W2-4, pT+12);
     ctx.globalAlpha=1;
@@ -3349,7 +3357,7 @@ function drawSpec(res, p){
         res.Lwin_emit.forEach((v,i)=>ctx.lineTo(lx(lamArr[i]),ly(v)));
         ctx.lineTo(lx(lamArr[res.Lwin_emit.length-1]),pT+H2);
         ctx.closePath();
-        ctx.globalAlpha=0.28; ctx.fillStyle=winColor; ctx.fill(); ctx.globalAlpha=1;
+        ctx.globalAlpha=0.28 * _alpha('Lwin_emit'); ctx.fillStyle=winColor; ctx.fill(); ctx.globalAlpha=1;
       }
     }
   }
@@ -3453,9 +3461,10 @@ function drawTau(res){
   ctx.closePath();
   ctx.globalAlpha=0.22; ctx.fillStyle=tv('--cyan'); ctx.fill(); ctx.globalAlpha=1;
 
+  const _tauAlpha = getHighlightedCurves() ? (getHighlightedCurves().includes('tau') ? 1 : 0.10) : 1;
   ctx.beginPath();
   res.tau.forEach((v,i)=>{ const x=lx(lamArr[i]); i===0?ctx.moveTo(x,ly(v)):ctx.lineTo(x,ly(v)); });
-  ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1.8; ctx.stroke();
+  ctx.globalAlpha=_tauAlpha; ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1.8; ctx.stroke(); ctx.globalAlpha=1;
   ctx.restore();
 
   // ── ETYKIETY WEWNĘTRZNE ──────────────────────────────────
@@ -3614,6 +3623,9 @@ function buildDocsHTML(mode){
   }
   .doc-toolbar button:hover{ border-color:#0e7490; color:#0e7490 }
   .doc-toolbar span{ font-size:.68rem; color:#7a7888 }
+
+.chain-box { cursor: pointer; transition: outline 0.12s; }
+.chain-arrow { cursor: help; }
 </style>
 </head>
 <body>
@@ -3623,7 +3635,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v2.8.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v2.9.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -4000,6 +4012,8 @@ const state = {
 
 let lastResult = null;
 let rafId = null;
+let highlightBlock = null;  // aktywny blok schematu ('cb-obj'|'cb-atm'|...) lub null
+let pinnedBlock    = null;  // przypięty blok (kliknięcie) — nadpisuje hover
 
 function setScale(mode){
   appState.logScale = (mode==='log');
@@ -4300,6 +4314,127 @@ function onWinChange(){
    MODULE 7 — INIT  ·  Inicjalizacja suwaków i event listenerów
    ═══════════════════════════════════════════════════ */
 
+/* ═══ Interakcja schemat ↔ widmo (opcja A hover / B klik / C tooltip strzałki) ═══ */
+function initChainInteraction(){
+
+  // Mapa: id bloku → tablica krzywych [curve_id, ...]
+  // curve_id odpowiada tagowi używanemu w drawSpec do globalAlpha
+  const BLOCK_CURVES = {
+    'cb-obj':  ['Lbb','Lemit','Eps'],
+    'cb-atm':  ['Latm','tau'],
+    'cb-win':  ['Lwin','Lwin_emit'],
+    'cb-det':  ['R','R2','Ldet'],
+    'cb-proc': ['Ldet'],
+    'cb-res':  ['Tind'],
+  };
+
+  // Tooltip strzałek (opcja C) — tekst i wartość
+  const ARROW_TIPS = [
+    { after:'cb-obj',  label:'L_emit(λ)',  valFn: r => r ? `ε·B max: ${(Math.max(...r.Lemit)*1e-9).toExponential(2)} nW` : '—' },
+    { after:'cb-atm',  label:'τ_atm(λ)',   valFn: r => r ? `τ̄ = ${r.tau_avg.toFixed(3)}` : '—' },
+    { after:'cb-win',  label:'τ_win(λ)',   valFn: r => r ? `τ̄_win = ${r.win_avg.toFixed(3)}` : '—' },
+    { after:'cb-det',  label:'S(λ)',        valFn: r => r ? `S = ${r.signal.toExponential(2)}` : '—' },
+    { after:'cb-proc', label:'T_ind',       valFn: r => r ? `${r.T_ind.toFixed(0)} °C` : '—' },
+  ];
+
+  // Tooltip DOM
+  const tip = document.createElement('div');
+  tip.id = 'chain-tip';
+  tip.style.cssText = [
+    'position:fixed','pointer-events:none','display:none',
+    'background:var(--card2,#1e1e1e)','border:1px solid var(--border,#444)',
+    'border-radius:7px','padding:5px 10px','font-size:.72rem',
+    'color:var(--text,#fff)','z-index:999','line-height:1.5',
+    'max-width:180px','box-shadow:0 2px 8px rgba(0,0,0,.4)'
+  ].join(';');
+  document.body.appendChild(tip);
+
+  function showTip(e, html){
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    moveTip(e);
+  }
+  function moveTip(e){
+    const x = e.clientX + 14, y = e.clientY - 10;
+    tip.style.left = Math.min(x, window.innerWidth - 190) + 'px';
+    tip.style.top  = y + 'px';
+  }
+  function hideTip(){ tip.style.display = 'none'; }
+
+  // Podłącz bloki (opcja A hover + B klik)
+  document.querySelectorAll('.chain-box').forEach(box => {
+    const id = box.id;
+
+    box.addEventListener('mouseenter', () => {
+      if(pinnedBlock) return;
+      highlightBlock = id;
+      scheduleUpdate();
+      box.style.outline = '2px solid var(--cyan,#00ffff)';
+      box.style.outlineOffset = '2px';
+    });
+    box.addEventListener('mouseleave', () => {
+      if(pinnedBlock) return;
+      highlightBlock = null;
+      scheduleUpdate();
+      box.style.outline = '';
+    });
+    box.addEventListener('click', () => {
+      if(pinnedBlock === id){
+        // odpięcie
+        pinnedBlock = null;
+        highlightBlock = null;
+        document.querySelectorAll('.chain-box').forEach(b => {
+          b.style.outline = '';
+          b.style.outlineOffset = '';
+        });
+      } else {
+        // przypięcie
+        pinnedBlock = id;
+        highlightBlock = id;
+        document.querySelectorAll('.chain-box').forEach(b => {
+          b.style.outline = (b.id === id) ? '2px solid var(--amber,#f59e0b)' : '';
+          b.style.outlineOffset = '2px';
+        });
+      }
+      scheduleUpdate();
+    });
+  });
+
+  // Podłącz strzałki (opcja C tooltip)
+  const arrows = document.querySelectorAll('.chain-arrow');
+  arrows.forEach((arrow, idx) => {
+    const cfg = ARROW_TIPS[idx];
+    if(!cfg) return;
+    arrow.style.cursor = 'default';
+    arrow.addEventListener('mouseenter', e => {
+      const res = lastResult;
+      const val = cfg.valFn(res);
+      showTip(e, `<b>${cfg.label}</b><br>${val}<br><span style="opacity:.6;font-size:.68rem">sygnał wyjściowy bloku ${idx+1}</span>`);
+      arrow.style.color = 'var(--cyan,#00ffff)';
+    });
+    arrow.addEventListener('mousemove', moveTip);
+    arrow.addEventListener('mouseleave', () => {
+      hideTip();
+      arrow.style.color = '';
+    });
+  });
+}
+
+// Eksportuj mapę do drawSpec
+function getHighlightedCurves(){
+  if(!highlightBlock) return null;
+  const map = {
+    'cb-obj':  ['Lbb','Lemit','Eps'],
+    'cb-atm':  ['Latm','tau'],
+    'cb-win':  ['Lwin','Lwin_emit'],
+    'cb-det':  ['R','R2','Ldet'],
+    'cb-proc': ['Ldet'],
+    'cb-res':  ['Tind'],
+  };
+  return map[highlightBlock] || null;
+}
+
+
 function initSliders(){
   const map=[
     ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
@@ -4505,6 +4640,7 @@ window.addEventListener('load', ()=>{
   const bnum=document.getElementById('beg_num_T');
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
+  initChainInteraction();
   // KaTeX — renderuj formuły w drawer dokumentacji
   // (wywołanie tu gwarantuje że defer skrypty są już wykonane)
   if(typeof renderMathInElement === 'function') {

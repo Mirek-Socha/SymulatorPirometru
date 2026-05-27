@@ -5,6 +5,44 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.9.0] — 2026-05-28 ✅ bieżąca
+
+### Dodano — interaktywny schemat blokowy
+
+Schemat blokowy toru pomiarowego (tryb Expert) jest teraz interaktywny:
+powiązane krzywe na wykresie widmowym reagują na kursor i kliknięcia.
+
+#### Opcja A — hover: podświetlenie krzywych
+Najechanie kursorem na blok schematu powoduje, że krzywe powiązane
+z tym blokiem pozostają jasne, a pozostałe przygasają do 10% jasności.
+Ramka bloku zmienia kolor na cyjanową.
+
+| Blok | Podświetlane krzywe |
+|---|---|
+| 1 · Obiekt | L_bb CDC, ε·B(λ), ε(λ) H-R/poly |
+| 2 · Atmosfera | L_atm (emisja atm.), τ_atm(λ) |
+| 3 · Przesłona | τ_win(λ), emisja własna przesłony |
+| 4 · Detektor | R(λ), R₂(λ), sygnał L_det |
+| 5 · Procesor | sygnał L_det |
+| 6 · Wynik | T_ind(λ) |
+
+#### Opcja B — klik: przypięcie podświetlenia
+Kliknięcie bloku zamraża podświetlenie — ramka zmienia kolor
+na bursztynową (pin). Ponowne kliknięcie odpina i wraca do normalnego widoku.
+
+#### Opcja C — tooltip na strzałce
+Najechanie na animowaną strzałkę między blokami pokazuje tooltip z:
+- nazwą sygnału fizycznego przepływającego przez to połączenie
+- aktualną wartością (np. τ̄ = 0.847)
+- numerem bloku źródłowego
+
+### Poprawiono (przeniesione z v2.8.1)
+- Tooltip dymka: L_atm, L_win_emit, R₂+T_ratio (warunkowo)
+- Schemat: środowisko + T_atm (blok 2), tryb proc. (blok 5), T_ratio (blok 6)
+- Legenda: wpisy warunkowe (przesłona, ε(λ), R₂)
+- Siatka spektralna N = 700 → 1400 punktów
+
+
 ## [v2.8.0] — 2026-05-27 ✅ bieżąca
 
 ### Zmieniono — Refactoring Faza 4: Konfiguracja
