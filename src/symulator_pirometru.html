@@ -832,7 +832,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.8.0</span>
+    <span class="hdr-ver">v2.8.1</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -888,8 +888,9 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <div class="chain-box cb-atm" id="cb-atm">
       <div class="cb-name">2 · Atmosfera</div>
-      <div class="cb-val">L = <span class="re" id="cv-L">2 m</span> &nbsp; HR = <span id="cv-hr">50 %</span></div>
-      <div class="cb-val">CO₂ = <span id="cv-co2">400 ppm</span></div>
+      <div class="cb-val" id="cv-env-lbl" style="font-size:.68rem;color:var(--muted)">Ziemia</div>
+      <div class="cb-val">L = <span class="re" id="cv-L">2 m</span> &nbsp; T<sub>atm</sub> = <span id="cv-Tatm">15 °C</span></div>
+      <div class="cb-val">HR = <span id="cv-hr">50 %</span> &nbsp; CO₂ = <span id="cv-co2">400 ppm</span></div>
       <div class="cb-val">τ̄ = <span class="cy" id="cv-tau">—</span></div>
     </div>
 
@@ -920,9 +921,10 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <div class="chain-box cb-proc" id="cb-proc">
       <div class="cb-name">5 · Procesor</div>
+      <div class="cb-val" id="cv-proc-mode" style="font-size:.68rem;color:var(--muted)">jednobarwny</div>
       <div class="cb-val">ε<sub>zał.</sub> = <span style="color:var(--orange)" id="cv-epsA">0.70</span></div>
-      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">inwersja Plancka</div>
-      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">bisekcja 72 iter.</div>
+      <div class="cb-val" id="cv-ratio-row" style="font-size:.68rem;display:none">S₁/S₂ = <span id="cv-ratio-val" style="color:var(--green)">—</span></div>
+      <div class="cb-val" style="font-size:.65rem;color:var(--muted)">inwersja Plancka · bisekcja</div>
     </div>
 
     <div class="chain-arrow">
@@ -932,6 +934,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <div class="chain-box cb-res" id="cb-res">
       <div class="cb-name">6 · Wynik</div>
       <div class="cb-val" style="font-size:.88rem;font-weight:600"><span id="cv-Tind">—</span></div>
+      <div class="cb-val" id="cv-Tratio-row" style="display:none;font-size:.75rem">T<sub>ratio</sub> = <span id="cv-Tratio" style="color:var(--green)">—</span></div>
       <div class="cb-val">ΔT = <span id="cv-dT">—</span></div>
     </div>
 
@@ -1322,12 +1325,14 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <div class="legend">
       <div class="leg"><div class="leg-line" style="background:var(--muted);border-top:1px dashed currentColor"></div>CDC (wzorzec)</div>
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
+      <div class="leg" id="leg-eps-model" style="display:none"><div class="leg-line" style="background:var(--amber);border-top:2px dashed var(--amber)"></div><span id="leg-eps-label">ε(λ)</span></div>
       <div class="leg"><div class="leg-fill" style="background:var(--red);opacity:.5"></div>Emisja atm.</div>
       <div class="leg"><div class="leg-line" style="background:var(--signal);height:3px"></div>Sygnał na det.</div>
       <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:2px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
       <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.3"></div>R(λ) det. [góra]</div>
-      <div class="leg"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
-      <div class="leg"><div class="leg-fill" style="background:#10b981;opacity:.35"></div>Emisja przesłony</div>
+      <div class="leg" id="leg-win-tau" style="display:none"><div class="leg-line" style="background:#10b981;border-top:1px dashed #10b981"></div>τ przesłony</div>
+      <div class="leg" id="leg-win-emit" style="display:none"><div class="leg-fill" style="background:#10b981;opacity:.35"></div>Emisja przesłony</div>
+      <div class="leg" id="leg-ratio-r2" style="display:none"><div class="leg-line" style="background:var(--green);border-top:2px dashed var(--green)"></div>R₂(λ) det. 2</div>
     </div>
     <div class="plot-hdr tau-hdr xo">Transmitancja atmosferyczna τ(λ)</div>
     <canvas id="tauCanvas" height="200" style="height:clamp(100px, 22vh, 200px)" class="xo"></canvas>
@@ -2080,7 +2085,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.8.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v2.8.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2255,7 +2260,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
 ───────────────────────────────────────────── */
 const h_  = 6.626e-34, cL = 2.998e8, kB = 1.381e-23;
 const c2  = h_*cL/kB;   // 1.43878e-2 m·K
-const LAM_MIN = 0.10e-6, LAM_MAX = 16e-6, N = 700;
+const LAM_MIN = 0.10e-6, LAM_MAX = 16e-6, N = 1400;
 const DL = (LAM_MAX - LAM_MIN) / N;
 const lams = Array.from({length:N+1}, (_,i) => LAM_MIN + i*DL);
 
@@ -3618,7 +3623,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v2.8.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v2.8.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -4010,6 +4015,33 @@ function setScale(mode){
    MODULE 6 — UPDATE LOOP  ·  Pętla aktualizacji i renderowania
    ═══════════════════════════════════════════════════ */
 
+function updateLegend(res, p){
+  // τ przesłony i emisja — widoczne tylko gdy okno ≠ none
+  const hasWin = p.windowKey && p.windowKey !== 'none';
+  const legWinTau  = document.getElementById('leg-win-tau');
+  const legWinEmit = document.getElementById('leg-win-emit');
+  if(legWinTau)  legWinTau.style.display  = hasWin ? '' : 'none';
+  if(legWinEmit) legWinEmit.style.display = hasWin ? '' : 'none';
+
+  // ε(λ) — widoczna tylko gdy model H-R lub poly
+  const legEpsModel = document.getElementById('leg-eps-model');
+  const legEpsLabel = document.getElementById('leg-eps-label');
+  if(legEpsModel){
+    const showEps = appState.epsModel === 'hr' || appState.epsModel === 'poly';
+    legEpsModel.style.display = showEps ? '' : 'none';
+    if(legEpsLabel && showEps){
+      legEpsLabel.textContent = appState.epsModel === 'hr'
+        ? `ε(λ) H-R (${(HR_MATERIALS[appState.hrMat]||HR_MATERIALS.fe).label})`
+        : `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
+    }
+  }
+
+  // R₂(λ) — widoczna tylko w trybie ratio
+  const legR2 = document.getElementById('leg-ratio-r2');
+  if(legR2) legR2.style.display = appState.ratioMode ? '' : 'none';
+}
+
+
 function scheduleUpdate(){
   if(rafId) return;
   rafId = requestAnimationFrame(()=>{ rafId=null; doUpdate(); });
@@ -4024,6 +4056,7 @@ function doUpdate(){
   drawTau(res);
   updateChain(res, p);
   updateResults(res, p);
+  updateLegend(res, p);
 }
 
 function updateChain(res, p){
@@ -4032,7 +4065,10 @@ function updateChain(res, p){
   document.getElementById('cv-eps').textContent = p.eps_real.toFixed(2);
   document.getElementById('cv-wien').textContent= `λ_max = ${res.wien_um.toFixed(2)} µm`;
   // atm
+  const envLabel = (ENVS[appState.env]||ENVS.earth).label || appState.env;
+  document.getElementById('cv-env-lbl').textContent = envLabel;
   document.getElementById('cv-L').textContent   = `${p.path} m`;
+  document.getElementById('cv-Tatm').textContent = `${p.Tatm} °C`;
   document.getElementById('cv-hr').textContent  = `${p.rh} %`;
   document.getElementById('cv-co2').textContent = `${p.co2} ppm`;
   document.getElementById('cv-tau').textContent = res.tau_avg.toFixed(3);
@@ -4047,16 +4083,39 @@ function updateChain(res, p){
   // det
   document.getElementById('cv-det').textContent = res.det.label;
   document.getElementById('cv-sig').textContent = res.signal.toExponential(2);
-  // proc
-  document.getElementById('cv-epsA').textContent= p.eps_assumed.toFixed(2);
+  // proc — tryb + ε_zał + ratio S1/S2
+  document.getElementById('cv-epsA').textContent = p.eps_assumed.toFixed(2);
+  const procModeEl = document.getElementById('cv-proc-mode');
+  const ratioRowEl = document.getElementById('cv-ratio-row');
+  if(appState.ratioMode){
+    procModeEl.textContent = 'dwubarwny (ratio)';
+    procModeEl.style.color = 'var(--green)';
+    ratioRowEl.style.display = '';
+    const rv = res.ratio && res.ratio.ratio_meas != null
+      ? res.ratio.ratio_meas.toFixed(4) : '—';
+    document.getElementById('cv-ratio-val').textContent = rv;
+  } else {
+    procModeEl.textContent = 'jednobarwny';
+    procModeEl.style.color = 'var(--muted)';
+    ratioRowEl.style.display = 'none';
+  }
   // result
   const dT = res.dT;
   const dTStr = (dT>=0?'+':'')+dT.toFixed(1)+' K';
   const Tstr  = res.T_ind_K.toFixed(0)+' K ('+(res.T_ind).toFixed(0)+' °C)';
-  document.getElementById('cv-Tind').textContent= Tstr;
+  document.getElementById('cv-Tind').textContent = Tstr;
   const dTEl = document.getElementById('cv-dT');
   dTEl.textContent = dTStr;
   dTEl.style.color = Math.abs(res.dT)<2 ? 'var(--green)' : res.dT>0 ? 'var(--red)' : 'var(--cyan)';
+  // result — T_ratio (gdy ratioMode)
+  const TratioRowEl = document.getElementById('cv-Tratio-row');
+  if(appState.ratioMode && res.ratio && res.ratio.T_ratio_C != null){
+    TratioRowEl.style.display = '';
+    document.getElementById('cv-Tratio').textContent =
+      `${res.ratio.T_ratio_K.toFixed(0)} K (${res.ratio.T_ratio_C.toFixed(0)} °C)`;
+  } else {
+    TratioRowEl.style.display = 'none';
+  }
   // res box class
   const cb = document.getElementById('cb-res');
   cb.className = 'chain-box cb-res '+(Math.abs(res.dT)<2 ? '' : Math.abs(res.dT)<20 ? 'err-med' : 'err-big');
@@ -4385,13 +4444,34 @@ specCanvas.addEventListener('mousemove', e=>{
   tt.style.left=(e.clientX+14)+'px';
   tt.style.top=(e.clientY-55)+'px';
   const absVal = v => v.toExponential(2)+' W·m⁻²·sr⁻¹·m⁻¹';
-  const winRow = (res.winKey && res.winKey!=='none')
-    ? `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${WINDOWS[res.winKey]?.color||'#10b981'}">${res.Lwin[idx].toFixed(4)}</span></div>`
-    : '';
+  // — etykiety emisyjności
   const epsVal  = res.Eps ? res.Eps[idx] : state.eps_real;
   const epsLabel = appState.epsModel==='grey'  ? 'ε (szara)'
                  : appState.epsModel==='hr'    ? 'ε(λ) H-R'
                  : `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
+
+  // — wiersz emisji atmosferycznej (sygnał czerwony)
+  const latmRow = `<div class="tt-r"><span class="tt-l">L<sub>atm</sub>:</span><span style="color:var(--red)">${pct(res.Latm[idx])}</span></div>`;
+
+  // — wiersz przesłony (τ_win + ew. emisja własna)
+  let winRows = '';
+  if(res.winKey && res.winKey!=='none'){
+    const wc = WINDOWS[res.winKey]?.color||'#10b981';
+    winRows += `<div class="tt-r"><span class="tt-l">τ_win(λ):</span><span style="color:${wc}">${res.Lwin[idx].toFixed(4)}</span></div>`;
+    if(res.Lwin_emit && res.Lwin_emit[idx] > 1e-30)
+      winRows += `<div class="tt-r"><span class="tt-l">L<sub>win</sub>:</span><span style="color:${wc};opacity:.7">${pct(res.Lwin_emit[idx])}</span></div>`;
+  }
+
+  // — wiersze ratio mode
+  let ratioRows = '';
+  if(appState.ratioMode && res.ratio && res.ratio.R2){
+    const r2pct = (res.ratio.R2[idx]/(res.ratio.det2?.Rp||1)*100).toFixed(1);
+    ratioRows = `<div class="tt-r" style="border-top:1px solid var(--border);margin-top:2px;padding-top:2px">` +
+      `<span class="tt-l">R₂(λ):</span><span style="color:var(--green)">${r2pct} %</span></div>`;
+    if(res.ratio.T_ratio_C != null)
+      ratioRows += `<div class="tt-r"><span class="tt-l">T<sub>ratio</sub>:</span><span style="color:var(--green)">${res.ratio.T_ratio_C.toFixed(1)} °C</span></div>`;
+  }
+
   tt.innerHTML=`
     <div class="tt-h">λ = ${lamHov.toFixed(3)} µm = ${(lamHov*1000).toFixed(0)} nm</div>
     <div class="tt-r"><span class="tt-l">L<sub>bb</sub> CDC:</span><span>${pct(res.Lbb[idx])}</span></div>
@@ -4399,9 +4479,11 @@ specCanvas.addEventListener('mousemove', e=>{
     <div class="tt-r"><span class="tt-l">${epsLabel}:</span><span style="color:var(--amber)">${epsVal.toFixed(4)}</span></div>
     <div class="tt-r"><span class="tt-l">ε·B(λ):</span><span style="color:var(--amber);opacity:.7">${pct(res.Lemit[idx])}</span></div>
     <div class="tt-r"><span class="tt-l">τ_atm(λ):</span><span style="color:var(--cyan)">${res.tau[idx].toFixed(4)}</span></div>
-    ${winRow}
+    ${latmRow}
+    ${winRows}
     <div class="tt-r"><span class="tt-l">Sygnał L<sub>det</sub>:</span><span style="color:var(--signal)">${pct(res.Ldet[idx])}</span></div>
-    <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)} %</span></div>`;
+    <div class="tt-r"><span class="tt-l">R(λ):</span><span style="color:var(--cyan)">${(res.R[idx]*100).toFixed(1)} %</span></div>
+    ${ratioRows}`;
   scheduleUpdate();
 });
 specCanvas.addEventListener('mouseleave',()=>{ hideTT(); hoverFrac=null; scheduleUpdate(); });
