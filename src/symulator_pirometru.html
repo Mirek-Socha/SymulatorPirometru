@@ -4660,22 +4660,8 @@ window.addEventListener('load', ()=>{
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
   initChainInteraction();
-<<<<<<< Updated upstream
-  // KaTeX — render formulae in documentation drawer
-  // (calling here guarantees defer scripts are already executed)
-  if(typeof renderMathInElement === 'function') {
-    renderMathInElement(document.getElementById('docsBody'), {
-      delimiters: [
-        {left: '$$', right: '$$', display: true},
-        {left: '\\(', right: '\\)', display: false}
-      ],
-      throwOnError: false
-    });
-  }
-=======
   // KaTeX — próba przy window.load (jeśli defer już gotowy)
   tryRenderKatex();
->>>>>>> Stashed changes
 });
 </script>
 </body>
