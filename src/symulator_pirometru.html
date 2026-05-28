@@ -6,7 +6,7 @@
 <title>Pirometria — Symulator Toru Pomiarowego</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderDocsKatex()"></script>
 
 
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
@@ -4628,6 +4628,19 @@ function hideTT(){ document.getElementById('tooltip').style.display='none'; }
    INIT
 ───────────────────────────────────────────── */
 window.addEventListener('resize', ()=>scheduleUpdate());
+function renderDocsKatex(){
+  const el = document.getElementById('docsBody');
+  if(!el || !window.renderMathInElement) return;
+  renderMathInElement(el, {
+    delimiters:[
+      {left:'$$', right:'$$', display:true},
+      {left:'\\(', right:'\\)', display:false}
+    ],
+    throwOnError:false
+  });
+}
+
+
 window.addEventListener('load', ()=>{
   // body już ma klasę 'beginner' z HTML — nie nadpisujemy
   setupCanvas();
@@ -4641,17 +4654,7 @@ window.addEventListener('load', ()=>{
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
   initChainInteraction();
-  // KaTeX — renderuj formuły w drawer dokumentacji
-  // (wywołanie tu gwarantuje że defer skrypty są już wykonane)
-  if(typeof renderMathInElement === 'function') {
-    renderMathInElement(document.getElementById('docsBody'), {
-      delimiters: [
-        {left: '$$', right: '$$', display: true},
-        {left: '\\(', right: '\\)', display: false}
-      ],
-      throwOnError: false
-    });
-  }
+  // KaTeX renderuje się przez onload na auto-render.min.js
 });
 </script>
 </body>
