@@ -5,6 +5,30 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v2.9.0-en] — 2026-05-28 ✅ bieżąca (gałąź en/english-translation)
+
+### Dodano — pełne tłumaczenie na angielski
+
+Kompletne tłumaczenie wersji v2.9.0 na język angielski (~500 zamian stringów):
+- Interfejs użytkownika (suwaki, przyciski, presety, menu)
+- Schemat blokowy (etykiety bloków i strzałek)
+- Legenda wykresu (wpisy warunkowe)
+- Dokumentacja Beginner (5 sekcji)
+- Dokumentacja Expert (12 sekcji + KaTeX)
+- Słownik symboli (26 pozycji), literatura, tabele materiałów
+- Stringi JS widoczne dla użytkownika (hinty, tooltips)
+- Komentarze JS/CSS
+
+### Poprawiono — efekty uboczne tłumaczenia w JS
+
+Masowa zamiana `fale→waves` uszkodziła słowo `false` w kodzie JS:
+`false` → `f`+`waves`+`e` = `wavesse` (18× w JS, 1× w HTML)
+
+Naprawione miejsca: `h2o_pure`, `expertMode`, `ratioMode`, `logScale`,
+`epsMoved`, `r2mv`, `KaTeX display/throwOnError`, `disabled` sliderów,
+`setRatioMode()` w HTML.
+
+
 ## [v2.9.0] — 2026-05-28 ✅ bieżąca
 
 ### Dodano — interaktywny schemat blokowy
