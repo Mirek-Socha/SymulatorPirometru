@@ -4012,6 +4012,7 @@ const state = {
 
 let lastResult = null;
 let rafId = null;
+let katexRendered = false;  // KaTeX renderuje docsBody tylko raz
 let highlightBlock = null;  // aktywny blok schematu ('cb-obj'|'cb-atm'|...) lub null
 let pinnedBlock    = null;  // pinned block (click) — overrides hover
 
@@ -4547,6 +4548,8 @@ function toggleDocs(){
   const btn=document.getElementById('docsBtn');
   ov.classList.toggle('open');
   btn.classList.toggle('active');
+  // KaTeX — renderuj przy pierwszym otwarciu (defer może nie być gotowy przy window.load)
+  if(ov.classList.contains('open')) tryRenderKatex();
 }
 function closeDocs(e){
   if(e.target===document.getElementById('docsOverlay')) toggleDocs();
@@ -4628,6 +4631,22 @@ function hideTT(){ document.getElementById('tooltip').style.display='none'; }
    INIT
 ───────────────────────────────────────────── */
 window.addEventListener('resize', ()=>scheduleUpdate());
+function tryRenderKatex(){
+  if(katexRendered) return;
+  if(typeof renderMathInElement !== 'function') return;
+  const body = document.getElementById('docsBody');
+  if(!body) return;
+  renderMathInElement(body, {
+    delimiters: [
+      {left: '$$',  right: '$$',  display: true},
+      {left: '\\(', right: '\\)', display: false}
+    ],
+    throwOnError: false
+  });
+  katexRendered = true;
+}
+
+
 window.addEventListener('load', ()=>{
   // body already has 'beginner' class from HTML — do not override
   setupCanvas();
@@ -4641,6 +4660,7 @@ window.addEventListener('load', ()=>{
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
   initChainInteraction();
+<<<<<<< Updated upstream
   // KaTeX — render formulae in documentation drawer
   // (calling here guarantees defer scripts are already executed)
   if(typeof renderMathInElement === 'function') {
@@ -4652,6 +4672,10 @@ window.addEventListener('load', ()=>{
       throwOnError: false
     });
   }
+=======
+  // KaTeX — próba przy window.load (jeśli defer już gotowy)
+  tryRenderKatex();
+>>>>>>> Stashed changes
 });
 </script>
 </body>
