@@ -6,7 +6,7 @@
 <title>Pyrometry — Measurement Channel Simulator</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderDocsKatex()"></script>
 
 
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
@@ -1609,8 +1609,8 @@ fizycznych <span class="cite">[5,8]</span>:</p>
 
 <div class="fml-math">$$\begin{aligned}
 L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[
-  &\underbrace{\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon(\lambda,T)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{object + atmosfera}} \\
-  &+ \underbrace{[1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja atm.}}\Bigr] \\
+  &\underbrace{\tau_{\mathrm{atm}}(\lambda)\cdot\varepsilon(\lambda,T)\cdot L_{bb}(\lambda,T_{\mathrm{obj}})}_{\text{object + atmosfera}} \
+  &+ \underbrace{[1-\tau_{\mathrm{atm}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{atm}})}_{\text{emisja atm.}}\Bigr] \
   &+ \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja przes.}}
 \end{aligned}$$</div>
 
@@ -1925,7 +1925,7 @@ operate in the "window" between CO₂ bands. The industrial standard is <b>InSb 
 <p>Used: Si (0.65 µm), InGaAs (1.0, 1.6 µm), InSb (3.9 µm). Narrow band minimises atmospheric absorption and emissivity dependence.</p>
 
 <h3>Window pyrometer (rectangle with softened edges)</h3>
-<div class="fml-math">$$R(\lambda) = \begin{cases} R_p & |\lambda-\lambda_c| < 0{,}88\,\tfrac{\Delta\lambda}{2} \\ 0 & |\lambda-\lambda_c| > \tfrac{\Delta\lambda}{2} \end{cases}$$</div>
+<div class="fml-math">$$R(\lambda) = \begin{cases} R_p & |\lambda-\lambda_c| < 0{,}88\,\tfrac{\Delta\lambda}{2} \ 0 & |\lambda-\lambda_c| > \tfrac{\Delta\lambda}{2} \end{cases}$$</div>
 <p>Stosowany: InSb (3–5 µm), MCT/bolometr (8–14 µm).</p>
 
 <h3>Total-power pyrometer (broadband)</h3>
@@ -3532,7 +3532,7 @@ function buildDocsHTML(mode){
     'renderMathInElement(document.body,{',
     '  delimiters:[',
     '    {left:"$$",right:"$$",display:true},',
-    '    {left:"\\\\(",right:"\\\\)",display:false}',
+    '    {left:"\\\\(",right:"\\\)",display:false}',
     '  ],throwOnError:false',
     '});'
   ].join('\n');
@@ -4012,7 +4012,7 @@ const state = {
 
 let lastResult = null;
 let rafId = null;
-let katexRendered = false;  // KaTeX renderuje docsBody tylko raz
+
 let highlightBlock = null;  // aktywny blok schematu ('cb-obj'|'cb-atm'|...) lub null
 let pinnedBlock    = null;  // pinned block (click) — overrides hover
 
@@ -4549,7 +4549,6 @@ function toggleDocs(){
   ov.classList.toggle('open');
   btn.classList.toggle('active');
   // KaTeX — renderuj przy pierwszym otwarciu (defer może nie być gotowy przy window.load)
-  if(ov.classList.contains('open')) tryRenderKatex();
 }
 function closeDocs(e){
   if(e.target===document.getElementById('docsOverlay')) toggleDocs();
@@ -4631,19 +4630,19 @@ function hideTT(){ document.getElementById('tooltip').style.display='none'; }
    INIT
 ───────────────────────────────────────────── */
 window.addEventListener('resize', ()=>scheduleUpdate());
-function tryRenderKatex(){
-  if(katexRendered) return;
-  if(typeof renderMathInElement !== 'function') return;
-  const body = document.getElementById('docsBody');
-  if(!body) return;
-  renderMathInElement(body, {
-    delimiters: [
-      {left: '$$',  right: '$$',  display: true},
-      {left: '\\(', right: '\\)', display: false}
+
+
+
+function renderDocsKatex(){
+  const el = document.getElementById('docsBody');
+  if(!el || !window.renderMathInElement) return;
+  renderMathInElement(el, {
+    delimiters:[
+      {left:'$$', right:'$$', display:true},
+      {left:'\\(', right:'\\)', display:false}
     ],
-    throwOnError: false
+    throwOnError:false
   });
-  katexRendered = true;
 }
 
 
@@ -4661,7 +4660,6 @@ window.addEventListener('load', ()=>{
   scheduleUpdate();
   initChainInteraction();
   // KaTeX — próba przy window.load (jeśli defer już gotowy)
-  tryRenderKatex();
 });
 </script>
 </body>
