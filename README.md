@@ -113,7 +113,7 @@ SymulatorPirometru/
 | Gałąź | Język | Wersja |
 |---|---|---|
 | `main` | 🇵🇱 Polski | **v2.8.0** |
-| `en/english-translation` | 🇬🇧 English | v2.0.0-en *(wymaga aktualizacji)* |
+| `en/english-translation` | 🇬🇧 English | **v2.9.0-en** |
 
 ---
 
