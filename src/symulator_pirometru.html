@@ -984,7 +984,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <!-- ATMOSPHERE -->
     <div class="beg-panel">
-      <div class="beg-label">🌫 Atmosfera</div>
+      <div class="beg-label">🌫 Atmosphere</div>
       <div class="atm-btns">
         <button class="atm-btn active" id="bat0" onclick="begSetAtm(0,'bat0')">
           None<br><small>τ = 1</small>
@@ -1390,16 +1390,16 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="rb-lbl">Error components</div>
       <table class="err-tbl" id="err_tbl">
         <tr><td class="en">Δε-emissivity</td><td class="ev" id="e_eps">—</td></tr>
-        <tr><td class="en">Atmosfera</td><td class="ev" id="e_atm">—</td></tr>
+        <tr><td class="en">Atmosphere</td><td class="ev" id="e_atm">—</td></tr>
         <tr><td class="en">Window</td><td class="ev" id="e_win">—</td></tr>
         <tr><td class="en" style="color:var(--text)">Total ΔT</td><td class="ev" id="e_tot">—</td></tr>
       </table>
     </div>
 
     <div class="rb" style="border-color:var(--border)">
-      <div class="rb-lbl">Parametry spektralne</div>
+      <div class="rb-lbl">Spectral parameters</div>
       <table class="err-tbl">
-        <tr><td class="en">τ̄ w oknie det.</td><td class="ev cy" id="r_tau">—</td></tr>
+        <tr><td class="en">τ̄ in det. window</td><td class="ev cy" id="r_tau">—</td></tr>
         <tr><td class="en">λ<sub>max</sub> Wien</td><td class="ev" id="r_wien" style="color:var(--muted)">—</td></tr>
         <tr><td class="en">Signal S</td><td class="ev" id="r_sig" style="color:var(--pale);font-size:.62rem">—</td></tr>
       </table>
@@ -1501,7 +1501,7 @@ analyzing infrared radiation (IR) emitted by every body above absolute zero.</p>
 <div class="beg-analogy">Every object "glows" with heat. The hotter — the more intensely and at shorter wavelengths.
 Glowing steel shines red because its IR waves are short. Your hand also emits IR — but at wavelengths too long
 for the eye to see.</div>
-<h3>Jak widzisz to na chartie?</h3>
+<h3>How to read the chart?</h3>
 <p>The grey dashed curve (CDC — blackbody) is the <b>maximum possible emission</b> for a given temperature.
 The amber curve below is what the measured object <b>actually emits</b> — always weaker, depending on material.
 The violet curve is the <b>signal reaching the detector</b> after passing through the atmosphere.</p>
@@ -1511,8 +1511,8 @@ The violet curve is the <b>signal reaching the detector</b> after passing throug
   <div class="bsl-row"><div class="bsl-swatch" style="background:var(--signal)"></div><span><b>Violeta</b> — signal na detectorze (po atmosferze)</span></div>
   <div class="bsl-row"><div class="bsl-swatch" style="background:var(--cyan)"></div><span><b>Cyan (dashed)</b> — detector sensitivity R(λ)</span></div>
 </div>
-Move the temperature slider and observe how the curves grow and <b>shift to the left</b>.
-Przy ok. 700°C object becomes visible to the naked eye as a red glow — Wien's law in action.</div>
+<div class="beg-key-box">Move the temperature slider and observe how the curves grow and <b>shift to the left</b>.
+At ~700°C the object becomes visible to the naked eye as a red glow — Wien's law in action.</div>
 </div>
 
 <!-- Sekcja 2 -->
@@ -1523,7 +1523,7 @@ describes how close an object is to an ideal blackbody (ε = 1).</p>
 <div class="beg-analogy">Imagine a heated steel plate and a mirror — both at the same temperature.
 The mirror reflects heat instead of emitting it (ε ≈ 0.05). The plate emits heat efficiently (ε ≈ 0.7–0.9).
 Pyrometer skierowany na lusterko zobaczy prawie nic.</div>
-<h3>Typowe value emissivity</h3>
+<h3>Typical emissivity values</h3>
 <table class="beg-eps-table">
   <tr><th>Material</th><th>ε</th><th>Uwaga</th></tr>
   <tr><td>Polished metal</td><td class="eps-val">0.05–0.15</td><td>Trudny do measurementu — odbija otoczenie</td></tr>
@@ -1543,7 +1543,7 @@ To error — the pyrometer sees too little radiation and underestimates temperat
 and carbon dioxide (CO₂). The longer the optical path, the more radiation is lost along the way.</p>
 <div class="beg-analogy">It is like looking through fog — the thicker and further, the less you see.
 Air is a "fog" for infrared, especially when humid or rich in CO₂ (e.g. near a furnace).</div>
-<h3>Efekt w praktyce</h3>
+<h3>Effect in practice</h3>
 <p>At a short path (2 m, low humidity) the atmosphere absorbs a few percent of signal — small error.
 At a long path (20 m, high humidity) the loss can be significant, especially at long wavelengths.
 <div class="beg-key-box">Try: select detector <b>Far IR 8–14 µm</b>, switch atmosphere to <b>Long (20 m)</b>
@@ -1562,7 +1562,7 @@ Each environment changes gas composition and pressure — and thus transmittance
 On Venus? What about measuring welding temperature through a CO₂ shielding gas curtain? 
 Switch to <b>Expert Mode</b> and find out — the answer is surprising!</div>
 
-<h3>Kluczowe obserwacje</h3>
+<h3>Key observations</h3>
 <p><b>Mars:</b> Even though the air is nearly pure CO₂ (95%), pressure is 170 times lower than on Earth.
 The τ(λ) charts show the atmosphere <i>surprisingly transparent</i> — Beer-Lambert law counts the amount of gas,
 not its concentration.</p>
@@ -1578,7 +1578,7 @@ Observe how the τ(λ) chart and error ΔT change.</div>
 
 <div class="beg-doc-sec">
 <h2 id="beg-s5">5. How to read the charts?</h2>
-<h3>Chart spectrum radiation</h3>
+<h3>Reading the spectrum chart</h3>
 <p>The horizontal axis is wavelength λ (in µm). Shorter wavelengths are closer to visible light (0.4 µm).
 Longer wavelengths are deeper into infrared. The vertical axis is radiation intensity.</p>
 <p>The vertical dashed cyan bar (R(λ)) shows the <b>sensitivity range of the selected detector</b>.
