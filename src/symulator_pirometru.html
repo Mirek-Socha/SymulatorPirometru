@@ -984,7 +984,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     <!-- ATMOSFERA -->
     <div class="beg-panel">
-      <div class="beg-label">🌫 Atmosphere</div>
+      <div class="beg-label">🌫 Atmosfera</div>
       <div class="atm-btns">
         <button class="atm-btn active" id="bat0" onclick="begSetAtm(0,'bat0')">
           Brak<br><small>τ = 1</small>
@@ -1390,7 +1390,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="rb-lbl">Składowe błędu</div>
       <table class="err-tbl" id="err_tbl">
         <tr><td class="en">Δε-emisyjność</td><td class="ev" id="e_eps">—</td></tr>
-        <tr><td class="en">Atmosphere</td><td class="ev" id="e_atm">—</td></tr>
+        <tr><td class="en">Atmosfera</td><td class="ev" id="e_atm">—</td></tr>
         <tr><td class="en">Przesłona</td><td class="ev" id="e_win">—</td></tr>
         <tr><td class="en" style="color:var(--text)">Łącznie ΔT</td><td class="ev" id="e_tot">—</td></tr>
       </table>
@@ -4520,9 +4520,11 @@ function loadPreset(name){
   document.getElementById('sel_win').value = state.windowKey;
   initSliders();
   onWinChange();
+  // Sync beginner atmosfera
+  begSetAtm(state.path, state.path===0?'bat0':state.path<=5?'bat1':'bat2');
   // Sync beginner slider
   const bsl = document.getElementById('beg_sl_T');
-  if(bsl){ const c=Math.round(state.Tobj-273.15); bsl.value=c; }
+  if(bsl){ const c=Math.round(state.Tobj-273.15); bsl.value=c; slPct(bsl); }
   const bnum = document.getElementById('beg_num_T');
   if(bnum) bnum.value = Math.round(state.Tobj-273.15);
   scheduleUpdate();
@@ -4650,8 +4652,9 @@ window.addEventListener('load', ()=>{
   // synchronizuj suwak i pole °C w trybie beginera
   setEnv('earth');  // inicjalizuj środowisko
   onPolyMat('w');    // inicjalizuj poly — wypełnij pola
+  begSetAtm(state.path, state.path===0?'bat0':state.path<=5?'bat1':'bat2');  // sync przyciski atmosfery
   const bsl=document.getElementById('beg_sl_T');
-  if(bsl) bsl.value=Math.round(state.Tobj-273.15);
+  if(bsl){ bsl.value=Math.round(state.Tobj-273.15); slPct(bsl); }
   const bnum=document.getElementById('beg_num_T');
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
