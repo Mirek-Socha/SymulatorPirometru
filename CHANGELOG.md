@@ -5,6 +5,39 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v3.0.0] — 2026-06-11 ✅ bieżąca
+
+### Dodano — trzeci tryb interfejsu: PRO
+
+Architektura trybów rozszerzona z 2 do 3 poziomów:
+
+| Tryb | Zakres |
+|---|---|
+| **Podstawowy** | uproszczony interfejs (5 kontrolek) |
+| **PRO** (nowy) | pełny tor pomiarowy: atmosfera, środowiska, przesłona, detektory, dekompozycja błędów |
+| **Ekspert** | PRO + pirometria dwubarwna + modele emisyjności (H-R, wielomian TPRC) |
+
+- Segment 3 przycisków w nagłówku zastępuje pojedynczy przełącznik
+- Nowa klasa CSS `.eo` (expert-only); `.xo` oznacza odtąd „PRO i wyżej"
+- Higiena stanu: wyjście z trybu Ekspert automatycznie wyłącza tryb dwubarwny
+  i przywraca model ε = const (obliczenia nie są sterowane ukrytymi panelami)
+
+### Zmieniono — dokumentacja rozdzielona na PRO i EKSPERT
+
+- Dokumentacja EKSPERT = dokumentacja PRO + sekcje zaawansowane (rozszerzenie)
+- Sekcja 8 (Pirometria dwubarwna) widoczna tylko w trybie Ekspert
+- Fragmenty modeli H-R i wielomianowego w sekcji 3 — tylko Ekspert
+- Spis treści ukrywa wpisy sekcji eksperckich w trybie PRO
+- `buildDocsHTML()` (drukowanie/nowe okno) obsługuje 3 tryby
+
+### Refaktoryzacja — fundament pod modele powierzchni
+
+- `expertMode` (boolean) → `uiMode` ('beginner' | 'pro' | 'expert')
+- `epsSpectral()` przepisana na **rejestr `EPS_MODELS`** — dodanie nowego
+  modelu emisyjności (Fresnel ε(θ), cienkie warstwy, efekt wnękowy) to
+  nowy wpis w rejestrze, bez zmian w `compute()`
+
+
 ## [v2.9.0] — 2026-05-28 ✅ bieżąca
 
 ### Dodano — interaktywny schemat blokowy

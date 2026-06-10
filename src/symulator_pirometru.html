@@ -300,18 +300,28 @@ button{
 .xo { display:none !important; }           /* expert-only: ukryte domyślnie  */
 .bo { display:none !important; }           /* beginner-only: ukryte domyślnie */
 
+/* ── Tryby UI: beginner / pro / expert ──
+   .bo = tylko beginner | .xo = pro + expert | .eo = tylko expert */
 body.expert   .xo { display:revert !important; }
+body.expert   .eo { display:revert !important; }
 body.expert   .bo { display:none   !important; }
+body.pro      .xo { display:revert !important; }
+body.pro      .eo { display:none   !important; }
+body.pro      .bo { display:none   !important; }
 body.beginner .xo { display:none   !important; }
+body.beginner .eo { display:none   !important; }
 body.beginner .bo { display:revert !important; }
 
 /* Grid items (aside, main, div z grid-area) muszą używać konkretnego display */
 body.expert   aside.xo  { display:flex   !important; flex-direction:column; }
+body.pro      aside.xo  { display:flex   !important; flex-direction:column; }
 body.beginner aside.bo  { display:flex   !important; flex-direction:column; }
 body.expert   section.xo{ display:block  !important; }
+body.pro      section.xo{ display:block  !important; }
 body.beginner div.bo    { display:block  !important; }
 /* Wewnętrzne elementy wynikowe */
 body.expert   .res-col > div.xo { display:block !important; }
+body.pro      .res-col > div.xo { display:block !important; }
 body.beginner .res-col > div.bo { display:block !important; }
 
 /* ── MODE TOGGLE BUTTON ────────────────────────── */
@@ -823,6 +833,18 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   padding:8px 12px;margin:8px 0;font-size:.78rem;color:var(--text);
   line-height:1.6;border-left:3px solid var(--cyan);
 }
+
+/* ── Segment przycisków trybu ── */
+.mode-seg { display:flex; gap:0; border:1px solid var(--border); border-radius:7px; overflow:hidden }
+.mode-seg button {
+  background:var(--card); color:var(--muted); border:none; cursor:pointer;
+  font:600 .68rem 'IBM Plex Mono',monospace; padding:6px 10px;
+  border-right:1px solid var(--border); transition:background .15s,color .15s;
+}
+.mode-seg button:last-child { border-right:none }
+.mode-seg button.active { background:var(--am); color:#1a1208 }
+.mode-seg button:hover:not(.active) { color:var(--ink) }
+@media (max-width:700px){ .mode-seg button { padding:6px 7px; font-size:.6rem } }
 </style>
 </head>
 <body class="theme-dark beginner">
@@ -832,7 +854,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v2.9.0</span>
+    <span class="hdr-ver">v3.0.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -866,7 +888,11 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     <button class="icon-btn xo" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
     <button class="icon-btn bo" id="docsBtnBeg" onclick="toggleDocs()" title="Jak to działa?">📖 Jak to działa?</button>
-    <button class="mode-btn" id="modeBtn" onclick="toggleMode()">🔬 Tryb Eksperta</button>
+    <div class="mode-seg" id="modeSeg">
+      <button id="mseg_beginner" class="active" onclick="setUiMode('beginner')">Podstawowy</button>
+      <button id="mseg_pro" onclick="setUiMode('pro')">PRO</button>
+      <button id="mseg_expert" onclick="setUiMode('expert')">Ekspert</button>
+    </div>
   </div>
 </header>
 
@@ -1051,7 +1077,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
 
     <!-- MODEL EMISYJNOŚCI — tylko Expert -->
-    <div class="ctrl-panel" id="epsModePanel">
+    <div class="ctrl-panel eo" id="epsModePanel">
       <div class="panel-hdr am">🌑 Model emisyjności</div>
 
       <!-- Przełącznik modelu -->
@@ -1248,7 +1274,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div><!-- /ctrl-panel przesłona -->
 
     <!-- TRYB PROCESORA — tylko Expert -->
-    <div class="ctrl-panel xo" id="ratioProcPanel">
+    <div class="ctrl-panel eo" id="ratioProcPanel">
       <div class="panel-hdr am">⚙ Tryb procesora</div>
       <div class="epsm-toggle" style="grid-template-columns:1fr 1fr">
         <button class="epsm-btn active" id="proc_single" onclick="setRatioMode(false)">
@@ -1406,7 +1432,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div>
 
     <!-- WYNIKI DWUBARWNE -->
-    <div class="rb xo" id="rb_ratio" style="display:none;border-color:var(--violet)">
+    <div class="rb eo" id="rb_ratio" style="display:none;border-color:var(--violet)">
       <div class="rb-hdr" style="color:var(--violet)">÷ Pirometria dwubarwna</div>
       <table class="err-tbl">
         <tr><td class="en">S(λ₁)/S(λ₂)</td><td class="ev" id="r_ratio_val" style="color:var(--violet)">—</td></tr>
@@ -1453,7 +1479,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <span class="toc-sub">Fresnel · Beer-Lambert · emisja własna · tabela materiałów</span></li>
     <li><a href="#doc-s7">Modele detektora R(λ)</a>
       <span class="toc-sub">Gauss · prostokąt · szerokopasmowy</span></li>
-    <li><a href="#doc-s8">Pirometria dwubarwna</a>
+    <li class="eo"><a href="#doc-s8">Pirometria dwubarwna</a>
       <span class="toc-sub">Stosunek S₁/S₂ · eliminacja ε · błąd selektywny · pary detektorów</span></li>
     <li><a href="#doc-s9">Całkowanie sygnału i inwersja T</a>
       <span class="toc-sub">Bisekcja 72 iter. · dekompozycja błędów</span></li>
@@ -1662,8 +1688,9 @@ dekomponowany na trzy składowe (zob. sekcja 8).</p>
 <p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze <span class="cite">[5,6]</span>:</p>
 <div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
 <p>Zgodnie z prawem Kirchhoffa <span class="cite">[4]</span>: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
-<div class="warn-box">Domyślny model symulatora to ciało szare (ε = const). Tryb Eksperta oferuje drugi model — <b>Hagen-Rubens</b> — opisujący realistyczną emisyjność metali jako funkcję λ i T.</div>
+<div class="warn-box">Domyślny model symulatora to ciało szare (ε = const). Tryb Eksperta oferuje dodatkowe modele — <b>Hagen-Rubens</b> i <b>wielomianowy (TPRC)</b> — opisujące realistyczną emisyjność jako funkcję λ i T (opis poniżej, widoczny w trybie Eksperta).</div>
 
+<div class="eo"><!-- modele zaawansowane: tylko expert -->
 <h3>Model Hagena-Rubensa — emisyjność spektralna metali</h3>
 <p>Dla metali w zakresie długich fal (λ ≫ głębokość wnikania) emisyjność wynika z teorii elektronowej.
 Korzystając z równań Fresnela przy dużej przewodności elektrycznej <span class="cite">[5,8]</span>:</p>
@@ -1722,6 +1749,7 @@ zaniży temperaturę ceramiki, natomiast MCT może dać prawidłowy wynik przy p
 nie zastępują bezpośrednich pomiarów emisyjności konkretnej próbki. Emisyjność zależy od stanu
 powierzchni, utlenienia, chropowatości i historii termicznej materiału.</div>
 
+</div><!-- /eo modele -->
 <h3>Korekcja temperatury (pirometr monochromatyczny)</h3>
 <p>Jeżeli pirometr wskazuje T_J (temp. jasności), temperatura rzeczywista T_obj przy emisyjności ε wynosi <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
@@ -1936,7 +1964,8 @@ pracować w "oknie" między pasmami CO₂. Standardem przemysłowym jest <b>InSb
 </div>
 
 
-<!-- ──── 8. PIROMETRIA DWUBARWNA ────────────────────────── -->
+<!-- ──── 8. PIROMETRIA DWUBARWNA (expert only) ──────────── -->
+<div class="eo">
 <div class="doc-sec" id="doc-s8">
 <h2>8. Pirometria dwubarwna (stosunkowa)</h2>
 
@@ -1990,6 +2019,7 @@ W rzeczywistym torze pochłanianie atmosferyczne przy λ₁ ≠ pochłanianie pr
 co wprowadza dodatkowy błąd (zwłaszcza przy pasmo CO₂ 4.26 µm w zakresie 3–5 µm).
 Pełny model toru z atmosferą i przesłoną działa poprawnie — stosunek S₁/S₂ wyliczany
 z rzeczywistych sygnałów uwzględnia τ(λ).</div>
+</div><!-- /eo s8 -->
 
 <!-- /doc-sec 8 -->
 
@@ -2086,7 +2116,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v2.9.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.0.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2587,18 +2617,35 @@ function polyEmissivity(lam_um, mat){
 }
 
 /* Główna funkcja emisyjności: zwraca ε dla λ [m], T [K], state */
+/* ── Rejestr modeli emisyjności ──
+   Każdy model: { label, fn(lam_um, T_K, p) → ε }
+   Rozszerzenia (planowane): fresnel (ε(θ)), thinfilm (interferencja),
+   oraz modyfikatory: cavity (efekt wnękowy), roughness.
+   Nowy model = nowy wpis w rejestrze, bez zmian w compute(). */
+const EPS_MODELS = {
+  grey: {
+    label: 'ε = const (ciało szare)',
+    fn: (lam_um, T_K, p) => p.eps_real
+  },
+  hr: {
+    label: 'Hagen-Rubens ε(λ,T)',
+    fn: (lam_um, T_K, p) => {
+      const mat = HR_MATERIALS[appState.hrMat] || HR_MATERIALS.fe;
+      return hagenRubens(lam_um, rhoT(mat, T_K));
+    }
+  },
+  poly: {
+    label: 'Wielomian ε(λ) — dane TPRC',
+    fn: (lam_um, T_K, p) => {
+      const mat = POLY_MATERIALS[appState.polyMat] || POLY_MATERIALS.w;
+      return polyEmissivity(lam_um, mat);
+    }
+  },
+};
+
 function epsSpectral(lam_m, T_K, p){
-  const lam_um = lam_m * 1e6;
-  if(appState.epsModel === 'grey') return p.eps_real;
-  if(appState.epsModel === 'hr'){
-    const mat = HR_MATERIALS[appState.hrMat] || HR_MATERIALS.fe;
-    return hagenRubens(lam_um, rhoT(mat, T_K));
-  }
-  if(appState.epsModel === 'poly'){
-    const mat = POLY_MATERIALS[appState.polyMat] || POLY_MATERIALS.w;
-    return polyEmissivity(lam_um, mat);
-  }
-  return p.eps_real;
+  const model = EPS_MODELS[appState.epsModel] || EPS_MODELS.grey;
+  return model.fn(lam_m * 1e6, T_K, p);
 }
 
 /* Tablica ε(λ) dla całej siatki lam[] — dla wykresów */
@@ -3509,19 +3556,21 @@ function buildDocsHTML(mode){
   const body = document.getElementById('docsBody');
   if(!body) return '';
 
-  // Zbierz treść odpowiednich sekcji
-  const isExpert = document.body.classList.contains('expert');
-  const title = isExpert
+  // Zbierz treść odpowiednich sekcji (3 tryby: beginner / pro / expert)
+  const title = uiMode==='expert'
+    ? 'Pirometria — Dokumentacja fizyczna i algorytmiczna (pełna)'
+    : uiMode==='pro'
     ? 'Pirometria — Dokumentacja fizyczna i algorytmiczna'
     : 'Pirometria — Przewodnik: Jak działa pirometr?';
 
-  // Klonuj docsBody i usuń sekcje drugiego trybu
+  // Klonuj docsBody i usuń sekcje niewidoczne w bieżącym trybie
   const clone = body.cloneNode(true);
-  // Usuń elementy tylko beginner (bo) w trybie expert i vice versa
-  const removeClass = isExpert ? 'bo' : 'xo';
-  clone.querySelectorAll('.'+removeClass).forEach(el=>el.remove());
+  const removeSel = uiMode==='expert' ? '.bo'
+                  : uiMode==='pro'    ? '.bo, .eo'
+                  :                     '.xo, .eo';
+  clone.querySelectorAll(removeSel).forEach(el=>el.remove());
   // Pokaż wszystkie — klonowany DOM nie ma body.expert/beginner context
-  clone.querySelectorAll('.xo,.bo').forEach(el=>{
+  clone.querySelectorAll('.xo,.bo,.eo').forEach(el=>{
     el.style.display='';
   });
 
@@ -3637,7 +3686,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v2.9.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.0.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3891,22 +3940,25 @@ function setEnv(key){
 /* ─────────────────────────────────────────────
    MODE SWITCHING
 ───────────────────────────────────────────── */
-let expertMode = false;
+/* Tryby: beginner (uproszczony) → pro (pełny tor) → expert (pro + ratio + modele ε) */
+const UI_MODES = { beginner:{}, pro:{}, expert:{} };
+let uiMode = 'beginner';
 
-function toggleMode(){
-  expertMode = !expertMode;
-  applyMode();
-}
-function applyMode(){
-  const btn = document.getElementById('modeBtn');
-  if(expertMode){
-    document.body.classList.remove('beginner');
-    document.body.classList.add('expert');
-    btn.textContent = '🎓 Tryb Podstawowy';
-  } else {
-    document.body.classList.remove('expert');
-    document.body.classList.add('beginner');
-    btn.textContent = '🔬 Tryb Eksperta';
+function setUiMode(mode){
+  if(!UI_MODES[mode]) mode = 'beginner';
+  uiMode = mode;
+  document.body.classList.remove('beginner','pro','expert');
+  document.body.classList.add(mode);
+  // Podświetl aktywny przycisk segmentu
+  ['beginner','pro','expert'].forEach(k=>{
+    const b = document.getElementById('mseg_'+k);
+    if(b) b.classList.toggle('active', k===mode);
+  });
+  // Higiena stanu: poza trybem expert wyłącz funkcje eksperckie,
+  // by obliczenia nie były sterowane przez ukryte panele
+  if(mode !== 'expert'){
+    if(appState.ratioMode) setRatioMode(false);
+    if(appState.epsModel !== 'grey') setEpsModel('grey');
   }
   // tauCanvas był display:none w trybie podstawowym — czekamy jeden frame
   // aż przeglądarka policzy layout przed rysowaniem
@@ -3915,6 +3967,11 @@ function applyMode(){
     resizeCanvas(tauCanvas);
     scheduleUpdate();
   });
+}
+
+/* Zgodność wsteczna: cykliczne przełączanie (dokumentacja odsyła do trybów) */
+function toggleMode(){
+  setUiMode(uiMode==='beginner' ? 'pro' : uiMode==='pro' ? 'expert' : 'beginner');
 }
 
 /* ─────────────────────────────────────────────
