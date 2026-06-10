@@ -986,10 +986,10 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <div class="beg-panel">
       <div class="beg-label">🌫 Atmosphere</div>
       <div class="atm-btns">
-        <button class="atm-btn active" id="bat0" onclick="begSetAtm(0,'bat0')">
+        <button class="atm-btn" id="bat0" onclick="begSetAtm(0,'bat0')">
           None<br><small>τ = 1</small>
         </button>
-        <button class="atm-btn" id="bat1" onclick="begSetAtm(2,'bat1')">
+        <button class="atm-btn active" id="bat1" onclick="begSetAtm(2,'bat1')">
           Short<br><small>2 m</small>
         </button>
         <button class="atm-btn" id="bat2" onclick="begSetAtm(20,'bat2')">
@@ -4521,9 +4521,10 @@ function loadPreset(name){
   document.getElementById('sel_win').value = state.windowKey;
   initSliders();
   onWinChange();
+  begSetAtm(state.path, state.path===0?'bat0':state.path<=5?'bat1':'bat2');
   // Sync beginner slider
   const bsl = document.getElementById('beg_sl_T');
-  if(bsl){ const c=Math.round(state.Tobj-273.15); bsl.value=c; }
+  if(bsl){ const c=Math.round(state.Tobj-273.15); bsl.value=c; slPct(bsl); }
   const bnum = document.getElementById('beg_num_T');
   if(bnum) bnum.value = Math.round(state.Tobj-273.15);
   scheduleUpdate();
@@ -4655,8 +4656,9 @@ window.addEventListener('load', ()=>{
   // synchronizuj suwak i pole °C w trybie beginera
   setEnv('earth');  // initialise environment
   onPolyMat('w');    // initialise poly — fill fields
+  begSetAtm(state.path, state.path===0?'bat0':state.path<=5?'bat1':'bat2');
   const bsl=document.getElementById('beg_sl_T');
-  if(bsl) bsl.value=Math.round(state.Tobj-273.15);
+  if(bsl){ bsl.value=Math.round(state.Tobj-273.15); slPct(bsl); }
   const bnum=document.getElementById('beg_num_T');
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
