@@ -1,6 +1,6 @@
 # Pirometria — Symulator Toru Pomiarowego
 
-**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny 6-blokowy tor pomiarowy z dwoma trybami obsługi, sześcioma środowiskami atmosferycznymi i trzema modelami emisyjności.
+**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny 6-blokowy tor pomiarowy z **trzema trybami obsługi**, sześcioma środowiskami atmosferycznymi, trzema modelami emisyjności i modelowaniem odbić promieniowania otoczenia.
 
 > Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury  
 > **Mirosław Socha** · Katedra Metrologii i Elektroniki · WEAIiIB · AGH Kraków
@@ -14,7 +14,9 @@ Brak instalacji, brak serwera, brak zależności lokalnych. CDN: Google Fonts + 
 
 ---
 
-## Dwa tryby obsługi
+## Trzy tryby obsługi
+
+Segment przełącznika w nagłówku: **Podstawowy → PRO → Ekspert**. Każdy kolejny tryb jest nadzbiorem poprzedniego.
 
 ### 🎓 Tryb Podstawowy (domyślny)
 Dla studentów bez doświadczenia z pirometrią:
@@ -25,31 +27,38 @@ Dla studentów bez doświadczenia z pirometrią:
 - Sygnalizacja świetlna ΔT 🟢🟡🔴
 - Wbudowany przewodnik „Jak działa pirometr?" (5 sekcji z analogiami)
 
-### 🔬 Tryb Eksperta
-Pełny model fizyczny — wszystkie parametry toru:
+### ⚙️ Tryb PRO
+Pełny tor pomiarowy bez elementów najbardziej zaawansowanych:
 - Temperatura 10 K – 12 000 K (suwak w K + pole °C)
-- **Model emisyjności**: szara / Hagen-Rubens ε(λ,T) (8 materiałów) / wielomianowy TPRC (9 materiałów)
 - **6 środowisk atmosferycznych**: Ziemia, Mars, Wenus, woda, NH₃ MOCVD, CO₂ tech.
 - 4 suwaki atmosferyczne: droga L, wilgotność RH, CO₂ [ppm], T_atm
+- **Odbicia promieniowania otoczenia**: (1−ε)·L_bb(T_otocz) z polem T_otocz
 - Przesłona optyczna: 6 materiałów, grubość d (Beer-Lambert), temperatura (emisja własna)
 - 7 typów detektorów z krzywą R(λ) na wykresie widmowym
-- Dwa wykresy: widmo promieniowania + transmitancja τ(λ)
+- Dwa wykresy: widmo promieniowania + transmitancja τ(λ), z wizualizacją przesterowania (>100%)
+- Budżet błędów 4-składowy: ΔT_ε + ΔT_refl + ΔT_atm + ΔT_win
+- Dokumentacja PRO: pełny opis toru z wzorami KaTeX
+
+### 🔬 Tryb Eksperta
+PRO + elementy najbardziej zaawansowane:
+- **Model emisyjności**: szara / Hagen-Rubens ε(λ,T) (8 materiałów) / wielomianowy TPRC (9 materiałów)
 - **Tryb procesora**: Jednobarwny / Dwubarwny (ratio S₁/S₂ → T_ratio)
-- Budżet błędów 3-składowy: ΔT_ε + ΔT_atm + ΔT_win
-- Dokumentacja: 12 sekcji z wzorami KaTeX + bibliografia 15 pozycji
+- Dokumentacja Ekspert = dokumentacja PRO + sekcja pirometrii dwubarwnej i modeli emisyjności (rozszerzenie)
 
 ---
 
 ## Tor pomiarowy — 6 bloków
 
 ```
-[Obiekt T,ε(λ,T)] → [Atmosfera P,τ_atm(λ)] → [Przesłona τ_win(λ,d)] → [Detektor R(λ)] → [Procesor ε_zał] → T_ind
+[Obiekt T,ε + odbicia] → [Atmosfera P,τ_atm(λ)] → [Przesłona τ_win(λ,d)] → [Detektor R(λ)] → [Procesor ε_zał] → T_ind
 ```
 
 Równanie sygnału na wejściu detektora:
 
 ```
-L_det(λ) = τ_win(λ) · [ τ_atm(λ)·ε(λ,T)·L_bb(λ,T_obj)
+L_obj(λ) = ε(λ,T)·L_bb(λ,T_obj) + [1−ε(λ,T)]·L_bb(λ,T_otocz)   ← emisja + odbicia otoczenia
+
+L_det(λ) = τ_win(λ) · [ τ_atm(λ)·L_obj(λ)
                         + [1−τ_atm(λ)]·L_bb(λ,T_atm) ]
           + [1−τ_win(λ)]·L_bb(λ,T_win)
 ```
@@ -102,7 +111,7 @@ L_det(λ) = τ_win(λ) · [ τ_atm(λ)·ε(λ,T)·L_bb(λ,T_obj)
 ```
 SymulatorPirometru/
 ├── src/
-│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~4360 linii)
+│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~4800 linii)
 ├── CHANGELOG.md
 ├── README.md
 └── .gitignore
@@ -112,8 +121,8 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v2.8.0** |
-| `en/english-translation` | 🇬🇧 English | **v2.9.0-en** |
+| `main` | 🇵🇱 Polski | **v3.1.1** |
+| `en/english-translation` | 🇬🇧 English | **v3.1.1-en** |
 
 ---
 
@@ -121,7 +130,11 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
-| **v2.8.0** | Refactoring Faza 4: CONFIG object — magic numbers zastąpione nazwanymi stałymi |
+| **v3.1.1** | Poprawki UI: kontrast przycisków trybu, reorganizacja paneli, pole T_otocz, wizualizacja przesterowania (>100%) i warstwy odbić |
+| v3.1.0 | Modelowanie odbić promieniowania otoczenia (1−ε)·L_bb(T_otocz), składowa błędu ΔT_refl (tryb PRO) |
+| v3.0.0 | Trzeci tryb UI — PRO między Podstawowym a Ekspertem; rozdzielenie dokumentacji PRO/Ekspert; rejestr EPS_MODELS |
+| v2.9.0 | Pełne tłumaczenie EN (gałąź en); interaktywny schemat blokowy |
+| v2.8.0 | Refactoring Faza 4: CONFIG object — magic numbers zastąpione nazwanymi stałymi |
 | v2.7.0 | Refactoring Faza 3: Modularyzacja — 8 sekcji MODULE w JS |
 | v2.6.0 | Refactoring Faza 2: State Management — `appState` object, 8 globals → 1 obiekt |
 | v2.5.0 | Refactoring Faza 1: konsolidacja CSS/JS (−50% rozmiaru pliku), fix duplikat UI, fix KaTeX |
