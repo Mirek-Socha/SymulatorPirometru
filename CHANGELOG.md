@@ -5,6 +5,23 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v3.1.0] — 2026-06-11 ✅ bieżąca
+
+### Dodano — modelowanie odbić promieniowania otoczenia (tryb PRO)
+
+Obiekt rzeczywisty (ε < 1) odbija część promieniowania otoczenia:
+**L_obj(λ) = ε·L_bb(T_obj) + (1−ε)·L_bb(T_otocz)** (prawo Kirchhoffa).
+
+- Nowy panel „🪞 Otoczenie (odbicia)" — checkbox + suwak T_otocz (0–1500°C)
+- Nowa składowa błędu **ΔT_refl** w tabeli Wyniki (dekompozycja: ε → odbicia → atmosfera → przesłona)
+- Dostępne od trybu PRO (fizyka pierwszego rzędu, nie wymaga trybu Eksperta)
+- Higiena stanu: tryb Podstawowy automatycznie wyłącza odbicia
+- Dokumentacja: pod-sekcja „Odbicia promieniowania otoczenia" w sekcji 1 + hasło ΔT_refl w słowniku
+
+Efekt dydaktyczny: błyszczący metal (ε≈0.1) odbija 90% promieniowania ścian —
+przy gorącym otoczeniu pirometr drastycznie zawyża temperaturę.
+
+
 ## [v3.0.0] — 2026-06-11 ✅ bieżąca
 
 ### Dodano — trzeci tryb interfejsu: PRO

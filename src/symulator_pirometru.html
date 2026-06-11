@@ -854,7 +854,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v3.0.0</span>
+    <span class="hdr-ver">v3.1.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1273,6 +1273,27 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       </div>
     </div><!-- /ctrl-panel przesłona -->
 
+    <!-- OTOCZENIE — odbicia (PRO i wyżej) -->
+    <div class="ctrl-panel xo" id="surrPanel">
+      <div class="panel-hdr re">🪞 Otoczenie (odbicia)</div>
+      <label class="chk-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer">
+        <input type="checkbox" id="chk_refl" onchange="setRefl(this.checked)">
+        <span style="font-size:.78rem">Uwzględnij odbicia ścian/otoczenia</span>
+      </label>
+      <div id="surr_params" style="display:none">
+        <div class="sl-row">
+          <span class="sl-name">T<sub>otocz</sub></span>
+          <input type="range" id="sl_Tsurr" min="0" max="1500" step="10" value="20"
+                 oninput="onSl(this,'Tsurr')">
+          <span class="sl-val" id="val_Tsurr">20 °C</span>
+        </div>
+        <div class="hint-sm" style="font-size:.68rem;color:var(--muted);margin-top:6px;line-height:1.4">
+          Obiekt o emisyjności ε odbija (1−ε) promieniowania otoczenia.
+          Dla błyszczących metali (ε≈0.1) odbicia gorących ścian dają duży błąd dodatni.
+        </div>
+      </div>
+    </div>
+
     <!-- TRYB PROCESORA — tylko Expert -->
     <div class="ctrl-panel eo" id="ratioProcPanel">
       <div class="panel-hdr am">⚙ Tryb procesora</div>
@@ -1416,6 +1437,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="rb-lbl">Składowe błędu</div>
       <table class="err-tbl" id="err_tbl">
         <tr><td class="en">Δε-emisyjność</td><td class="ev" id="e_eps">—</td></tr>
+        <tr class="xo" id="e_refl_row"><td class="en">Odbicia otocz.</td><td class="ev" id="e_refl">—</td></tr>
         <tr><td class="en">Atmosfera</td><td class="ev" id="e_atm">—</td></tr>
         <tr><td class="en">Przesłona</td><td class="ev" id="e_win">—</td></tr>
         <tr><td class="en" style="color:var(--text)">Łącznie ΔT</td><td class="ev" id="e_tot">—</td></tr>
@@ -1644,7 +1666,7 @@ L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[
 <p style="font-size:.75rem;color:var(--muted);margin-top:2px">
 τ_atm(λ) — transmitancja atmosfery · τ_win(λ) — transmitancja przesłony ·
 ε(λ,T) — emisyjność obiektu (model szary: const; model H-R: f(λ,T)) ·
-odbicia tła pominięte (T_tła ≈ T_atm)
+odbicia otoczenia (1−ε)·L_bb(T_otocz) — opcjonalne, panel „🪞 Otoczenie"
 </p>
 
 <p>Procesor pirometru zakłada uproszczony model: ciało szare o emisyjności ε_zał,
@@ -1661,6 +1683,18 @@ dekomponowany na trzy składowe (zob. sekcja 8).</p>
   <tr><td>6 · Wynik</td><td>T_ind ± ΔT (3 składowe)</td><td>panel Wyniki</td></tr>
 </table>
 </div>
+<h3>Odbicia promieniowania otoczenia</h3>
+<p>Obiekt rzeczywisty (ε &lt; 1) nie tylko emituje, ale i <b>odbija</b> promieniowanie padające z otoczenia.
+Gdy ściany komory, piec lub inne gorące powierzchnie otaczają obiekt, radiancja u źródła wynosi:</p>
+<div class="fml-math">$$L_{\mathrm{obj}}(\lambda) = \varepsilon(\lambda)\,L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\varepsilon(\lambda)]\,L_{bb}(\lambda,T_{\mathrm{otocz}})$$</div>
+<p>Drugi człon to odbita część promieniowania otoczenia (z prawa Kirchhoffa współczynnik odbicia = 1−ε
+dla powierzchni nieprzezroczystej). Efekt jest <b>tym silniejszy, im niższa emisyjność</b>: błyszczący metal
+(ε ≈ 0.1) odbija 90% promieniowania otoczenia. Jeśli otoczenie jest cieplejsze od obiektu, pirometr
+<b>zawyża</b> temperaturę; jeśli chłodniejsze — zaniża.</p>
+<div class="warn-box">Składowa błędu <b>ΔT<sub>refl</sub></b> w tabeli Wyniki pokazuje wkład odbić.
+Włącz panel „🪞 Otoczenie" i ustaw T<sub>otocz</sub> &gt; T<sub>obj</sub> przy niskiej ε — błąd rośnie dramatycznie.
+To główny powód, dla którego pomiar błyszczących metali w piecu jest trudny.</div>
+
 
 <!-- ──── 2. PRAWO PLANCKA ─────────────────── -->
 <div class="doc-sec" id="doc-s2">
@@ -2059,7 +2093,8 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}} + \Delta T_{\mathr
 <table class="beg-eps-table">
   <tr><th>Składowa</th><th>Co uwzględnia</th><th>Typowy znak</th></tr>
   <tr><td>ΔT_ε</td><td>Błąd emisyjności: ε_real ≠ ε_zał (lub ε(λ) ≠ ε_zał w modelu H-R)</td><td>ujemny gdy ε_real &lt; ε_zał</td></tr>
-  <tr><td>ΔT_atm</td><td>Atmosfera: tłumienie + emisja własna gazu</td><td>ujemny (tłumienie) lub dodatni (hot gas)</td></tr>
+  <tr><td>ΔT_refl</td><td>Składowa błędu od odbić promieniowania otoczenia (1−ε)·L_bb(T_otocz)</td></tr>
+<tr><td>ΔT_atm</td><td>Atmosfera: tłumienie + emisja własna gazu</td><td>ujemny (tłumienie) lub dodatni (hot gas)</td></tr>
   <tr><td>ΔT_win</td><td>Przesłona: tłumienie τ_win + emisja własna T_win</td><td>ujemny (zimna) lub dodatni (gorąca)</td></tr>
 </table>
 
@@ -2116,7 +2151,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v3.0.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.1.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2866,6 +2901,8 @@ function compute(p){
   const Twin_K = (p.windowTemp ?? 25) + 273.15;   // temperatura przesłony
   const thick  = p.windowThick ?? (WINDOWS[p.windowKey]?.defaultThick ?? 5);
   const det = DETS[p.detKey];
+  const reflOn  = !!p.reflOn;                      // odbicia otoczenia włączone?
+  const Tsurr_K = (p.Tsurr ?? 20) + 273.15;        // temperatura otoczenia [K]
 
   const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[], Eps=[];
   let signal=0, tw=0, ts=0, twww=0;
@@ -2874,7 +2911,10 @@ function compute(p){
     const lam=lams[i];
     const bb = planck(lam, Tobj_K);
     const epsSp = epsSpectral(lam, Tobj_K, p);  // ε(λ,T) — grey lub H-R
-    const em = epsSp * bb;
+    // Emisja obiektu + odbicie otoczenia: (1−ε)·L_bb(T_surr) [prawo Kirchhoffa]
+    const em = reflOn
+      ? epsSp * bb + (1 - epsSp) * planck(lam, Tsurr_K)
+      : epsSp * bb;
     const ta = atmTau(lam, p.path, p.rh, p.co2, env);
     const la = (1-ta)*planck(lam, Tatm_K);
     const lAfterAtm = ta*em + la;
@@ -2898,12 +2938,24 @@ function compute(p){
     sig_eps += detResp(lams[i],det)*epsSpectral(lams[i],Tobj_K,p)*planck(lams[i],Tobj_K)*DL;
   const T_eps_K = invertTemp(sig_eps, det, p.eps_assumed);
 
-  // 2. Emisyjność + atmosfera (τ_win=1)
+  // 2. Emisyjność + odbicie otoczenia (τ_atm=1, τ_win=1)
+  let sig_refl=0;
+  for(let i=0;i<=N;i++){
+    const lam=lams[i], es=epsSpectral(lam,Tobj_K,p);
+    const emR = reflOn ? es*planck(lam,Tobj_K)+(1-es)*planck(lam,Tsurr_K)
+                       : es*planck(lam,Tobj_K);
+    sig_refl += detResp(lam,det)*emR*DL;
+  }
+  const T_refl_K = invertTemp(sig_refl, det, p.eps_assumed);
+
+  // 3. Emisyjność + odbicie + atmosfera (τ_win=1)
   let sig_atm=0;
   for(let i=0;i<=N;i++){
-    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2);
+    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2), es=epsSpectral(lam,Tobj_K,p);
+    const emR = reflOn ? es*planck(lam,Tobj_K)+(1-es)*planck(lam,Tsurr_K)
+                       : es*planck(lam,Tobj_K);
     const la=(1-ta)*planck(lam,p.Tatm+273.15);
-    sig_atm += detResp(lam,det)*(ta*epsSpectral(lam,Tobj_K,p)*planck(lam,Tobj_K)+la)*DL;
+    sig_atm += detResp(lam,det)*(ta*emR+la)*DL;
   }
   const T_atm_K = invertTemp(sig_atm, det, p.eps_assumed);
 
@@ -2921,9 +2973,11 @@ function compute(p){
     T_ind: T_ind_C, T_ind_K,
     Tobj_C, Tobj_K,
     dT:     T_ind_K - Tobj_K,
-    dT_eps: T_eps_K - Tobj_K,
-    dT_atm: T_atm_K - T_eps_K,
-    dT_win: T_ind_K - T_atm_K,
+    dT_eps:  T_eps_K  - Tobj_K,
+    dT_refl: T_refl_K - T_eps_K,
+    dT_atm:  T_atm_K  - T_refl_K,
+    dT_win:  T_ind_K  - T_atm_K,
+    reflOn,
     signal, tau_avg, win_avg, wien_um, Tind_arr, det,
     winKey: p.windowKey, Twin_K, thick
   };
@@ -3686,7 +3740,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v3.0.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.1.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3822,6 +3876,16 @@ function onHrSlider(el, param){
 /* ─────────────────────────────────────────────
    RATIO PYROMETRY UI
 ───────────────────────────────────────────── */
+
+function setRefl(on){
+  state.reflOn = !!on;
+  const prm = document.getElementById('surr_params');
+  if(prm) prm.style.display = on ? 'block' : 'none';
+  const row = document.getElementById('e_refl_row');
+  if(row) row.style.display = on ? '' : 'none';
+  scheduleUpdate();
+}
+
 function setRatioMode(enabled){
   appState.ratioMode = enabled;
   const btnS=document.getElementById('proc_single');
@@ -3954,11 +4018,14 @@ function setUiMode(mode){
     const b = document.getElementById('mseg_'+k);
     if(b) b.classList.toggle('active', k===mode);
   });
-  // Higiena stanu: poza trybem expert wyłącz funkcje eksperckie,
-  // by obliczenia nie były sterowane przez ukryte panele
-  if(mode !== 'expert'){
+  // Higiena stanu: ukryte panele nie mogą sterować obliczeniami
+  if(mode !== 'expert'){          // ratio i modele ε: tylko expert
     if(appState.ratioMode) setRatioMode(false);
     if(appState.epsModel !== 'grey') setEpsModel('grey');
+  }
+  if(mode === 'beginner'){        // odbicia otoczenia: PRO i wyżej
+    if(state.reflOn) setRefl(false);
+    const chk=document.getElementById('chk_refl'); if(chk) chk.checked=false;
   }
   // tauCanvas był display:none w trybie podstawowym — czekamy jeden frame
   // aż przeglądarka policzy layout przed rysowaniem
@@ -4066,7 +4133,8 @@ const appState = {
 const state = {
   Tobj:1473, eps_real:.70, path:2, rh:50, co2:400, Tatm:20,
   detKey:'band_065', eps_assumed:.70, windowKey:'none',
-  windowTemp:25, windowThick:5
+  windowTemp:25, windowThick:5,
+  Tsurr:20, reflOn:false   // odbicia otoczenia: T ścian [°C], włączone?
 };
 
 let lastResult = null;
@@ -4229,6 +4297,7 @@ function updateResults(res, p){
   const fmt=v=>(v>=0?'+':'')+v.toFixed(1)+' K';
   const cls=v=>Math.abs(v)<0.3?'ev ok':v>0?'ev pos':'ev neg';
   document.getElementById('e_eps').textContent=fmt(res.dT_eps); document.getElementById('e_eps').className=cls(res.dT_eps);
+  { const er=document.getElementById('e_refl'); if(er){ er.textContent=fmt(res.dT_refl); er.className=cls(res.dT_refl);} }
   document.getElementById('e_atm').textContent=fmt(res.dT_atm); document.getElementById('e_atm').className=cls(res.dT_atm);
   const ew=document.getElementById('e_win'); ew.textContent=fmt(res.dT_win); ew.className=cls(res.dT_win);
   document.getElementById('e_tot').textContent=fmt(dT); document.getElementById('e_tot').className=cls(dT);
@@ -4287,7 +4356,7 @@ function onSl(el, key){
   slPct(el);
   const labels = {
     path:v+' m', rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
-    windowThick: v.toFixed(1)+' mm', windowTemp: v.toFixed(0)+' °C',
+    windowThick: v.toFixed(1)+' mm', windowTemp: v.toFixed(0)+' °C', Tsurr: v.toFixed(0)+' °C',
   };
   const ve = document.getElementById('val_'+key);
   if(ve) ve.textContent = labels[key]||v;
@@ -4499,6 +4568,7 @@ function initSliders(){
     ['sl_Tobj','Tobj'],['sl_eps_real','eps_real'],['sl_path','path'],
     ['sl_rh','rh'],['sl_co2','co2'],['sl_Tatm','Tatm'],['sl_eps_assumed','eps_assumed'],
     ['sl_windowThick','windowThick'],['sl_windowTemp','windowTemp'],
+    ['sl_Tsurr','Tsurr'],
   ];
   map.forEach(([id,key])=>{
     const el=document.getElementById(id);
@@ -4535,7 +4605,7 @@ function initSliders(){
     if(ve){
       const v=state[key];
       const labels={path:v+' m',rh:v+' %',co2:v+' ppm',
-        windowThick:v.toFixed(1)+' mm',windowTemp:v.toFixed(0)+' °C'};
+        windowThick:v.toFixed(1)+' mm',windowTemp:v.toFixed(0)+' °C',Tsurr:v.toFixed(0)+' °C'};
       ve.textContent=labels[key]||v;
     }
   });
