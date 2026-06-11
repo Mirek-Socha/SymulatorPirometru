@@ -837,13 +837,14 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 /* ── Segment przycisków trybu ── */
 .mode-seg { display:flex; gap:0; border:1px solid var(--border); border-radius:7px; overflow:hidden }
 .mode-seg button {
-  background:var(--card); color:var(--muted); border:none; cursor:pointer;
+  background:var(--card); color:var(--text); border:none; cursor:pointer;
   font:600 .68rem 'IBM Plex Mono',monospace; padding:6px 10px;
   border-right:1px solid var(--border); transition:background .15s,color .15s;
+  opacity:.62;
 }
 .mode-seg button:last-child { border-right:none }
-.mode-seg button.active { background:var(--am); color:#1a1208 }
-.mode-seg button:hover:not(.active) { color:var(--ink) }
+.mode-seg button.active { background:var(--amber); color:#1a1208; opacity:1 }
+.mode-seg button:hover:not(.active) { opacity:1; background:var(--surf) }
 @media (max-width:700px){ .mode-seg button { padding:6px 7px; font-size:.6rem } }
 </style>
 </head>
@@ -854,7 +855,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v3.1.0</span>
+    <span class="hdr-ver">v3.1.1</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1076,6 +1077,30 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
 
 
+    <!-- OTOCZENIE — odbicia (PRO i wyżej) -->
+    <div class="ctrl-panel xo" id="surrPanel">
+      <div class="panel-hdr re">🪞 Otoczenie (odbicia)</div>
+      <label class="chk-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer">
+        <input type="checkbox" id="chk_refl" onchange="setRefl(this.checked)">
+        <span style="font-size:.78rem">Uwzględnij odbicia ścian/otoczenia</span>
+      </label>
+      <div id="surr_params" style="display:none">
+        <div class="sl-row">
+          <span class="sl-name">T<sub>otocz</sub></span>
+          <input type="range" id="sl_Tsurr" min="0" max="1500" step="10" value="20"
+                 oninput="onSl(this,'Tsurr')">
+          <input type="number" id="num_Tsurr" class="sl-num"
+                 min="0" max="1500" step="1" value="20"
+                 title="Wpisz T otoczenia w °C, zatwierdź Enter"
+                 onchange="onNumTsurr(this)" onkeydown="if(event.key==='Enter')onNumTsurr(this)">
+        </div>
+        <div class="hint-sm" style="font-size:.68rem;color:var(--muted);margin-top:6px;line-height:1.4">
+          Obiekt o emisyjności ε odbija (1−ε) promieniowania otoczenia.
+          Dla błyszczących metali (ε≈0.1) odbicia gorących ścian dają duży błąd dodatni.
+        </div>
+      </div>
+    </div>
+
     <!-- MODEL EMISYJNOŚCI — tylko Expert -->
     <div class="ctrl-panel eo" id="epsModePanel">
       <div class="panel-hdr am">🌑 Model emisyjności</div>
@@ -1185,6 +1210,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
     </div>
 
+
     <!-- ŚRODOWISKO — panel eksperta -->
     <div class="ctrl-panel" id="envPanel">
       <div class="panel-hdr re">🌐 Środowisko / atmosfera</div>
@@ -1273,26 +1299,6 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       </div>
     </div><!-- /ctrl-panel przesłona -->
 
-    <!-- OTOCZENIE — odbicia (PRO i wyżej) -->
-    <div class="ctrl-panel xo" id="surrPanel">
-      <div class="panel-hdr re">🪞 Otoczenie (odbicia)</div>
-      <label class="chk-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer">
-        <input type="checkbox" id="chk_refl" onchange="setRefl(this.checked)">
-        <span style="font-size:.78rem">Uwzględnij odbicia ścian/otoczenia</span>
-      </label>
-      <div id="surr_params" style="display:none">
-        <div class="sl-row">
-          <span class="sl-name">T<sub>otocz</sub></span>
-          <input type="range" id="sl_Tsurr" min="0" max="1500" step="10" value="20"
-                 oninput="onSl(this,'Tsurr')">
-          <span class="sl-val" id="val_Tsurr">20 °C</span>
-        </div>
-        <div class="hint-sm" style="font-size:.68rem;color:var(--muted);margin-top:6px;line-height:1.4">
-          Obiekt o emisyjności ε odbija (1−ε) promieniowania otoczenia.
-          Dla błyszczących metali (ε≈0.1) odbicia gorących ścian dają duży błąd dodatni.
-        </div>
-      </div>
-    </div>
 
     <!-- TRYB PROCESORA — tylko Expert -->
     <div class="ctrl-panel eo" id="ratioProcPanel">
@@ -1374,6 +1380,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
       <div class="leg" id="leg-eps-model" style="display:none"><div class="leg-line" style="background:var(--amber);border-top:2px dashed var(--amber)"></div><span id="leg-eps-label">ε(λ)</span></div>
       <div class="leg"><div class="leg-fill" style="background:var(--red);opacity:.5"></div>Emisja atm.</div>
+      <div class="leg" id="leg-refl" style="display:none"><div class="leg-fill" style="background:var(--violet);opacity:.5"></div>Odbicia otocz.</div>
       <div class="leg"><div class="leg-line" style="background:var(--signal);height:3px"></div>Sygnał na det.</div>
       <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:2px dashed var(--cyan)"></div>Odczyt T<sub>ind</sub></div>
       <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.3"></div>R(λ) det. [góra]</div>
@@ -2151,7 +2158,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v3.1.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.1.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2904,7 +2911,7 @@ function compute(p){
   const reflOn  = !!p.reflOn;                      // odbicia otoczenia włączone?
   const Tsurr_K = (p.Tsurr ?? 20) + 273.15;        // temperatura otoczenia [K]
 
-  const Lbb=[], Lemit=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[], Eps=[];
+  const Lbb=[], Lemit=[], Lrefl=[], tau=[], Latm=[], Lwin=[], Lwin_emit=[], Ldet=[], R=[], Eps=[];
   let signal=0, tw=0, ts=0, twww=0;
 
   for(let i=0;i<=N;i++){
@@ -2912,9 +2919,9 @@ function compute(p){
     const bb = planck(lam, Tobj_K);
     const epsSp = epsSpectral(lam, Tobj_K, p);  // ε(λ,T) — grey lub H-R
     // Emisja obiektu + odbicie otoczenia: (1−ε)·L_bb(T_surr) [prawo Kirchhoffa]
-    const em = reflOn
-      ? epsSp * bb + (1 - epsSp) * planck(lam, Tsurr_K)
-      : epsSp * bb;
+    const emObj  = epsSp * bb;                                    // emisja własna obiektu
+    const reflTerm = reflOn ? (1 - epsSp) * planck(lam, Tsurr_K) : 0;  // odbite z otoczenia
+    const em = emObj + reflTerm;
     const ta = atmTau(lam, p.path, p.rh, p.co2, env);
     const la = (1-ta)*planck(lam, Tatm_K);
     const lAfterAtm = ta*em + la;
@@ -2923,7 +2930,7 @@ function compute(p){
     const lwe = (1 - tw_win) * planck(lam, Twin_K);
     const ld  = tw_win * lAfterAtm + lwe;
     const r   = detResp(lam, det);
-    Lbb.push(bb); Lemit.push(em); tau.push(ta); Eps.push(epsSp);
+    Lbb.push(bb); Lemit.push(emObj); Lrefl.push(reflTerm); tau.push(ta); Eps.push(epsSp);
     Latm.push(la); Lwin.push(tw_win); Lwin_emit.push(lwe); Ldet.push(ld); R.push(r);
     signal += r*ld*DL;
     if(r>0.01){ tw+=r; ts+=ta*r; twww+=tw_win*r; }
@@ -2968,7 +2975,7 @@ function compute(p){
   const Tobj_C  = Tobj_K  - 273.15;
 
   return {
-    Lbb, Lemit, tau, Latm, Lwin, Lwin_emit, Ldet, R, Eps,
+    Lbb, Lemit, Lrefl, tau, Latm, Lwin, Lwin_emit, Ldet, R, Eps,
     lam_um: lams.map(x=>x*1e6),
     T_ind: T_ind_C, T_ind_K,
     Tobj_C, Tobj_K,
@@ -2979,6 +2986,7 @@ function compute(p){
     dT_win:  T_ind_K  - T_atm_K,
     reflOn,
     signal, tau_avg, win_avg, wien_um, Tind_arr, det,
+    Ldet_max: Math.max(...Ldet, 1e-30),  // szczyt sygnału na detektorze (dla skali)
     winKey: p.windowKey, Twin_K, thick
   };
 }
@@ -3247,12 +3255,21 @@ function drawSpec(res, p){
     ? u => pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
     : u => pL + W2 * (u-lamMin)/(lamMax-lamMin);
 
-  const gMax = Math.max(...res.Lbb, 1e-30);
-  // Widmo zaczyna się PONIŻEJ strefy R(λ)
-  const Rz = Math.round(H2*CONFIG.RZONE_FRAC);  // rezerwuj górne 22% na R(λ)
-  const specTop = pT + Rz;         // góra widma
-  const specH   = H2 - Rz;         // wysokość widma
-  const ly = v => specTop + specH*(1 - Math.min(v/gMax, CONFIG.R_OVERDRAW));
+  // Skala odniesienia: radiancja CDC obiektu = poziom 100%
+  const gRef = Math.max(...res.Lbb, 1e-30);
+  // Rzeczywisty szczyt wszystkich krzywych (sygnał z odbiciami/atmosferą może przekroczyć 100%)
+  const gPeak = Math.max(gRef, res.Ldet_max||0,
+                         ...(res.Latm||[]), ...(res.Lrefl||[]), 1e-30);
+  const overshoot = gPeak / gRef;                 // >1 oznacza przesterowanie
+  // Headroom: jeśli sygnał przekracza 100%, skaluj tak by zmieścić szczyt (max +60%)
+  const headroom = Math.min(Math.max(overshoot, 1) * 1.04, 1.6);
+  const gMax = gRef;                              // 100% odniesienia = CDC obiektu
+  const Rz = Math.round(H2*CONFIG.RZONE_FRAC);
+  const specTop = pT + Rz;
+  const specH   = H2 - Rz;
+  // ly: v/gRef=1 → poziom 100%; cała oś mieści headroom (1.0..1.6)
+  const ly = v => specTop + specH*(1 - Math.min(v/gMax, headroom)/headroom);
+  const y100 = specTop + specH*(1 - 1/headroom);  // pozycja linii 100%
 
   // y-grid — tylko strefa widma (specTop..specTop+specH)
   ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
@@ -3260,6 +3277,25 @@ function drawSpec(res, p){
     const y = specTop + specH*i/4;
     ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
   }
+  // ── Strefa przesterowania (>100%): wyróżniona gdy sygnał przekracza CDC obiektu ──
+  if(headroom > 1.001){
+    ctx.save();
+    ctx.beginPath(); ctx.rect(pL, specTop, W2, y100 - specTop); ctx.clip();
+    ctx.globalAlpha = 0.10; ctx.fillStyle = tv('--red');
+    ctx.fillRect(pL, specTop, W2, y100 - specTop);
+    ctx.restore();
+    // linia 100% (poziom radiancji CDC obiektu)
+    ctx.save();
+    ctx.globalAlpha = 0.55; ctx.strokeStyle = tv('--red');
+    ctx.lineWidth = 1; ctx.setLineDash([5,3]);
+    ctx.beginPath(); ctx.moveTo(pL, y100); ctx.lineTo(pL+W2, y100); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.7; ctx.fillStyle = tv('--red');
+    ctx.font='9px IBM Plex Mono,monospace'; ctx.textAlign='left';
+    ctx.fillText('100% (CDC obiektu) — powyżej: przesterowanie', pL+4, y100-3);
+    ctx.globalAlpha = 1; ctx.restore();
+  }
+
   // delikatna linia oddzielająca strefę R(λ) od widma
   ctx.globalAlpha=0.3; ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=0.5;
   ctx.beginPath(); ctx.moveTo(pL,specTop); ctx.lineTo(pL+W2,specTop); ctx.stroke();
@@ -3427,9 +3463,27 @@ function drawSpec(res, p){
   ctx.lineTo(lx(lamArr[res.Latm.length-1]),pT+H2); ctx.closePath();
   ctx.globalAlpha=0.35 * _alpha('Latm'); ctx.fillStyle=tv('--red'); ctx.fill(); ctx.globalAlpha=1;
 
+  // ── Warstwa odbić otoczenia (1−ε)·L_bb(T_otocz) — wypełnienie między Lemit a Lemit+Lrefl ──
+  if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+    ctx.beginPath();
+    // dolna krawędź: emisja obiektu (Lemit); górna: emisja + odbicie
+    res.Lemit.forEach((v,i)=>{ const x=lx(lamArr[i]),y=ly(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    for(let i=res.Lemit.length-1;i>=0;i--){
+      ctx.lineTo(lx(lamArr[i]), ly(res.Lemit[i]+res.Lrefl[i]));
+    }
+    ctx.closePath();
+    ctx.globalAlpha = 0.40 * _alpha('Lrefl'); ctx.fillStyle = tv('--violet');
+    ctx.fill(); ctx.globalAlpha = 1;
+  }
+
   curve(res.Lbb,   tv('--muted'),   1, [4,4], 'Lbb');
   curve(res.Latm,  tv('--red'),     1, [], 'Latm');
   curve(res.Lemit, tv('--amber'),   2.0, [], 'Lemit');
+  // obrys sumy emisja+odbicie (górna krawędź warstwy odbić)
+  if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+    const sumRefl = res.Lemit.map((v,i)=>v+res.Lrefl[i]);
+    curve(sumRefl, tv('--violet'), 1.4, [2,3], 'Lrefl');
+  }
   curve(res.Ldet,  tv('--signal'),  2.8, [], 'Ldet');  // sygnał wynikowy — wyróżniony
   curve(res.Tind_arr, tv('--cyan'), 1.5, [7,4], 'Tind');
 
@@ -3740,7 +3794,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v3.1.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.1.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3876,6 +3930,18 @@ function onHrSlider(el, param){
 /* ─────────────────────────────────────────────
    RATIO PYROMETRY UI
 ───────────────────────────────────────────── */
+
+
+function onNumTsurr(el){
+  let c = parseFloat(el.value);
+  if(isNaN(c)) return;
+  c = Math.max(0, Math.min(1500, Math.round(c)));
+  el.value = c;
+  state.Tsurr = c;
+  const sl = document.getElementById('sl_Tsurr');
+  if(sl){ sl.value = c; slPct(sl); }
+  scheduleUpdate();
+}
 
 function setRefl(on){
   state.reflOn = !!on;
@@ -4180,6 +4246,8 @@ function updateLegend(res, p){
   // R₂(λ) — widoczna tylko w trybie ratio
   const legR2 = document.getElementById('leg-ratio-r2');
   if(legR2) legR2.style.display = appState.ratioMode ? '' : 'none';
+  const legRefl = document.getElementById('leg-refl');
+  if(legRefl) legRefl.style.display = state.reflOn ? '' : 'none';
 }
 
 
@@ -4356,7 +4424,7 @@ function onSl(el, key){
   slPct(el);
   const labels = {
     path:v+' m', rh:v+' %', co2:v+' ppm', Tatm:v+' °C',
-    windowThick: v.toFixed(1)+' mm', windowTemp: v.toFixed(0)+' °C', Tsurr: v.toFixed(0)+' °C',
+    windowThick: v.toFixed(1)+' mm', windowTemp: v.toFixed(0)+' °C',
   };
   const ve = document.getElementById('val_'+key);
   if(ve) ve.textContent = labels[key]||v;
@@ -4371,6 +4439,10 @@ function onSl(el, key){
   if(key==='eps_real'){
     const n = document.getElementById('num_eps_real');
     if(n) n.value = v.toFixed(2);
+  }
+  if(key==='Tsurr'){
+    const n = document.getElementById('num_Tsurr');
+    if(n) n.value = Math.round(v);
   }
   if(key==='eps_assumed'){
     const n = document.getElementById('num_eps_assumed');
@@ -4448,7 +4520,7 @@ function initChainInteraction(){
   // Mapa: id bloku → tablica krzywych [curve_id, ...]
   // curve_id odpowiada tagowi używanemu w drawSpec do globalAlpha
   const BLOCK_CURVES = {
-    'cb-obj':  ['Lbb','Lemit','Eps'],
+    'cb-obj':  ['Lbb','Lemit','Lrefl','Eps'],
     'cb-atm':  ['Latm','tau'],
     'cb-win':  ['Lwin','Lwin_emit'],
     'cb-det':  ['R','R2','Ldet'],
@@ -4552,7 +4624,7 @@ function initChainInteraction(){
 function getHighlightedCurves(){
   if(!highlightBlock) return null;
   const map = {
-    'cb-obj':  ['Lbb','Lemit','Eps'],
+    'cb-obj':  ['Lbb','Lemit','Lrefl','Eps'],
     'cb-atm':  ['Latm','tau'],
     'cb-win':  ['Lwin','Lwin_emit'],
     'cb-det':  ['R','R2','Ldet'],

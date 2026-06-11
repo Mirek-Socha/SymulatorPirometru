@@ -5,6 +5,25 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v3.1.1] — 2026-06-11 ✅ bieżąca
+
+### Poprawki UI i wizualizacji odbić otoczenia
+
+- **Kontrast przycisków trybu** — segment Podstawowy/PRO/Ekspert używał
+  niezdefiniowanej zmiennej `var(--am)`; naprawiono na `--amber` + opacity
+  (czytelny w ciemnym i jasnym motywie)
+- **Reorganizacja paneli** — „🪞 Otoczenie" przeniesione za „Obiekt mierzony",
+  przed „Środowisko"
+- **Pole tekstowe T_otocz** — można wpisać dokładną wartość (jak przy T_obiekt i ε)
+- **Strefa przesterowania wykresu** — gdy sygnał przekracza 100% radiancji CDC
+  obiektu (odbicia gorącego otoczenia lub ciepła atmosfera), wykres skaluje się
+  z zapasem (headroom do 160%), rysuje czerwoną linię 100% i wyróżnia strefę
+  przesterowania zamiast cicho obcinać na 110%
+- **Wizualizacja odbić** — odbite promieniowanie otoczenia (1−ε)·L_bb(T_otocz)
+  rysowane jako osobna fioletowa warstwa nad emisją obiektu (analogicznie do
+  czerwonej emisji atmosfery), z wpisem w legendzie i obrysem krzywej
+
+
 ## [v3.1.0] — 2026-06-11 ✅ bieżąca
 
 ### Dodano — modelowanie odbić promieniowania otoczenia (tryb PRO)
