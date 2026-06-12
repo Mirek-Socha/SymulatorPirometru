@@ -2756,7 +2756,7 @@ function fresnelEps(n, k, theta_deg){
 
   // ñ² = (n-ik)²  — obliczamy część rzecz i urojoną
   const nr2 = n*n - k*k;   // Re(ñ²)
-  const ni2 = 2*n*k;       // Im(ñ²)
+  const ni2 = -2*n*k;       // Im(ñ²)
 
   // M² = ñ² - sin²θ  →  M = sqrt zespolone
   const Mr2 = nr2 - sin2;
@@ -3995,13 +3995,12 @@ function onFresnelMat(key){
 }
 
 function onTheta(val){
-  appState.theta = Math.max(0, Math.min(85, parseFloat(val)||0));
+  const v = Math.max(0, Math.min(85, parseFloat(val)||0));
+  appState.theta = v;
   const sl  = document.getElementById('sl_theta');
   const num = document.getElementById('num_theta');
-  const lbl = document.getElementById('val_theta');
-  if(sl)  sl.value  = appState.theta;
-  if(num) num.value = appState.theta;
-  if(lbl) lbl.textContent = appState.theta.toFixed(0) + '°';
+  if(sl)  { sl.value = v; slPct(sl); }   // slPct aktualizuje gradient
+  if(num)   num.value = v;
   drawPolarPlot();
   scheduleUpdate();
 }
@@ -5007,104 +5006,114 @@ function drawPolarPlot(){
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
-  const cx = W/2, cy = H*0.92;   // środek na dole (półkole)
-  const R  = W*0.42;              // promień
+  const cx = W/2, cy = H * 0.94;   // środek u dołu (półkole)
+  const R  = Math.min(W * 0.42, cy - 14);
   const tv = v => getComputedStyle(document.body).getPropertyValue(v).trim();
 
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(0, 0, W, H);
 
-  // Siatka biegunowa (co 30°, półkole)
-  ctx.strokeStyle = tv('--border'); ctx.lineWidth = 0.7; ctx.globalAlpha = 0.6;
-  for(let deg=0; deg<=180; deg+=30){
-    const rad = deg*Math.PI/180;
+  // ── Siatka: luki ε = 0.2 / 0.5 / 0.8 ──
+  ctx.strokeStyle = tv('--border'); ctx.lineWidth = 0.7; ctx.globalAlpha = 0.5;
+  [0.2, 0.5, 0.8].forEach(eps => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * eps, Math.PI, 0, false);
+    ctx.stroke();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = tv('--muted');
+    ctx.font = '8px IBM Plex Mono,monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(eps.toFixed(1), cx - R * eps - 2, cy + 2);
+    ctx.globalAlpha = 0.5;
+  });
+
+  // ── Promienie co 30° (0°=góra, 90°=prawo) ──
+  [0, 30, 60, 90, 120, 150, 180].forEach(deg => {
+    const rad = (90 - deg) * Math.PI / 180;  // 0° → góra (π/2)
     ctx.beginPath();
     ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + R*Math.cos(Math.PI-rad), cy - R*Math.sin(Math.PI-rad));
+    ctx.lineTo(cx + R * Math.cos(rad), cy - R * Math.sin(rad));
     ctx.stroke();
-  }
-  // Łuki ε = 0.2, 0.5, 0.8
-  [0.2,0.5,0.8].forEach(eps=>{
-    ctx.beginPath();
-    ctx.arc(cx, cy, R*eps, Math.PI, 0, false);
-    ctx.stroke();
-    ctx.globalAlpha=0.45; ctx.fillStyle=tv('--muted');
-    ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='right';
-    ctx.fillText(eps.toFixed(1), cx - R*eps - 2, cy+2);
-    ctx.globalAlpha=0.6;
   });
-  ctx.globalAlpha=1;
+  ctx.globalAlpha = 1;
 
-  // Oś 0° (normalna) — pionowa linia
-  ctx.strokeStyle=tv('--muted'); ctx.lineWidth=1; ctx.setLineDash([3,2]);
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx, cy-R); ctx.stroke();
+  // ── Oś normalnej (0° = góra) ──
+  ctx.strokeStyle = tv('--muted'); ctx.lineWidth = 1; ctx.setLineDash([3,2]);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - R); ctx.stroke();
   ctx.setLineDash([]);
 
-  // Etykiety kątów
-  ctx.fillStyle=tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
-  [[0,'0°',cx+2,cy-R-2,'left'],[30,'30°',cx+R*0.5+2,cy-R*0.87-2,'left'],
-   [60,'60°',cx+R*0.87+3,cy-R*0.5,'left'],[90,'90°',cx+R+3,cy,'left'],
-   [180,'180°',cx-R*1.0-6,cy,'right']].forEach(([,lbl,x,y,al])=>{
-    ctx.textAlign=al; ctx.fillText(lbl,x,y);
+  // ── Etykiety kątów ──
+  const lbls = [[0,'0°',cx+3,cy-R-3,'left'],
+                [30,'30°',cx+R*Math.sin(30*Math.PI/180)+3,cy-R*Math.cos(30*Math.PI/180)-1,'left'],
+                [60,'60°',cx+R*Math.sin(60*Math.PI/180)+3,cy-R*Math.cos(60*Math.PI/180)+4,'left'],
+                [90,'90°',cx+R+3,cy+3,'left']];
+  ctx.fillStyle = tv('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
+  lbls.forEach(([,lbl,x,y,al]) => { ctx.textAlign=al; ctx.fillText(lbl,x,y); });
+
+  // ── λ_eff z aktualnego detektora ──
+  const detKey = (typeof state !== 'undefined') ? state.detKey : 'band_065';
+  const det    = (typeof DETS !== 'undefined')  ? DETS[detKey] : null;
+  const lam_eff = det ? ((det.lam_lo + det.lam_hi) / 2 * 1e6) : 1.0;
+
+  // ── T i materiał ──
+  const T_K     = (typeof state !== 'undefined') ? state.Tobj : 1473;
+  const matKey  = appState.fresnelMat || 'fe';
+  const mat     = (typeof HR_MATERIALS !== 'undefined') ? (HR_MATERIALS[matKey] || HR_MATERIALS.fe) : null;
+  if(!mat){ return; }
+
+  const rho = rhoT(mat, T_K);
+  const {n, k} = fresnelNK(rho, lam_eff);
+  const curTheta = appState.theta || 0;
+
+  // ── Krzywa ε(θ) — 0° do 90° ──
+  // Konwencja: 0° = góra (normalna), 90° = prawo (grazing)
+  // Kąt na canvasie: angle_canvas = 90° - θ  (bo 0° jest na górze)
+  ctx.beginPath();
+  ctx.strokeStyle = tv('--amber'); ctx.lineWidth = 2;
+  let first = true;
+  for(let deg = 0; deg <= 90; deg += 0.5){
+    const eps = fresnelEps(n, k, deg);
+    const rad = (90 - deg) * Math.PI / 180;   // 0°→góra(π/2), 90°→prawo(0)
+    const px  = cx + R * eps * Math.cos(rad);
+    const py  = cy - R * eps * Math.sin(rad);
+    if(first){ ctx.moveTo(px, py); first=false; } else ctx.lineTo(px, py);
+  }
+  // Symetria lustrzana (lewa strona)
+  for(let deg = 90; deg >= 0; deg -= 0.5){
+    const eps = fresnelEps(n, k, deg);
+    const rad = (90 + deg) * Math.PI / 180;   // odbicie na lewą stronę
+    const px  = cx + R * eps * Math.cos(rad);
+    const py  = cy - R * eps * Math.sin(rad);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.globalAlpha = 0.15; ctx.fillStyle = tv('--amber'); ctx.fill();
+  ctx.globalAlpha = 1; ctx.stroke();
+
+  // ── Wskaźnik aktualnego θ ──
+  const epsAt  = fresnelEps(n, k, curTheta);
+  const radAt  = (90 - curTheta) * Math.PI / 180;
+  const pxAt   = cx + R * epsAt * Math.cos(radAt);
+  const pyAt   = cy - R * epsAt * Math.sin(radAt);
+  // Linia kąta
+  ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 1; ctx.setLineDash([3,2]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + R * Math.cos(radAt), cy - R * Math.sin(radAt));
+  ctx.stroke(); ctx.setLineDash([]);
+  // Punkt na krzywej (i symetria)
+  [[radAt], [(90 + curTheta) * Math.PI / 180]].forEach(([rad]) => {
+    const px = cx + R * epsAt * Math.cos(rad);
+    const py = cy - R * epsAt * Math.sin(rad);
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, 2*Math.PI);
+    ctx.fillStyle = tv('--cyan'); ctx.fill();
   });
 
-  // Krzywa ε(θ) dla aktualnego materiału i λ_eff
-  const matKey = appState.fresnelMat;
-  const mat    = HR_MATERIALS[matKey] || HR_MATERIALS.fe;
-  const T_K    = typeof state!=='undefined' ? state.Tobj : 1473;
-  const rho    = rhoT(mat, T_K);
-  // Oblicz przy λ_eff = środek pasma detektora (lub 1.0µm jako fallback)
-  const det  = DETS[typeof state!=='undefined' ? state.detKey : 'band_065'];
-  const lam_eff = det ? (det.lam_lo + det.lam_hi) / 2 * 1e6 : 1.0;  // µm
-
-  const {n,k} = fresnelNK(rho, lam_eff);
-
-  // Zaznacz kąt aktualny
-  const curTheta = appState.theta;
-
-  // Rysuj krzywą
-  ctx.beginPath(); ctx.strokeStyle=tv('--amber'); ctx.lineWidth=2;
-  let first=true;
-  for(let deg=0; deg<=90; deg+=1){
-    const eps = fresnelEps(n,k,deg);
-    const rad = (180-deg)*Math.PI/180;   // 0°=góra, 90°=prawo
-    const px = cx + R*eps*Math.cos(rad);
-    const py = cy - R*eps*Math.sin(rad);
-    if(first){ctx.moveTo(px,py); first=false;} else ctx.lineTo(px,py);
-  }
-  // Symetria: lustrzane odbicie
-  for(let deg=90; deg>=0; deg--){
-    const eps = fresnelEps(n,k,deg);
-    const rad = deg*Math.PI/180;
-    const px = cx + R*eps*Math.cos(rad);
-    const py = cy - R*eps*Math.sin(rad);
-    ctx.lineTo(px,py);
-  }
-  ctx.stroke();
-
-  // Wskaźnik aktualnego kąta θ — linia + punkt
-  const epsAt = fresnelEps(n,k,curTheta);
-  const radAt = (180-curTheta)*Math.PI/180;
-  const pxAt  = cx + R*epsAt*Math.cos(radAt);
-  const pyAt  = cy - R*epsAt*Math.sin(radAt);
-  ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1; ctx.setLineDash([3,2]);
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(radAt), cy-R*Math.sin(radAt)); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.beginPath(); ctx.arc(pxAt,pyAt,4,0,2*Math.PI);
-  ctx.fillStyle=tv('--cyan'); ctx.fill();
-
-  // Symetria: drugi wskaźnik
-  const radAt2 = curTheta*Math.PI/180;
-  const pxAt2  = cx + R*epsAt*Math.cos(radAt2);
-  const pyAt2  = cy - R*epsAt*Math.sin(radAt2);
-  ctx.beginPath(); ctx.arc(pxAt2,pyAt2,4,0,2*Math.PI);
-  ctx.fillStyle=tv('--cyan'); ctx.fill();
-
-  // Etykieta ε przy aktualnym θ
-  ctx.fillStyle=tv('--cyan'); ctx.font='bold 9px IBM Plex Mono,monospace';
-  ctx.textAlign='left';
-  ctx.fillText('θ='+curTheta.toFixed(0)+'° ε='+epsAt.toFixed(3), 4, 12);
-  ctx.fillStyle=tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
-  ctx.fillText('λ≈'+lam_eff.toFixed(1)+'µm  T='+Math.round(T_K-273)+'°C', 4, 22);
+  // ── Etykieta ε i θ ──
+  ctx.fillStyle = tv('--cyan'); ctx.font = 'bold 9px IBM Plex Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('θ=' + curTheta.toFixed(0) + '°  ε=' + epsAt.toFixed(3), 4, 12);
+  ctx.fillStyle = tv('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
+  ctx.fillText('λ≈' + lam_eff.toFixed(2) + 'µm  T=' + Math.round(T_K - 273) + '°C', 4, 23);
 }
 
 window.addEventListener('load', ()=>{
