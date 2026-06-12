@@ -1106,18 +1106,18 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="panel-hdr am">🌑 Model emisyjności</div>
 
       <!-- Przełącznik modelu -->
-      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr 1fr 1fr">
+      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr">
         <button class="epsm-btn active" id="epsm_grey" onclick="setEpsModel('grey')">
-          <span class="epsm-ico">━</span> Szara<small>ε(λ) = const</small>
+          <span class="epsm-ico">━</span>Szara<small>ε = const</small>
         </button>
         <button class="epsm-btn" id="epsm_hr" onclick="setEpsModel('hr')">
-          <span class="epsm-ico">╲</span> Hagen-Rubens<small>ε(λ,T) z oporności</small>
+          <span class="epsm-ico">╲</span>H-R<small>ε(λ,T)</small>
         </button>
         <button class="epsm-btn" id="epsm_poly" onclick="setEpsModel('poly')">
-          <span class="epsm-ico">∿</span> Wielomianowy<small>ε(λ) = a₀+a₁λ+a₂λ²</small>
+          <span class="epsm-ico">∿</span>Wielomian<small>ε(λ) TPRC</small>
         </button>
         <button class="epsm-btn" id="epsm_fresnel" onclick="setEpsModel('fresnel')">
-          <span class="epsm-ico">◑</span> Fresnel<small>ε(θ,λ,T)</small>
+          <span class="epsm-ico">◑</span>Fresnel<small>ε(θ,λ,T)</small>
         </button>
       </div>
 
@@ -1204,7 +1204,15 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
           Klasyczna H-R: ε rośnie z T, maleje z λ
         </div>
 
-        <!-- FRESNEL params (model kierunkowości) -->
+
+      <!-- ε_assumed: w H-R pirometr nadal zakłada szarość -->
+        <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
+          ⚠ Procesor pirometru nadal zakłada ε_zał = const.<br>
+          Błąd pochodzi z niespójności ε(λ) ≠ ε_zał.
+        </div>
+      </div>
+
+      <!-- FRESNEL params (model kierunkowości) -->
       <div id="fresnel_params" style="display:none;margin-top:8px">
         <div class="sel-lbl">Materiał (dane H-R dla n,k)</div>
         <select id="sel_fresnel_mat" onchange="onFresnelMat(this.value)">
@@ -1237,13 +1245,6 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <div class="env-note" style="margin-top:6px;border-left-color:var(--amber)">
           ⚠ Model Drudego (n≈k z oporności ρ(T)). Dokładny dla czystych metali w IR.
           Dla tlenków i dielektryków użyj modelu wielomianowego.
-        </div>
-      </div>
-
-      <!-- ε_assumed: w H-R pirometr nadal zakłada szarość -->
-        <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
-          ⚠ Procesor pirometru nadal zakłada ε_zał = const.<br>
-          Błąd pochodzi z niespójności ε(λ) ≠ ε_zał.
         </div>
       </div>
 
