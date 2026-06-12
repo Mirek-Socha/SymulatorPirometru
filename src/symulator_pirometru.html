@@ -4798,6 +4798,9 @@ function initSliders(){
     ['sl_windowThick','windowThick'],['sl_windowTemp','windowTemp'],
     ['sl_Tsurr','Tsurr'],
   ];
+  // sl_theta osobno (appState, nie state)
+  const slTheta = document.getElementById('sl_theta');
+  if(slTheta){ slTheta.value = appState.theta || 0; slPct(slTheta); }
   map.forEach(([id,key])=>{
     const el=document.getElementById(id);
     if(!el) return;
@@ -5049,10 +5052,10 @@ function drawPolarPlot(){
   ctx.fillStyle = tv('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
   lbls.forEach(([,lbl,x,y,al]) => { ctx.textAlign=al; ctx.fillText(lbl,x,y); });
 
-  // ── λ_eff z aktualnego detektora ──
-  const detKey = (typeof state !== 'undefined') ? state.detKey : 'band_065';
-  const det    = (typeof DETS !== 'undefined')  ? DETS[detKey] : null;
-  const lam_eff = det ? ((det.lam_lo + det.lam_hi) / 2 * 1e6) : 1.0;
+  // ── λ_eff z aktualnego detektora (DETS używa lc = center wavelength [µm]) ──
+  const detKey  = (typeof state !== 'undefined') ? state.detKey : 'band_065';
+  const det     = (typeof DETS  !== 'undefined') ? DETS[detKey] : null;
+  const lam_eff = (det && det.lc) ? det.lc : 1.0;  // lc w µm
 
   // ── T i materiał ──
   const T_K     = (typeof state !== 'undefined') ? state.Tobj : 1473;
