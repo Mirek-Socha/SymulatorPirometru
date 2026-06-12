@@ -855,7 +855,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v3.1.1</span>
+    <span class="hdr-ver">v3.2.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1106,7 +1106,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="panel-hdr am">🌑 Model emisyjności</div>
 
       <!-- Przełącznik modelu -->
-      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr 1fr 1fr">
         <button class="epsm-btn active" id="epsm_grey" onclick="setEpsModel('grey')">
           <span class="epsm-ico">━</span> Szara<small>ε(λ) = const</small>
         </button>
@@ -1115,6 +1115,9 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         </button>
         <button class="epsm-btn" id="epsm_poly" onclick="setEpsModel('poly')">
           <span class="epsm-ico">∿</span> Wielomianowy<small>ε(λ) = a₀+a₁λ+a₂λ²</small>
+        </button>
+        <button class="epsm-btn" id="epsm_fresnel" onclick="setEpsModel('fresnel')">
+          <span class="epsm-ico">◑</span> Fresnel<small>ε(θ,λ,T)</small>
         </button>
       </div>
 
@@ -1201,7 +1204,43 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
           Klasyczna H-R: ε rośnie z T, maleje z λ
         </div>
 
-        <!-- ε_assumed: w H-R pirometr nadal zakłada szarość -->
+        <!-- FRESNEL params (model kierunkowości) -->
+      <div id="fresnel_params" style="display:none;margin-top:8px">
+        <div class="sel-lbl">Materiał (dane H-R dla n,k)</div>
+        <select id="sel_fresnel_mat" onchange="onFresnelMat(this.value)">
+          <option value="fe">Żelazo / stal węglowa</option>
+          <option value="ti">Tytan</option>
+          <option value="ni">Nikiel</option>
+          <option value="cu">Miedź</option>
+          <option value="al">Aluminium</option>
+          <option value="w">Wolfram</option>
+        </select>
+        <div class="sl-row" style="margin-top:6px">
+          <span class="sl-name">θ</span>
+          <input type="range" id="sl_theta" min="0" max="85" step="1" value="0"
+                 oninput="onTheta(this.value)">
+          <input type="number" id="num_theta" class="sl-num" min="0" max="85"
+                 step="1" value="0" onchange="onTheta(this.value)"
+                 title="Kąt obserwacji [°] (0 = normalnie do pow.)">
+        </div>
+        <div class="sl-secondary" style="margin-top:-4px">
+          Kąt obserwacji pirometru względem normalnej powierzchni
+        </div>
+        <div style="text-align:center;margin-top:8px">
+          <canvas id="polarCanvas" width="220" height="126"
+                  style="width:100%;max-width:220px;border:1px solid var(--border);
+                         background:var(--card);display:block;margin:0 auto"></canvas>
+          <div class="sl-secondary" style="margin-top:3px">
+            Diagram biegunowy ε(θ) — cyjanowy punkt = aktualne θ
+          </div>
+        </div>
+        <div class="env-note" style="margin-top:6px;border-left-color:var(--amber)">
+          ⚠ Model Drudego (n≈k z oporności ρ(T)). Dokładny dla czystych metali w IR.
+          Dla tlenków i dielektryków użyj modelu wielomianowego.
+        </div>
+      </div>
+
+      <!-- ε_assumed: w H-R pirometr nadal zakłada szarość -->
         <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
           ⚠ Procesor pirometru nadal zakłada ε_zał = const.<br>
           Błąd pochodzi z niespójności ε(λ) ≠ ε_zał.
@@ -1760,6 +1799,25 @@ zakresie. To właśnie uzasadnia pirometrię wielowidmową.</div>
 </table>
 <p style="font-size:.75rem;color:var(--muted)">Dane ρ₀ i α: CRC Handbook, Kaye &amp; Laby Tables; wartości ε obliczone z H-R w T=1000 K.</p>
 
+
+<div class="eo"><!-- Fresnel — tylko Expert -->
+<h3>Model Fresnela — emisyjność kierunkowa ε(θ,λ,T)</h3>
+<p>Obiekty rzeczywiste emitują promieniowanie <b>anizotropowo</b> — emisyjność zależy od kąta obserwacji θ względem normalnej powierzchni.
+Teoria elektromagnetyczna (równania Fresnela) podaje dla metalu z zespoloną funkcją dielektryczną <i>ñ = n − ik</i>:</p>
+<div class="fml-math">$$\varepsilon(\theta,\lambda,T) = 1 - \frac{|r_s|^2 + |r_p|^2}{2}$$</div>
+<p>gdzie <i>r_s, r_p</i> to współczynniki odbicia Fresnela dla polaryzacji s i p:</p>
+<div class="fml-math">$$r_s = \frac{\cos\theta - \sqrt{\tilde{n}^2 - \sin^2\theta}}{\cos\theta + \sqrt{\tilde{n}^2 - \sin^2\theta}}, \quad r_p = \frac{\tilde{n}^2\cos\theta - \sqrt{\tilde{n}^2 - \sin^2\theta}}{\tilde{n}^2\cos\theta + \sqrt{\tilde{n}^2 - \sin^2\theta}}$$</div>
+<p><b>Skąd n i k?</b> Symulator używa przybliżenia Drudego (granica długich fal IR): dla metali <i>n ≈ k ≈ √(ρ<sub>rel</sub>·λ/2)</i>, gdzie ρ<sub>rel</sub> = ρ(T)/ρ<sub>Cu,0</sub>.
+Oporność ρ(T) pochodzi z tej samej tabeli co model Hagena-Rubensa — <b>zero dodatkowych parametrów</b>.</p>
+
+<h3>Charakterystyki ε(θ)</h3>
+<p><b>Metale</b> (n,k duże): ε(θ) jest prawie płaskie do θ ≈ 40°, po czym <b>rośnie</b> z maksimum przy θ ≈ 75–85° i spada do zera przy 90°.
+Widać to wyraźnie na diagramie biegunowym — krzywa jest „wypukła" pod dużymi kątami.</p>
+<p><b>Konsekwencja praktyczna:</b> Pirometr patrzący pod kątem na polerowany metal widzi wyższą emisyjność niż przy obserwacji normalnej. Błąd może sięgnąć +20–40%. Wyrażając ilościowo:</p>
+<div class="fml-math">$$\frac{\varepsilon_{\text{hem}}}{\varepsilon_0} \approx 1.2 \text{ dla Cu}, \quad \approx 1.1 \text{ dla Fe}$$</div>
+<p>gdzie ε<sub>hem</sub> to emisyjność hemisferyczna (całkowana po 2π sr), a ε<sub>0</sub> = ε(θ=0°) to emisyjność normalna (mierzona pirometrem prostopadle).</p>
+<div class="warn-box">Symulator używa ε(θ) jako <b>jednolitej wartości</b> dla całego widma w obliczeniach toru (każdy punkt λ ma własne n,k z Drudego). Kąt θ wpływa też na drogę optyczną przez atmosferę (L/cosθ), ale ten efekt nie jest tu modelowany.</div>
+</div><!-- /eo Fresnel -->
 <h3>Model wielomianowy — ε(λ) z danych literaturowych</h3>
 <p>Dla wielu materiałów emisyjność spektralną dobrze aproksymuje wielomian drugiego stopnia
 dopasowany do danych tabelarycznych z TPRC <span class="cite">[A,B]</span>:</p>
@@ -2158,7 +2216,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v3.1.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.2.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2664,6 +2722,75 @@ function polyEmissivity(lam_um, mat){
    Rozszerzenia (planowane): fresnel (ε(θ)), thinfilm (interferencja),
    oraz modyfikatory: cavity (efekt wnękowy), roughness.
    Nowy model = nowy wpis w rejestrze, bez zmian w compute(). */
+/* ══════════════════════════════════════════════════════════════════
+   FRESNEL ε(θ) — emisyjność kierunkowa przez model Drudego
+   ──────────────────────────────────────────────────────────────────
+   Dla metali w zakresie IR: n ≈ k ≈ sqrt(ρ_rel · λ / 2)
+   gdzie ρ_rel = ρ(T)/ρ_0_Cu (bezwymiarowa), λ w µm.
+   Równania Fresnela dla zespolonego ñ = n - ik:
+     r_s = (cosθ - M) / (cosθ + M)
+     r_p = (ñ²cosθ - M) / (ñ²cosθ + M)
+     gdzie M = sqrt(ñ² - sin²θ)
+   ε(θ, λ, T) = 1 - (|r_s|² + |r_p|²) / 2
+   ══════════════════════════════════════════════════════════════════ */
+
+// Oporność miedzi w µΩ·cm w T=293K (punkt odniesienia dla ρ_rel)
+const RHO_CU_REF = 1.72;
+
+/* fresnelNK: n i k Drudego z oporności [µΩ·cm] i λ [µm] */
+function fresnelNK(rho_uOhm_cm, lam_um){
+  // Drude IR: n² ≈ k² ≈ ρ_rel·λ/2  (Hagen-Rubens limit ρ_rel·λ >> 1)
+  const rhoRel = rho_uOhm_cm / RHO_CU_REF;   // bezwymiarowa
+  const nk2 = rhoRel * lam_um / 2;            // n² = k²
+  const nk  = Math.sqrt(Math.max(nk2, 0.01)); // n ≈ k ≥ 0.1
+  return { n: nk, k: nk };                     // dla metali n ≈ k
+}
+
+/* fresnelEps: ε(θ) z Fresnela zespolonego dla metalu (n ≈ k >> 1) */
+function fresnelEps(n, k, theta_deg){
+  const th = Math.min(theta_deg, 89.5) * Math.PI / 180;
+  const cos_t = Math.cos(th);
+  const sin_t = Math.sin(th);
+  const sin2  = sin_t * sin_t;
+
+  // ñ² = (n-ik)²  — obliczamy część rzecz i urojoną
+  const nr2 = n*n - k*k;   // Re(ñ²)
+  const ni2 = 2*n*k;       // Im(ñ²)
+
+  // M² = ñ² - sin²θ  →  M = sqrt zespolone
+  const Mr2 = nr2 - sin2;
+  const Mi2 = ni2;
+  // |M|² = sqrt(Mr2² + Mi2²), kąt = atan2(Mi2, Mr2)/2
+  const Mabs = Math.sqrt(Mr2*Mr2 + Mi2*Mi2);
+  const Mang = Math.atan2(Mi2, Mr2) / 2;
+  const Mre  = Math.sqrt(Mabs) * Math.cos(Mang);  // Re(M)
+  const Mim  = Math.sqrt(Mabs) * Math.sin(Mang);  // Im(M)
+
+  // r_s = (cos_t - M) / (cos_t + M)
+  const rs_re_num = cos_t - Mre, rs_im_num = -Mim;
+  const rs_re_den = cos_t + Mre, rs_im_den =  Mim;
+  const rs_den2 = rs_re_den*rs_re_den + rs_im_den*rs_im_den;
+  const Rs = (rs_re_num*rs_re_num + rs_im_num*rs_im_num) / (rs_den2 || 1e-30);
+
+  // r_p = (ñ²·cos_t - M) / (ñ²·cos_t + M)
+  const n2c_re = nr2*cos_t, n2c_im = ni2*cos_t;
+  const rp_re_num = n2c_re - Mre, rp_im_num = n2c_im - Mim;
+  const rp_re_den = n2c_re + Mre, rp_im_den = n2c_im + Mim;
+  const rp_den2 = rp_re_den*rp_re_den + rp_im_den*rp_im_den;
+  const Rp = (rp_re_num*rp_re_num + rp_im_num*rp_im_num) / (rp_den2 || 1e-30);
+
+  const eps = 1 - (Rs + Rp) / 2;
+  return Math.max(0.001, Math.min(0.999, eps));
+}
+
+/* fresnelEmissivity: ε(λ, T, θ) używając HR_MATERIALS dla n,k */
+function fresnelEmissivity(lam_um, T_K, theta_deg, matKey){
+  const mat = HR_MATERIALS[matKey] || HR_MATERIALS.fe;
+  const rho  = rhoT(mat, T_K);           // oporność w µΩ·cm (z H-R)
+  const { n, k } = fresnelNK(rho, lam_um);
+  return fresnelEps(n, k, theta_deg);
+}
+
 const EPS_MODELS = {
   grey: {
     label: 'ε = const (ciało szare)',
@@ -2681,6 +2808,12 @@ const EPS_MODELS = {
     fn: (lam_um, T_K, p) => {
       const mat = POLY_MATERIALS[appState.polyMat] || POLY_MATERIALS.w;
       return polyEmissivity(lam_um, mat);
+    }
+  },
+  fresnel: {
+    label: 'Fresnel ε(θ,λ,T) — kierunkowość',
+    fn: (lam_um, T_K, p) => {
+      return fresnelEmissivity(lam_um, T_K, appState.theta, appState.fresnelMat);
     }
   },
 };
@@ -3794,7 +3927,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v3.1.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.2.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3834,21 +3967,41 @@ function setEpsModel(model){
     const k = b.id.replace('epsm_','');
     if(k===model) b.classList.add('active'); else b.classList.remove('active');
   });
-  const hrDiv   = document.getElementById('hr_params');
-  const polyDiv = document.getElementById('poly_params');
-  if(hrDiv)   hrDiv.style.display   = (model==='hr')   ? 'block' : 'none';
-  if(polyDiv) polyDiv.style.display = (model==='poly') ? 'block' : 'none';
+  const hrDiv      = document.getElementById('hr_params');
+  const polyDiv    = document.getElementById('poly_params');
+  const fresnelDiv = document.getElementById('fresnel_params');
+  if(hrDiv)      hrDiv.style.display      = (model==='hr')      ? 'block' : 'none';
+  if(polyDiv)    polyDiv.style.display    = (model==='poly')    ? 'block' : 'none';
+  if(fresnelDiv) fresnelDiv.style.display = (model==='fresnel') ? 'block' : 'none';
 
   // Zablokuj suwak eps_real gdy H-R lub Poly
   const slEps  = document.getElementById('sl_eps_real');
   const numEps = document.getElementById('num_eps_real');
-  const lockEps = (model==='hr' || model==='poly');
+  const lockEps = (model==='hr' || model==='poly' || model==='fresnel');
   if(slEps) { slEps.disabled=lockEps; slEps.style.opacity=lockEps?'0.3':'1'; }
   if(numEps){ numEps.disabled=lockEps; numEps.style.opacity=lockEps?'0.3':'1'; }
 
   // Legenda
   const legEps = document.getElementById('leg_eps');
   if(legEps) legEps.style.display = (model!=='grey') ? 'inline-flex' : 'none';
+  scheduleUpdate();
+}
+
+function onFresnelMat(key){
+  appState.fresnelMat = key;
+  drawPolarPlot();
+  scheduleUpdate();
+}
+
+function onTheta(val){
+  appState.theta = Math.max(0, Math.min(85, parseFloat(val)||0));
+  const sl  = document.getElementById('sl_theta');
+  const num = document.getElementById('num_theta');
+  const lbl = document.getElementById('val_theta');
+  if(sl)  sl.value  = appState.theta;
+  if(num) num.value = appState.theta;
+  if(lbl) lbl.textContent = appState.theta.toFixed(0) + '°';
+  drawPolarPlot();
   scheduleUpdate();
 }
 
@@ -4192,8 +4345,10 @@ const appState = {
   polyMat:   'w',          // materiał wielomianowy
   det2Key:   'band_100',   // drugi detektor (tryb ratio)
   ratioMode: false,        // false = jednobarwny, true = dwubarwny
-  logScale:  false,        // false = liniowa, true = logarytmiczna
-  isDark:    true,         // motyw ciemny
+  logScale:     false,      // false = liniowa, true = logarytmiczna
+  isDark:       true,       // motyw ciemny
+  theta:        0,          // kąt obserwacji pirometru [°] (Fresnel)
+  fresnelMat:   'fe',       // materiał dla modelu Fresnela
 };
 
 const state = {
@@ -4263,6 +4418,7 @@ function doUpdate(){
   lastResult = res;
   drawSpec(res, p);
   drawTau(res);
+  if(appState.epsModel==='fresnel') drawPolarPlot();
   updateChain(res, p);
   updateResults(res, p);
   updateLegend(res, p);
@@ -4844,6 +5000,112 @@ function renderDocsKatex(){
 }
 
 
+/* ── Wykres biegunowy ε(θ) — miniatura w panelu Fresnel ── */
+function drawPolarPlot(){
+  const canvas = document.getElementById('polarCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H*0.92;   // środek na dole (półkole)
+  const R  = W*0.42;              // promień
+  const tv = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+
+  ctx.clearRect(0,0,W,H);
+
+  // Siatka biegunowa (co 30°, półkole)
+  ctx.strokeStyle = tv('--border'); ctx.lineWidth = 0.7; ctx.globalAlpha = 0.6;
+  for(let deg=0; deg<=180; deg+=30){
+    const rad = deg*Math.PI/180;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R*Math.cos(Math.PI-rad), cy - R*Math.sin(Math.PI-rad));
+    ctx.stroke();
+  }
+  // Łuki ε = 0.2, 0.5, 0.8
+  [0.2,0.5,0.8].forEach(eps=>{
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*eps, Math.PI, 0, false);
+    ctx.stroke();
+    ctx.globalAlpha=0.45; ctx.fillStyle=tv('--muted');
+    ctx.font='8px IBM Plex Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(eps.toFixed(1), cx - R*eps - 2, cy+2);
+    ctx.globalAlpha=0.6;
+  });
+  ctx.globalAlpha=1;
+
+  // Oś 0° (normalna) — pionowa linia
+  ctx.strokeStyle=tv('--muted'); ctx.lineWidth=1; ctx.setLineDash([3,2]);
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx, cy-R); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Etykiety kątów
+  ctx.fillStyle=tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
+  [[0,'0°',cx+2,cy-R-2,'left'],[30,'30°',cx+R*0.5+2,cy-R*0.87-2,'left'],
+   [60,'60°',cx+R*0.87+3,cy-R*0.5,'left'],[90,'90°',cx+R+3,cy,'left'],
+   [180,'180°',cx-R*1.0-6,cy,'right']].forEach(([,lbl,x,y,al])=>{
+    ctx.textAlign=al; ctx.fillText(lbl,x,y);
+  });
+
+  // Krzywa ε(θ) dla aktualnego materiału i λ_eff
+  const matKey = appState.fresnelMat;
+  const mat    = HR_MATERIALS[matKey] || HR_MATERIALS.fe;
+  const T_K    = typeof state!=='undefined' ? state.Tobj : 1473;
+  const rho    = rhoT(mat, T_K);
+  // Oblicz przy λ_eff = środek pasma detektora (lub 1.0µm jako fallback)
+  const det  = DETS[typeof state!=='undefined' ? state.detKey : 'band_065'];
+  const lam_eff = det ? (det.lam_lo + det.lam_hi) / 2 * 1e6 : 1.0;  // µm
+
+  const {n,k} = fresnelNK(rho, lam_eff);
+
+  // Zaznacz kąt aktualny
+  const curTheta = appState.theta;
+
+  // Rysuj krzywą
+  ctx.beginPath(); ctx.strokeStyle=tv('--amber'); ctx.lineWidth=2;
+  let first=true;
+  for(let deg=0; deg<=90; deg+=1){
+    const eps = fresnelEps(n,k,deg);
+    const rad = (180-deg)*Math.PI/180;   // 0°=góra, 90°=prawo
+    const px = cx + R*eps*Math.cos(rad);
+    const py = cy - R*eps*Math.sin(rad);
+    if(first){ctx.moveTo(px,py); first=false;} else ctx.lineTo(px,py);
+  }
+  // Symetria: lustrzane odbicie
+  for(let deg=90; deg>=0; deg--){
+    const eps = fresnelEps(n,k,deg);
+    const rad = deg*Math.PI/180;
+    const px = cx + R*eps*Math.cos(rad);
+    const py = cy - R*eps*Math.sin(rad);
+    ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+
+  // Wskaźnik aktualnego kąta θ — linia + punkt
+  const epsAt = fresnelEps(n,k,curTheta);
+  const radAt = (180-curTheta)*Math.PI/180;
+  const pxAt  = cx + R*epsAt*Math.cos(radAt);
+  const pyAt  = cy - R*epsAt*Math.sin(radAt);
+  ctx.strokeStyle=tv('--cyan'); ctx.lineWidth=1; ctx.setLineDash([3,2]);
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+R*Math.cos(radAt), cy-R*Math.sin(radAt)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(pxAt,pyAt,4,0,2*Math.PI);
+  ctx.fillStyle=tv('--cyan'); ctx.fill();
+
+  // Symetria: drugi wskaźnik
+  const radAt2 = curTheta*Math.PI/180;
+  const pxAt2  = cx + R*epsAt*Math.cos(radAt2);
+  const pyAt2  = cy - R*epsAt*Math.sin(radAt2);
+  ctx.beginPath(); ctx.arc(pxAt2,pyAt2,4,0,2*Math.PI);
+  ctx.fillStyle=tv('--cyan'); ctx.fill();
+
+  // Etykieta ε przy aktualnym θ
+  ctx.fillStyle=tv('--cyan'); ctx.font='bold 9px IBM Plex Mono,monospace';
+  ctx.textAlign='left';
+  ctx.fillText('θ='+curTheta.toFixed(0)+'° ε='+epsAt.toFixed(3), 4, 12);
+  ctx.fillStyle=tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
+  ctx.fillText('λ≈'+lam_eff.toFixed(1)+'µm  T='+Math.round(T_K-273)+'°C', 4, 22);
+}
+
 window.addEventListener('load', ()=>{
   // body już ma klasę 'beginner' z HTML — nie nadpisujemy
   setupCanvas();
@@ -4858,6 +5120,7 @@ window.addEventListener('load', ()=>{
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
   initChainInteraction();
+  drawPolarPlot();  // inicjalizacja diagramu biegunowego Fresnela
   // KaTeX renderuje się przez onload na auto-render.min.js
 });
 </script>
