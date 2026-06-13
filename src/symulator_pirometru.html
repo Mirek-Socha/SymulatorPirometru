@@ -5177,76 +5177,105 @@ function drawCavityDiagram(){
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
   const tv = v => getComputedStyle(document.body).getPropertyValue(v).trim();
-
   ctx.clearRect(0,0,W,H);
 
-  const sSS  = appState.cavitySS || 0.1;
-  const eps  = state ? state.eps_real : 0.7;
-  const epsEff = eps / (eps + (1-eps)*sSS);
+  const sSS    = appState.cavitySS || 0.1;
+  const eps    = state ? state.eps_real : 0.7;
+  const epsEff = Math.min(0.999, eps / (eps + (1-eps)*Math.max(sSS,1e-4)));
+  const boost  = epsEff - eps;
 
-  // ── Przekrój wnęki (półkole) ──
-  const cx = W*0.38, cy = H*0.78, R = Math.min(W*0.28, H*0.6);
+  // ── Geometria wnęki (przekrój prostokątny) ──────────────────────
+  // Wnęka: szerokość Wc, głębokość Dc, apertura = Wc * sqrt(sSS)
+  const Wc = W * 0.34;          // szerokość wnęki
+  const Dc = H * 0.62;          // głębokość wnęki
+  const xL = W * 0.08;          // lewy brzeg wnęki
+  const xR = xL + Wc;           // prawy brzeg
+  const yT = H * 0.10;          // góra (wylot)
+  const yB = yT + Dc;           // dno
+  const cx = (xL + xR) / 2;
+
+  // Apertura: proporcjonalna do sqrt(s/S) × szerokość wnęki
+  // s/S = (a × Wc) / (Wc + 2×Dc)  →  a = sSS*(Wc+2*Dc)/Wc
+  const totalS  = Wc + 2 * Dc;
+  const aperW   = Math.min(Wc, sSS * totalS);   // szerokość apertury [px]
+  const aL = cx - aperW / 2;
+  const aR = cx + aperW / 2;
+
+  // Wypełnienie wnęki (ciemne tło)
+  ctx.fillStyle = tv('--card');
+  ctx.fillRect(xL+1, yT, Wc-2, Dc);
+
   // Ścianki wnęki
-  ctx.strokeStyle = tv('--border'); ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, 0, false); ctx.stroke();
-  // Linie boczne (wnęka cylindryczna)
+  ctx.strokeStyle = tv('--text'); ctx.lineWidth = 2; ctx.lineJoin='round';
   ctx.beginPath();
-  ctx.moveTo(cx-R, cy); ctx.lineTo(cx-R, cy-5);
-  ctx.moveTo(cx+R, cy); ctx.lineTo(cx+R, cy-5);
+  ctx.moveTo(aL, yT);        // lewy brzeg apertury
+  ctx.lineTo(xL, yT);        // do lewej ściany
+  ctx.lineTo(xL, yB);        // dno lewe
+  ctx.lineTo(xR, yB);        // dno prawe
+  ctx.lineTo(xR, yT);        // prawa ściana do góry
+  ctx.lineTo(aR, yT);        // prawy brzeg apertury
   ctx.stroke();
 
-  // Apertura s (zaznaczona na górze)
-  const s_half = R * Math.sqrt(sSS);  // s/S → apertura proporcjonalna do √(s/S)
+  // Zaznaczenie całkowitej powierzchni S (przerywane)
+  ctx.strokeStyle = tv('--amber'); ctx.lineWidth=1.5; ctx.setLineDash([2,2]);
+  ctx.beginPath();
+  // lewa ściana + dno + prawa ściana (wewnętrzna)
+  ctx.moveTo(xL+2, yT+2); ctx.lineTo(xL+2, yB-1);
+  ctx.lineTo(xR-2, yB-1); ctx.lineTo(xR-2, yT+2);
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // ── Apertura s (cyan) ───────────────────────────────────────────
   ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(cx - s_half, cy - 0.5);
-  ctx.lineTo(cx + s_half, cy - 0.5);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(aL, yT-1); ctx.lineTo(aR, yT-1); ctx.stroke();
+
   // Etykieta s
-  ctx.fillStyle = tv('--cyan'); ctx.font='bold 9px IBM Plex Mono,monospace';
+  ctx.fillStyle = tv('--cyan'); ctx.font='bold 8px IBM Plex Mono,monospace';
   ctx.textAlign='center';
-  ctx.fillText('s (apertura)', cx, cy - 6);
+  ctx.fillText('s', cx, yT - 4);
 
-  // Całkowita powierzchnia S (łuk)
-  ctx.strokeStyle = tv('--amber'); ctx.lineWidth = 1.5;
-  ctx.setLineDash([3,2]);
-  ctx.beginPath(); ctx.arc(cx, cy, R+6, Math.PI, 0, false); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = tv('--amber');
-  ctx.font='8px IBM Plex Mono,monospace';
+  // Etykieta S (amber)
+  ctx.fillStyle = tv('--amber'); ctx.font='8px IBM Plex Mono,monospace';
   ctx.textAlign='left';
-  ctx.fillText('S', cx+R+8, cy-R*0.3);
+  ctx.fillText('S', xR+4, yT + Dc*0.5);
 
-  // Strzałki wielokrotnych odbić wewnątrz
-  ctx.strokeStyle = tv('--red'); ctx.lineWidth=1; ctx.globalAlpha=0.5;
-  const nRefl = Math.min(5, Math.round(1/sSS * 0.5));
-  for(let i=0;i<nRefl;i++){
-    const a1=(0.3+i*0.4)*Math.PI, a2=(0.7+i*0.4)*Math.PI;
-    const x1=cx+R*0.7*Math.cos(a1), y1=cy-R*0.7*Math.sin(a1);
-    const x2=cx+R*0.7*Math.cos(a2), y2=cy-R*0.7*Math.sin(a2);
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  // ── Promienie odbić (zigzag wewnątrz wnęki) ─────────────────────
+  ctx.strokeStyle = tv('--red'); ctx.lineWidth = 0.8; ctx.globalAlpha=0.6;
+  // Promień wchodzi przez aperturę pod kątem i odbija od ścian
+  const nBounce = Math.max(1, Math.min(6, Math.round(1.5 / sSS)));
+  let rx = cx - aperW*0.25, ry = yT + 4;
+  let dx = Wc * 0.38, dy = Dc * 0.35;
+  ctx.beginPath(); ctx.moveTo(rx, ry);
+  for(let i=0; i<nBounce; i++){
+    rx += dx; ry += dy;
+    // odbij od ścian
+    if(rx < xL+3 || rx > xR-3){ dx = -dx; rx += dx*2; }
+    if(ry > yB-3){ dy = -dy; ry += dy*2; }
+    ctx.lineTo(Math.max(xL+2, Math.min(xR-2, rx)),
+               Math.max(yT+2, Math.min(yB-2, ry)));
   }
-  ctx.globalAlpha=1;
+  ctx.stroke(); ctx.globalAlpha=1;
 
-  // ── Panel wyników (prawa strona) ──
-  const xT = W*0.72, yT = H*0.1;
+  // ── Wyniki (prawa strona) ────────────────────────────────────────
+  const xV = xR + 12, yV = yT + 4;
   ctx.fillStyle = tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
   ctx.textAlign='left';
-  ctx.fillText('s/S = ' + sSS.toFixed(2), xT, yT);
-  ctx.fillText('ε   = ' + eps.toFixed(3),  xT, yT+14);
+  ctx.fillText('s/S='+sSS.toFixed(2), xV, yV);
+  ctx.fillText('ε ='+eps.toFixed(3),  xV, yV+13);
+
   ctx.fillStyle = tv('--signal');
   ctx.font='bold 9px IBM Plex Mono,monospace';
-  ctx.fillText('ε_eff = ' + epsEff.toFixed(3), xT, yT+30);
-  // Mini słupek wzmocnienia
-  const boost = epsEff - eps;
-  const barW = 40, barH2 = 8;
-  ctx.fillStyle = tv('--border');
-  ctx.fillRect(xT, yT+40, barW, barH2);
-  ctx.fillStyle = tv('--signal');
-  ctx.fillRect(xT, yT+40, barW * Math.min(1, epsEff), barH2);
-  ctx.fillStyle = tv('--muted'); ctx.font='7px IBM Plex Mono,monospace';
-  ctx.fillText('+' + (boost*100).toFixed(1)+'%', xT, yT+60);
+  ctx.fillText('ε_eff='+epsEff.toFixed(3), xV, yV+28);
+
+  // Pasek wzmocnienia
+  const barW=W-xV-6, barH=7;
+  ctx.fillStyle=tv('--border');
+  ctx.fillRect(xV, yV+34, barW, barH);
+  ctx.fillStyle=tv('--signal');
+  ctx.fillRect(xV, yV+34, barW*Math.min(1,epsEff), barH);
+  ctx.fillStyle=tv('--muted'); ctx.font='7px IBM Plex Mono,monospace';
+  ctx.fillText('+'+((boost*100).toFixed(1))+'%', xV, yV+52);
 }
+
 
 /* ── Wykres biegunowy ε(θ) — miniatura w panelu Fresnel ── */
 function drawPolarPlot(){
