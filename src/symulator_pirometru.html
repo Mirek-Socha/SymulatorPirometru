@@ -877,6 +877,18 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   margin-top:0!important;margin-bottom:0!important;
 }
 .ctrl-panel.collapsed>.panel-hdr::after{transform:rotate(-90deg)}
+
+/* ── Przyciski eksportu ── */
+.export-group{display:flex;align-items:center;gap:4px}
+.export-split{display:flex;gap:2px}
+.export-group .icon-btn{
+  font-size:.65rem;padding:5px 7px;letter-spacing:.03em;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.export-group .icon-btn:hover{background:var(--surf);color:var(--cyan)}
+@media(max-width:600px){.export-split .icon-btn{display:none}}
 </style>
 </head>
 <body class="theme-dark beginner">
@@ -886,7 +898,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v3.3.0</span>
+    <span class="hdr-ver">v3.4.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -917,6 +929,13 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       </div>
     </div>
 
+    <div class="export-group">
+      <button class="icon-btn" onclick="exportCSV()" title="Eksportuj nastawy i wyniki do CSV">⬇ CSV</button>
+      <div class="export-split">
+        <button class="icon-btn" onclick="exportSpectrum('png')" title="Eksportuj wykres jako PNG">⬇ PNG</button>
+        <button class="icon-btn" onclick="exportSpectrum('svg')" title="Eksportuj wykres jako SVG">⬇ SVG</button>
+      </div>
+    </div>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     <button class="icon-btn xo" id="docsBtn" onclick="toggleDocs()" title="Dokumentacja">📖 Dokumentacja</button>
     <button class="icon-btn bo" id="docsBtnBeg" onclick="toggleDocs()" title="Jak to działa?">📖 Jak to działa?</button>
@@ -2303,7 +2322,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v3.3.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.4.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -4087,7 +4106,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v3.3.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.4.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -5481,6 +5500,140 @@ function initPolarHover(){
     }
   });
   canvas.addEventListener('mouseleave', ()=>{ hideTT && hideTT(); });
+}
+
+/* ══════════════════════════════════════════════════════
+   EKSPORT — CSV i SVG/PNG
+   ══════════════════════════════════════════════════════ */
+
+/* ── Pomocnik: pobieranie pliku ── */
+function downloadBlob(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'),
+                             {href:url, download:filename});
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
+/* ── CSV: nastawy + wyniki + tabela widmowa ── */
+function exportCSV(){
+  const res = lastResult;
+  if(!res){ alert('Brak danych — uruchom symulator.'); return; }
+  const p   = {...state};
+  const env = ENVS[appState.env] || ENVS.earth;
+  const det = res.det || {};
+  const r   = (v,d=4) => (typeof v==='number'?v.toFixed(d):'—');
+  const ts  = new Date().toISOString().slice(0,19).replace('T',' ');
+
+  const rows = [];
+
+  // ── Nagłówek ──
+  rows.push(['# SymulatorPirometru v3.3.0','','','']);
+  rows.push(['# Eksport:',ts,'','']);
+  rows.push(['','','','']);
+
+  // ── Sekcja: Nastawy ──
+  rows.push(['=== NASTAWY ===','','','']);
+  rows.push(['Tryb UI', uiMode,'','']);
+  rows.push(['Model emisyjności', appState.epsModel,'','']);
+  rows.push(['Środowisko', env.label || appState.env,'','']);
+  rows.push(['T_obiekt [°C]', r(p.Tobj-273.15,1),'','']);
+  rows.push(['T_obiekt [K]',  r(p.Tobj,2),'','']);
+  rows.push(['ε_real', r(p.eps_real,4),'','']);
+  rows.push(['ε_zał', r(p.eps_assumed,4),'','']);
+  rows.push(['Droga atmosfery L [m]', r(p.path,1),'','']);
+  rows.push(['Wilgotność RH [%]', r(p.rh,1),'','']);
+  rows.push(['CO₂ [ppm]', r(p.co2,0),'','']);
+  rows.push(['T_atmosfery [°C]', r(p.Tatm,1),'','']);
+  rows.push(['Przesłona', p.windowKey,'','']);
+  rows.push(['Grubość przesłony [mm]', r(p.windowThick,1),'','']);
+  rows.push(['T_przesłony [°C]', r(p.windowTemp,1),'','']);
+  rows.push(['Detektor', det.label||p.detKey,'','']);
+  rows.push(['Odbicia otoczenia', p.reflOn?'TAK':'NIE','','']);
+  if(p.reflOn) rows.push(['T_otoczenia [°C]', r(p.Tsurr,1),'','']);
+  rows.push(['Efekt wnękowy', appState.cavityOn?'TAK':'NIE','','']);
+  if(appState.cavityOn) rows.push(['s/S wnęki', r(appState.cavitySS,3),'','']);
+  if(appState.epsModel==='fresnel'){
+    rows.push(['Fresnel materiał', appState.fresnelMat,'','']);
+    rows.push(['Kąt θ [°]', r(appState.theta,1),'','']);
+  }
+  rows.push(['','','','']);
+
+  // ── Sekcja: Wyniki ──
+  rows.push(['=== WYNIKI ===','','','']);
+  rows.push(['T_ind [°C]', r(res.T_ind,2),'','']);
+  rows.push(['T_ind [K]',  r(res.T_ind_K,2),'','']);
+  rows.push(['ΔT [K]',     r(res.dT,3),'','']);
+  rows.push(['ΔT_ε [K]',   r(res.dT_eps,3),'','']);
+  if(res.reflOn) rows.push(['ΔT_refl [K]', r(res.dT_refl,3),'','']);
+  rows.push(['ΔT_atm [K]', r(res.dT_atm,3),'','']);
+  rows.push(['ΔT_win [K]', r(res.dT_win,3),'','']);
+  rows.push(['τ_avg', r(res.tau_avg,4),'','']);
+  rows.push(['λ_Wien [µm]', r(res.wien_um,3),'','']);
+  if(appState.ratioMode && res.T_ratio_K){
+    rows.push(['T_ratio [K]', r(res.T_ratio_K,2),'','']);
+    rows.push(['T_ratio [°C]', r(res.T_ratio_C,2),'','']);
+  }
+  rows.push(['','','','']);
+
+  // ── Sekcja: Widmo (tabela λ) ──
+  rows.push(['=== WIDMO PROMIENIOWANIA ===','','','']);
+  rows.push(['λ [µm]','L_bb [W/m²/sr/m]','L_emit','L_refl','L_atm','L_det','R(λ)','ε(λ)']);
+  const N = res.lam_um.length;
+  const step = Math.max(1, Math.floor(N/700));  // maks ~700 wierszy
+  for(let i=0; i<N; i+=step){
+    rows.push([
+      res.lam_um[i].toFixed(4),
+      (res.Lbb[i]||0).toExponential(4),
+      (res.Lemit[i]||0).toExponential(4),
+      (res.Lrefl&&res.Lrefl[i]?res.Lrefl[i]:0).toExponential(4),
+      (res.Latm[i]||0).toExponential(4),
+      (res.Ldet[i]||0).toExponential(4),
+      (res.R[i]||0).toFixed(5),
+      (res.Eps[i]||0).toFixed(5),
+    ]);
+  }
+
+  const csv = rows.map(r=>r.map(c=>
+    String(c).includes(',') ? '"'+String(c).replace(/"/g,'""')+'"' : c
+  ).join(',')).join('\r\n');
+
+  const fname = `pirometria_${ts.slice(0,10)}_T${Math.round(p.Tobj-273)}.csv`;
+  downloadBlob('\uFEFF'+csv, fname, 'text/csv;charset=utf-8');
+}
+
+/* ── SVG/PNG: eksport wykresu widmowego ── */
+function exportSpectrum(fmt){
+  const canvas = document.getElementById('specCanvas');
+  if(!canvas){ alert('Canvas nieznaleziony.'); return; }
+
+  if(fmt==='png'){
+    // PNG: bezpośrednio z canvas
+    canvas.toBlob(blob=>{
+      const ts = new Date().toISOString().slice(0,10);
+      downloadBlob(blob, `widmo_pirometria_${ts}.png`, 'image/png');
+    }, 'image/png', 0.95);
+    return;
+  }
+
+  if(fmt==='svg'){
+    // SVG: odwzoruj canvas przez serializer (rysujemy na offscreen canvas → SVG wrapper)
+    const W = canvas.width, H = canvas.height;
+    // Pobierz obraz canvas jako data URL
+    const dataURL = canvas.toDataURL('image/png', 0.95);
+    const svg = [
+      `<?xml version="1.0" encoding="UTF-8"?>`,
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
+      `     width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`,
+      `  <title>Widmo promieniowania — SymulatorPirometru</title>`,
+      `  <desc>T_obj=${Math.round((lastResult?.Tobj_C||0))}°C  ε=${state.eps_real}  λ_Wien=${(lastResult?.wien_um||0).toFixed(2)}µm</desc>`,
+      `  <image x="0" y="0" width="${W}" height="${H}" xlink:href="${dataURL}"/>`,
+      `</svg>`,
+    ].join('\n');
+    const ts = new Date().toISOString().slice(0,10);
+    downloadBlob(svg, `widmo_pirometria_${ts}.svg`, 'image/svg+xml');
+  }
 }
 
 window.addEventListener('load', ()=>{
