@@ -853,8 +853,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
 
 /* ── Zwijane ctrl-panele ── */
-.ctrl-panel > *:not(
-/* ── Zwijane ctrl-panele ── */
+
 .panel-hdr { cursor:pointer; user-select:none; }
 .ctrl-panel.collapsed > .panel-hdr::after { transform:rotate(-90deg); }
 .ctrl-panel > *:not(.panel-hdr) {
@@ -867,6 +866,17 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   opacity: 0; pointer-events: none;
 }
 .ctrl-panel.collapsed { padding-bottom: 4px; }
+/* ── Zwijane ctrl-panele ── */
+.panel-hdr{cursor:pointer;user-select:none}
+.ctrl-panel>.panel-hdr+*,.ctrl-panel>.panel-hdr~*{
+  transition:max-height .22s cubic-bezier(.4,0,.2,1),opacity .18s ease;
+  overflow:hidden;max-height:800px;
+}
+.ctrl-panel.collapsed>.panel-hdr+*,.ctrl-panel.collapsed>.panel-hdr~*{
+  max-height:0!important;opacity:0;pointer-events:none;
+  margin-top:0!important;margin-bottom:0!important;
+}
+.ctrl-panel.collapsed>.panel-hdr::after{transform:rotate(-90deg)}
 </style>
 </head>
 <body class="theme-dark beginner">
