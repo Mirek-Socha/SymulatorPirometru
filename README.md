@@ -111,7 +111,7 @@ L_det(λ) = τ_win(λ) · [ τ_atm(λ)·L_obj(λ)
 ```
 SymulatorPirometru/
 ├── src/
-│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~4800 linii)
+│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~5100 linii)
 ├── CHANGELOG.md
 ├── README.md
 └── .gitignore
@@ -121,8 +121,8 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v3.1.1** |
-| `en/english-translation` | 🇬🇧 English | **v3.1.1-en** |
+| `main` | 🇵🇱 Polski | **v3.2.0** |
+| `en/english-translation` | 🇬🇧 English | **v3.2.0-en** |
 
 ---
 
@@ -130,6 +130,7 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
+| **v3.2.0** | Model Fresnela ε(θ,λ,T): emisyjność kierunkowa; diagram biegunowy live-update; model Drudego n,k z ρ(T) |
 | **v3.1.1** | Poprawki UI: kontrast przycisków trybu, reorganizacja paneli, pole T_otocz, wizualizacja przesterowania (>100%) i warstwy odbić |
 | v3.1.0 | Modelowanie odbić promieniowania otoczenia (1−ε)·L_bb(T_otocz), składowa błędu ΔT_refl (tryb PRO) |
 | v3.0.0 | Trzeci tryb UI — PRO między Podstawowym a Ekspertem; rozdzielenie dokumentacji PRO/Ekspert; rejestr EPS_MODELS |

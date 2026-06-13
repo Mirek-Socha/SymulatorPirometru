@@ -1712,7 +1712,7 @@ L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[
 
 <p style="font-size:.75rem;color:var(--muted);margin-top:2px">
 τ_atm(λ) — transmitancja atmosfery · τ_win(λ) — transmitancja przesłony ·
-ε(λ,T) — emisyjność obiektu (model szary: const; model H-R: f(λ,T)) ·
+ε(θ,λ,T) — emisyjność obiektu [modele: szary ε=const, H-R ε(λ,T), wielomian ε(λ), Fresnel ε(θ,λ,T)] ·
 odbicia otoczenia (1−ε)·L_bb(T_otocz) — opcjonalne, panel „🪞 Otoczenie"
 </p>
 
@@ -2142,7 +2142,7 @@ i przesłony) i szuka T_ind spełniającej <span class="cite">[5,8]</span>:</p>
 Złożoność obliczeniowa: ∼72 × (N+1) ≈ 50 700 ewaluacji prawa Plancka na każde przesunięcie suwaka.</p>
 
 <div class="info-box"><b>Uwaga na model ε w inwersji:</b> procesor zawsze używa ε_zał = const,
-nawet jeśli wybrany jest model Hagena-Rubensa. Niezgodność ε(λ) ≠ ε_zał jest <i>celowa</i>
+nawet jeśli wybrany jest model Hagena-Rubensa, wielomianowy lub Fresnela. Niezgodność ε(θ,λ,T) ≠ ε_zał jest <i>celowa</i>
 — dokładnie tak działa rzeczywisty pirometr, który nie zna prawdziwego widma emisyjności obiektu.
 Ten błąd jest widoczny w składowej ΔT_ε.</div>
 
@@ -2159,7 +2159,8 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}} + \Delta T_{\mathr
 <table class="beg-eps-table">
   <tr><th>Składowa</th><th>Co uwzględnia</th><th>Typowy znak</th></tr>
   <tr><td>ΔT_ε</td><td>Błąd emisyjności: ε_real ≠ ε_zał (lub ε(λ) ≠ ε_zał w modelu H-R)</td><td>ujemny gdy ε_real &lt; ε_zał</td></tr>
-  <tr><td>ΔT_refl</td><td>Składowa błędu od odbić promieniowania otoczenia (1−ε)·L_bb(T_otocz)</td></tr>
+  <tr><td>θ</td><td>Kąt obserwacji pirometru względem normalnej powierzchni obiektu [°]</td></tr>
+<tr><td>ΔT_refl</td><td>Składowa błędu od odbić promieniowania otoczenia (1−ε)·L_bb(T_otocz)</td></tr>
 <tr><td>ΔT_atm</td><td>Atmosfera: tłumienie + emisja własna gazu</td><td>ujemny (tłumienie) lub dodatni (hot gas)</td></tr>
   <tr><td>ΔT_win</td><td>Przesłona: tłumienie τ_win + emisja własna T_win</td><td>ujemny (zimna) lub dodatni (gorąca)</td></tr>
 </table>
@@ -2176,7 +2177,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><th>Symbol / skrót</th><th>Znaczenie</th><th>Jednostka</th></tr>
   <tr><td>CDC</td><td><b>Ciało Doskonale Czarne</b> — odpowiednik ang. <i>blackbody (BB)</i>. Idealne źródło promieniowania termicznego, ε = 1</td><td>—</td></tr>
   <tr><td>L_bb(λ,T)</td><td>Spektralna luminancja ciała doskonale czarnego — prawo Plancka</td><td>W·m⁻²·sr⁻¹·m⁻¹</td></tr>
-  <tr><td>ε(λ,T)</td><td>Emisyjność spektralna obiektu — model szary: const; model H-R: funkcja λ i T</td><td>—</td></tr>
+  <tr><td>ε(θ,λ,T)</td><td>Emisyjność spektralna i kierunkowa — modele: szary, H-R, wielomian, Fresnel</td><td>—</td></tr>
   <tr><td>ε_real</td><td>Emisyjność rzeczywista (wartość suwaka w modelu szarym)</td><td>—</td></tr>
   <tr><td>ε_zał</td><td>Emisyjność zakładana przez procesor pirometru (zawsze stała)</td><td>—</td></tr>
   <tr><td>ρ₀</td><td>Oporność elektryczna metalu w T₀ = 293 K — parametr modelu H-R</td><td>µΩ·cm</td></tr>
@@ -2222,7 +2223,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
 </table>
-<div class="info-box">Aplikacja jest samodzielnym plikiem HTML bez zależności lokalnych. Zewnętrzne zasoby ładowane przez CDN: Google Fonts (typografia) i KaTeX (renderowanie wzorów matematycznych).</div>
+<div class="info-box">Aplikacja jest samodzielnym plikiem HTML bez zależności lokalnych. Zewnętrzne zasoby ładowane przez CDN: Google Fonts (typografia) i KaTeX (renderowanie wzorów matematycznych). Obliczenia Fresnela wykonywane lokalnie (pełne równania zespolone, model Drudego).</div>
 </div>
 
 
