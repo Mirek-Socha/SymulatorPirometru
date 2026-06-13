@@ -846,6 +846,23 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 .mode-seg button.active { background:var(--amber); color:#1a1208; opacity:1 }
 .mode-seg button:hover:not(.active) { opacity:1; background:var(--surf) }
 @media (max-width:700px){ .mode-seg button { padding:6px 7px; font-size:.6rem } }
+
+/* ── Zwijane ctrl-panele ── */
+.panel-hdr { cursor:pointer; user-select:none; }
+.panel-hdr::after {
+  content:'▾'; margin-left:auto; font-size:.8rem;
+  color:var(--muted); transition:transform .22s; flex-shrink:0;
+}
+.ctrl-panel.collapsed > .panel-hdr::after { transform:rotate(-90deg); }
+.ctrl-panel > *:not(.panel-hdr) {
+  transition: max-height .22s cubic-bezier(.4,0,.2,1), opacity .18s ease,
+              margin .18s ease, padding .18s ease;
+}
+.ctrl-panel.collapsed > *:not(.panel-hdr) {
+  max-height:0 !important; overflow:hidden !important;
+  margin-top:0 !important; margin-bottom:0 !important;
+  opacity:0; pointer-events:none;
+}
 </style>
 </head>
 <body class="theme-dark beginner">
@@ -855,7 +872,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v3.2.1</span>
+    <span class="hdr-ver">v3.3.0</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1205,6 +1222,29 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         </div>
 
 
+      <!-- CAVITY — efekt wnękowy (Expert) -->
+      <div class="ctrl-panel eo" id="cavityPanel" style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div class="panel-hdr am">🕳 Efekt wnękowy</div>
+        <label class="chk-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" id="chk_cavity" onchange="setCavity(this.checked)">
+          <span style="font-size:.78rem">Uwzględnij efekt wnęki (ε<sub>eff</sub> &gt; ε)</span>
+        </label>
+        <div id="cavity_params" style="display:none">
+          <div class="sl-row" style="margin-top:4px">
+            <span class="sl-name" style="white-space:nowrap">s/S</span>
+            <input type="range" id="sl_cavitySS" min="0.01" max="0.99" step="0.01" value="0.1"
+                   oninput="onCavitySS(this.value)">
+            <input type="number" id="num_cavitySS" class="sl-num" min="0.01" max="0.99"
+                   step="0.01" value="0.10" onchange="onCavitySS(this.value)"
+                   title="s/S: stosunek apertury do powierzchni wnęki">
+          </div>
+          <div class="sl-secondary">apertura / powierzchnia wnęki (0.01 = wąski otwór)</div>
+          <canvas id="cavityCanvas" width="220" height="110"
+                  style="width:100%;max-width:220px;border:1px solid var(--border);
+                         background:var(--card);display:block;margin:6px auto 0"></canvas>
+        </div>
+      </div>
+
       <!-- ε_assumed: w H-R pirometr nadal zakłada szarość -->
         <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
           ⚠ Procesor pirometru nadal zakłada ε_zał = const.<br>
@@ -1233,6 +1273,20 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         </div>
         <div class="sl-secondary" style="margin-top:-4px">
           Kąt obserwacji pirometru względem normalnej powierzchni
+        </div>
+        <!-- Porównanie materiałów -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+          <span style="font-size:.72rem;color:var(--muted);white-space:nowrap">Porównaj:</span>
+          <select id="sel_fresnel_mat2" style="flex:1;font-size:.72rem"
+                  onchange="appState.fresnelMat2=this.value; drawPolarPlot()">
+            <option value="">— brak —</option>
+            <option value="fe">Żelazo</option>
+            <option value="ti">Tytan</option>
+            <option value="ni">Nikiel</option>
+            <option value="cu">Miedź</option>
+            <option value="al">Aluminium</option>
+            <option value="w">Wolfram</option>
+          </select>
         </div>
         <div style="text-align:center;margin-top:8px">
           <canvas id="polarCanvas" width="220" height="126"
@@ -2235,7 +2289,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v3.2.1</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.3.0</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2880,9 +2934,22 @@ const EPS_MODELS = {
   },
 };
 
+/* ── Efekt wnękowy (model Gouffé uproszczony) ──────────────────────────
+   ε_eff = ε / [ε + (1−ε)·(s/S)]
+   gdzie s/S to stosunek pola apertury do całkowitej pow. wnęki.
+   s/S → 0 (mała apertura):  ε_eff → 1  (idealne ciało czarne)
+   s/S → 1 (płaska pow.):    ε_eff = ε  (brak efektu wnękowego)
+   Ref: Gouffe A. (1945). Rev. Opt. 24, 1-10. [21] */
+function cavityBoost(eps, sSS){
+  if(!appState.cavityOn || sSS >= 1) return eps;
+  const denom = eps + (1 - eps) * Math.max(sSS, 1e-4);
+  return Math.min(0.999, eps / denom);
+}
+
 function epsSpectral(lam_m, T_K, p){
   const model = EPS_MODELS[appState.epsModel] || EPS_MODELS.grey;
-  return model.fn(lam_m * 1e6, T_K, p);
+  const eps0 = model.fn(lam_m * 1e6, T_K, p);
+  return cavityBoost(eps0, appState.cavitySS);  // efekt wnękowy (mnożnik)
 }
 
 /* Tablica ε(λ) dla całej siatki lam[] — dla wykresów */
@@ -4006,7 +4073,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v3.2.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.3.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -4069,6 +4136,24 @@ function setEpsModel(model){
 function onFresnelMat(key){
   appState.fresnelMat = key;
   drawPolarPlot();
+  scheduleUpdate();
+}
+
+function setCavity(on){
+  appState.cavityOn = !!on;
+  const prm = document.getElementById('cavity_params');
+  if(prm) prm.style.display = on ? 'block' : 'none';
+  drawCavityDiagram();
+  scheduleUpdate();
+}
+function onCavitySS(val){
+  const v = Math.max(0.01, Math.min(0.99, parseFloat(val)||0.1));
+  appState.cavitySS = v;
+  const sl  = document.getElementById('sl_cavitySS');
+  const num = document.getElementById('num_cavitySS');
+  if(sl)  { sl.value = v; slPct(sl); }
+  if(num)   num.value = v.toFixed(2);
+  drawCavityDiagram();
   scheduleUpdate();
 }
 
@@ -4427,6 +4512,9 @@ const appState = {
   isDark:       true,       // motyw ciemny
   theta:        0,          // kąt obserwacji pirometru [°] (Fresnel)
   fresnelMat:   'fe',       // materiał dla modelu Fresnela
+  fresnelMat2:  '',         // drugi materiał do porównania ('' = brak)
+  cavityOn:     false,      // efekt wnękowy włączony?
+  cavitySS:     0.1,        // s/S — apertura/powierzchnia wnęki (0.01–0.5)
 };
 
 const state = {
@@ -4497,6 +4585,7 @@ function doUpdate(){
   drawSpec(res, p);
   drawTau(res);
   if(appState.epsModel==='fresnel') drawPolarPlot();
+  if(appState.cavityOn) drawCavityDiagram();
   updateChain(res, p);
   updateResults(res, p);
   updateLegend(res, p);
@@ -5081,6 +5170,84 @@ function renderDocsKatex(){
 }
 
 
+/* ── Diagram wnęki — wizualizacja s/S i ε_eff ── */
+function drawCavityDiagram(){
+  const canvas = document.getElementById('cavityCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const tv = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+
+  ctx.clearRect(0,0,W,H);
+
+  const sSS  = appState.cavitySS || 0.1;
+  const eps  = state ? state.eps_real : 0.7;
+  const epsEff = eps / (eps + (1-eps)*sSS);
+
+  // ── Przekrój wnęki (półkole) ──
+  const cx = W*0.38, cy = H*0.78, R = Math.min(W*0.28, H*0.6);
+  // Ścianki wnęki
+  ctx.strokeStyle = tv('--border'); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, 0, false); ctx.stroke();
+  // Linie boczne (wnęka cylindryczna)
+  ctx.beginPath();
+  ctx.moveTo(cx-R, cy); ctx.lineTo(cx-R, cy-5);
+  ctx.moveTo(cx+R, cy); ctx.lineTo(cx+R, cy-5);
+  ctx.stroke();
+
+  // Apertura s (zaznaczona na górze)
+  const s_half = R * Math.sqrt(sSS);  // s/S → apertura proporcjonalna do √(s/S)
+  ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - s_half, cy - 0.5);
+  ctx.lineTo(cx + s_half, cy - 0.5);
+  ctx.stroke();
+  // Etykieta s
+  ctx.fillStyle = tv('--cyan'); ctx.font='bold 9px IBM Plex Mono,monospace';
+  ctx.textAlign='center';
+  ctx.fillText('s (apertura)', cx, cy - 6);
+
+  // Całkowita powierzchnia S (łuk)
+  ctx.strokeStyle = tv('--amber'); ctx.lineWidth = 1.5;
+  ctx.setLineDash([3,2]);
+  ctx.beginPath(); ctx.arc(cx, cy, R+6, Math.PI, 0, false); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = tv('--amber');
+  ctx.font='8px IBM Plex Mono,monospace';
+  ctx.textAlign='left';
+  ctx.fillText('S', cx+R+8, cy-R*0.3);
+
+  // Strzałki wielokrotnych odbić wewnątrz
+  ctx.strokeStyle = tv('--red'); ctx.lineWidth=1; ctx.globalAlpha=0.5;
+  const nRefl = Math.min(5, Math.round(1/sSS * 0.5));
+  for(let i=0;i<nRefl;i++){
+    const a1=(0.3+i*0.4)*Math.PI, a2=(0.7+i*0.4)*Math.PI;
+    const x1=cx+R*0.7*Math.cos(a1), y1=cy-R*0.7*Math.sin(a1);
+    const x2=cx+R*0.7*Math.cos(a2), y2=cy-R*0.7*Math.sin(a2);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+
+  // ── Panel wyników (prawa strona) ──
+  const xT = W*0.72, yT = H*0.1;
+  ctx.fillStyle = tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
+  ctx.textAlign='left';
+  ctx.fillText('s/S = ' + sSS.toFixed(2), xT, yT);
+  ctx.fillText('ε   = ' + eps.toFixed(3),  xT, yT+14);
+  ctx.fillStyle = tv('--signal');
+  ctx.font='bold 9px IBM Plex Mono,monospace';
+  ctx.fillText('ε_eff = ' + epsEff.toFixed(3), xT, yT+30);
+  // Mini słupek wzmocnienia
+  const boost = epsEff - eps;
+  const barW = 40, barH2 = 8;
+  ctx.fillStyle = tv('--border');
+  ctx.fillRect(xT, yT+40, barW, barH2);
+  ctx.fillStyle = tv('--signal');
+  ctx.fillRect(xT, yT+40, barW * Math.min(1, epsEff), barH2);
+  ctx.fillStyle = tv('--muted'); ctx.font='7px IBM Plex Mono,monospace';
+  ctx.fillText('+' + (boost*100).toFixed(1)+'%', xT, yT+60);
+}
+
 /* ── Wykres biegunowy ε(θ) — miniatura w panelu Fresnel ── */
 function drawPolarPlot(){
   const canvas = document.getElementById('polarCanvas');
@@ -5170,6 +5337,37 @@ function drawPolarPlot(){
   ctx.globalAlpha = 0.15; ctx.fillStyle = tv('--amber'); ctx.fill();
   ctx.globalAlpha = 1; ctx.stroke();
 
+  // ── Druga krzywa: porównanie materiałów ──
+  if(appState.fresnelMat2 && appState.fresnelMat2 !== matKey){
+    const mat2    = HR_MATERIALS[appState.fresnelMat2];
+    if(mat2){
+      const rho2  = rhoT(mat2, T_K);
+      const {n:n2,k:k2} = fresnelNK(rho2, lam_eff);
+      ctx.beginPath(); ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,3]);
+      let first2 = true;
+      for(let deg=0; deg<=90; deg+=0.5){
+        const eps2 = fresnelEps(n2, k2, deg);
+        const rad2 = (90-deg)*Math.PI/180;
+        const px2  = cx + R*eps2*Math.cos(rad2);
+        const py2  = cy - R*eps2*Math.sin(rad2);
+        if(first2){ctx.moveTo(px2,py2); first2=false;} else ctx.lineTo(px2,py2);
+      }
+      for(let deg=90; deg>=0; deg-=0.5){
+        const eps2 = fresnelEps(n2, k2, deg);
+        const rad2 = (90+deg)*Math.PI/180;
+        ctx.lineTo(cx + R*eps2*Math.cos(rad2), cy - R*eps2*Math.sin(rad2));
+      }
+      ctx.closePath();
+      ctx.globalAlpha=0.08; ctx.fillStyle=tv('--cyan'); ctx.fill();
+      ctx.globalAlpha=1; ctx.stroke(); ctx.setLineDash([]);
+      // Etykieta drugiego materiału
+      ctx.fillStyle=tv('--cyan'); ctx.font='8px IBM Plex Mono,monospace';
+      ctx.textAlign='right';
+      ctx.fillText(mat2.short||appState.fresnelMat2, W-2, H-4);
+    }
+  }
+
   // ── Wskaźnik aktualnego θ ──
   const epsAt  = fresnelEps(n, k, curTheta);
   const radAt  = (90 - curTheta) * Math.PI / 180;
@@ -5190,11 +5388,56 @@ function drawPolarPlot(){
   });
 
   // ── Etykieta ε i θ ──
-  ctx.fillStyle = tv('--cyan'); ctx.font = 'bold 9px IBM Plex Mono,monospace';
+  ctx.fillStyle = tv('--amber'); ctx.font = 'bold 9px IBM Plex Mono,monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('θ=' + curTheta.toFixed(0) + '°  ε=' + epsAt.toFixed(3), 4, 12);
+  ctx.fillText((HR_MATERIALS[matKey]?.short||matKey)+' θ='+curTheta.toFixed(0)+'° ε='+epsAt.toFixed(3), 4, 12);
   ctx.fillStyle = tv('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
   ctx.fillText('λ≈' + lam_eff.toFixed(2) + 'µm  T=' + Math.round(T_K - 273) + '°C', 4, 23);
+}
+
+function initCollapsiblePanels(){
+  document.querySelectorAll('.ctrl-panel .panel-hdr').forEach(hdr=>{
+    hdr.addEventListener('click',()=>
+      hdr.closest('.ctrl-panel').classList.toggle('collapsed'));
+  });
+}
+
+/* ── Hover tooltip na diagramie biegunowym Fresnela ── */
+function initPolarHover(){
+  const canvas = document.getElementById('polarCanvas');
+  if(!canvas) return;
+  canvas.addEventListener('mousemove', e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    const W = canvas.width, H = canvas.height;
+    const cx = W/2, cy = H * 0.94;
+    const dx = mx - cx, dy = cy - my;  // dy: up = positive
+    // Kąt od normalnej (góra = 0°)
+    const thetaHov = Math.round(Math.atan2(Math.abs(dx), Math.max(dy,0.1)) * 180/Math.PI);
+    if(thetaHov < 0 || thetaHov > 90) return;
+    // Oblicz ε przy tym kącie
+    const mat  = HR_MATERIALS[appState.fresnelMat] || HR_MATERIALS.fe;
+    const T_K  = state ? state.Tobj : 1473;
+    const detK = state ? state.detKey : 'band_065';
+    const det  = DETS[detK];
+    const lam_eff = det ? det.lc : 1.0;
+    const rho  = rhoT(mat, T_K);
+    const {n,k}= fresnelNK(rho, lam_eff);
+    const eps  = fresnelEps(n, k, thetaHov);
+    // Pokaż tooltip
+    const tt = document.getElementById('tooltip');
+    if(tt){
+      tt.style.display='block';
+      tt.style.left=(e.clientX+14)+'px';
+      tt.style.top =(e.clientY-30)+'px';
+      tt.innerHTML =
+        `<div class="tt-r"><span class="tt-l">θ:</span><span>${thetaHov}°</span></div>`+
+        `<div class="tt-r"><span class="tt-l">ε(θ):</span><span>${eps.toFixed(4)}</span></div>`+
+        `<div class="tt-r"><span class="tt-l">λ:</span><span>${lam_eff.toFixed(2)}µm</span></div>`;
+    }
+  });
+  canvas.addEventListener('mouseleave', ()=>{ hideTT && hideTT(); });
 }
 
 window.addEventListener('load', ()=>{
@@ -5212,6 +5455,9 @@ window.addEventListener('load', ()=>{
   scheduleUpdate();
   initChainInteraction();
   drawPolarPlot();  // inicjalizacja diagramu biegunowego Fresnela
+  drawCavityDiagram();
+  initPolarHover();  // hover tooltip na diagramie biegunowym
+  initCollapsiblePanels();
   // KaTeX renderuje się przez onload na auto-render.min.js
 });
 </script>
