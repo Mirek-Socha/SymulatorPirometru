@@ -855,7 +855,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pirometria</span>
-    <span class="hdr-ver">v3.2.0</span>
+    <span class="hdr-ver">v3.2.1</span>
     <span class="hdr-sub xo">Tor: Obiekt · Atmosfera · Przesłona · Detektor → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Pomiar bezdotykowy — podstawy pirometrii</span>
     <span class="beg-mode-badge bo">🎓 Tryb Podstawowy</span>
@@ -1243,8 +1243,9 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
           </div>
         </div>
         <div class="env-note" style="margin-top:6px;border-left-color:var(--amber)">
-          ⚠ Model Drudego (n≈k z oporności ρ(T)). Dokładny dla czystych metali w IR.
-          Dla tlenków i dielektryków użyj modelu wielomianowego.
+          ⚠ Model Drudego (n≈k z oporności ρ(T)). Najdokładniejszy dla dobrych przewodników (Cu, Al, W, Au) przy λ&nbsp;&gt;&nbsp;2&nbsp;µm.
+          Dla Fe, Ti, Ni wartości orientacyjne (absorpcje interpasmowe). Dla tlenków i dielektryków użyj modelu wielomianowego.
+          Przy λ&nbsp;&lt;&nbsp;2&nbsp;µm (pirometria optyczna 0.65–1 µm): n,k z Drudego przybliżone — kształt ε(θ) poprawny jakościowo.
         </div>
       </div>
 
@@ -1539,7 +1540,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <li><a href="#doc-s2">Prawo Plancka — ciało doskonale czarne</a>
       <span class="toc-sub">Wien · Stefan-Boltzmann · stałe promieniowania</span></li>
     <li><a href="#doc-s3">Emisyjność i prawo Kirchhoffa</a>
-      <span class="toc-sub">Ciało szare · Hagen-Rubens ε(λ,T) · korekcja T</span></li>
+      <span class="toc-sub">Modele: szary · H-R · wielomian TPRC · Fresnel ε(θ)</span></li>
     <li><a href="#doc-s4">Model transmitancji atmosferycznej</a>
       <span class="toc-sub">Beer-Lambert · H₂O, CO₂ · emisja własna</span></li>
     <li><a href="#doc-s5">Środowiska atmosferyczne</a>
@@ -1713,7 +1714,7 @@ L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[
 <p style="font-size:.75rem;color:var(--muted);margin-top:2px">
 τ_atm(λ) — transmitancja atmosfery · τ_win(λ) — transmitancja przesłony ·
 ε(θ,λ,T) — emisyjność obiektu [modele: szary ε=const, H-R ε(λ,T), wielomian ε(λ), Fresnel ε(θ,λ,T)] ·
-odbicia otoczenia (1−ε)·L_bb(T_otocz) — opcjonalne, panel „🪞 Otoczenie"
+odbicia otoczenia (1−ε(λ))·L_bb(λ,T_otocz) — opcjonalne, panel „🪞 Otoczenie" (tryb PRO+)
 </p>
 
 <p>Procesor pirometru zakłada uproszczony model: ciało szare o emisyjności ε_zał,
@@ -1769,6 +1770,15 @@ To główny powód, dla którego pomiar błyszczących metali w piecu jest trudn
 <p>Emisyjność ε(λ,T) definiuje stosunek promieniowania emitowanego przez ciało rzeczywiste do promieniowania CDC w tej samej temperaturze <span class="cite">[5,6]</span>:</p>
 <div class="fml-math">$$\varepsilon(\lambda,T) = \frac{L_{\mathrm{emit}}(\lambda,T)}{L_{bb}(\lambda,T)}, \qquad 0 \leq \varepsilon \leq 1$$</div>
 <p>Zgodnie z prawem Kirchhoffa <span class="cite">[4]</span>: <b>ε(λ,T) = α(λ,T)</b>, gdzie α to absorpcyjność. Ciało doskonale czarne: ε = 1, ciało szare: ε = const(λ), ciało selektywne: ε(λ) ≠ const.</p>
+<h3>Model domyślny (tryb PRO): ciało szare ε = const</h3>
+<p>W trybie PRO symulator zakłada <b>emisyjność stałą</b> ε(λ,T) = ε<sub>zał</sub> = const — model ciała szarego.
+Jest to uproszczenie: rzeczywiste materiały mają emisyjność zależną od λ i T.
+Stała ε stosowana jest zarówno przez fizyczny model obiektu, jak i przez procesor pirometru.
+Korekcja temperatury (błąd ε) wynika z niespójności gdy założona ε<sub>zał</sub> różni się od rzeczywistej ε<sub>real</sub>:</p>
+<div class="fml-math">$$\Delta T_arepsilon pprox rac{T_{\mathrm{ind}}^2}{c_2/\lambda_{\mathrm{eff}}} \cdot \ln\!rac{arepsilon_{\mathrm{real}}}{arepsilon_{\mathrm{zał}}}$$</div>
+<p>Wzór przybliżony (przybliżenie Wiena); T<sub>ind</sub> — temperatura wskazana, c₂ = 14388 µm·K,
+λ<sub>eff</sub> — efektywna długość fali detektora <span class="cite">[5,8]</span>.</p>
+
 <div class="warn-box">Domyślny model symulatora to ciało szare (ε = const). Tryb Eksperta oferuje dodatkowe modele — <b>Hagen-Rubens</b> i <b>wielomianowy (TPRC)</b> — opisujące realistyczną emisyjność jako funkcję λ i T (opis poniżej, widoczny w trybie Eksperta).</div>
 
 <div class="eo"><!-- modele zaawansowane: tylko expert -->
@@ -1811,17 +1821,17 @@ Teoria elektromagnetyczna (równania Fresnela) podaje dla metalu z zespoloną fu
 <p><b>Skąd n i k?</b> Symulator używa przybliżenia Drudego (granica długich fal IR): dla metali <i>n ≈ k ≈ √(ρ<sub>rel</sub>·λ/2)</i>, gdzie ρ<sub>rel</sub> = ρ(T)/ρ<sub>Cu,0</sub>.
 Oporność ρ(T) pochodzi z tej samej tabeli co model Hagena-Rubensa — <b>zero dodatkowych parametrów</b>.</p>
 
-<h3>Charakterystyki ε(θ)</h3>
+<h3>Charakterystyki ε(θ) <span class="cite">[18,19]</span></h3>
 <p><b>Metale</b> (n,k duże): ε(θ) jest prawie płaskie do θ ≈ 40°, po czym <b>rośnie</b> z maksimum przy θ ≈ 75–85° i spada do zera przy 90°.
 Widać to wyraźnie na diagramie biegunowym — krzywa jest „wypukła" pod dużymi kątami.</p>
 <p><b>Konsekwencja praktyczna:</b> Pirometr patrzący pod kątem na polerowany metal widzi wyższą emisyjność niż przy obserwacji normalnej. Błąd może sięgnąć +20–40%. Wyrażając ilościowo:</p>
 <div class="fml-math">$$\frac{\varepsilon_{\text{hem}}}{\varepsilon_0} \approx 1.2 \text{ dla Cu}, \quad \approx 1.1 \text{ dla Fe}$$</div>
 <p>gdzie ε<sub>hem</sub> to emisyjność hemisferyczna (całkowana po 2π sr), a ε<sub>0</sub> = ε(θ=0°) to emisyjność normalna (mierzona pirometrem prostopadle).</p>
-<div class="warn-box">Symulator używa ε(θ) jako <b>jednolitej wartości</b> dla całego widma w obliczeniach toru (każdy punkt λ ma własne n,k z Drudego). Kąt θ wpływa też na drogę optyczną przez atmosferę (L/cosθ), ale ten efekt nie jest tu modelowany.</div>
+<div class="warn-box">Symulator używa ε(θ,λ) osobno dla każdego punktu λ w obliczeniach toru (n,k z Drudego dla każdego λ). Kąt θ wpływa też na drogę optyczną przez atmosferę (L/cosθ), ale ten efekt nie jest tu modelowany. Model Drudego (n≈k) jest ważny dla λ &gt; 2 µm i czystych metali; przy λ &lt; 2 µm wartości ε są przybliżone, choć kierunek zmiany z θ pozostaje poprawny.</div>
 </div><!-- /eo Fresnel -->
 <h3>Model wielomianowy — ε(λ) z danych literaturowych</h3>
 <p>Dla wielu materiałów emisyjność spektralną dobrze aproksymuje wielomian drugiego stopnia
-dopasowany do danych tabelarycznych z TPRC <span class="cite">[A,B]</span>:</p>
+dopasowany do danych tabelarycznych z TPRC <span class="cite">[16,17]</span>:</p>
 <div class="fml-math">$$\varepsilon(\lambda) = a_0 + a_1\cdot\lambda + a_2\cdot\lambda^2, \qquad \lambda\;[\mu\mathrm{m}], \quad \varepsilon \in [0.01,\, 0.99]$$</div>
 <p>Model jest niezależny od temperatury (ε = f(λ) tylko) — dopasowanie jest ważne w podanym
 zakresie λ i T. Poza zakresem wynik jest ekstrapolowany i może być mniej dokładny.</p>
@@ -1884,6 +1894,13 @@ powierzchni, utlenienia, chropowatości i historii termicznej materiału.</div>
 <p>Atmosfera pochłaniając promieniowanie, sama emituje (prawo Kirchhoffa). Emisja atmosfery jest opisana luminancją:</p>
 <div class="fml-math">$$L_{\mathrm{atm}}(\lambda) = \bigl[1-\tau(\lambda)\bigr]\cdot L_{bb}(\lambda,\,T_{\mathrm{atm}}) \qquad \bigl(T_{\mathrm{atm}} = \text{const wzdluz toru}\bigr)$$</div>
 <p>Ta emisja jest <b>dodawana</b> do sygnału obiektu. Powoduje to przeszacowanie temperatury (pirometr "widzi" cieplejszą atmosferę).</p>
+
+<h3>Inne gazy absorbujące (środowiska specjalne)</h3>
+<p>Symulator obsługuje dwa dodatkowe składniki atmosferyczne, aktywowane przez wybór środowiska:</p>
+<ul style="font-size:.82rem;color:var(--pale);line-height:1.8;padding-left:1.2em">
+  <li><b>NH₃ (amoniak)</b> — środowisko MOCVD. Silne pasma przy 2.97 µm i 6.15 µm blokują typowe okna IR; pirometr musi pracować przy 0.95 µm.</li>
+  <li><b>SO₂ (ditlenek siarki)</b> — atmosfera Wenus (~150 ppm). Pasma przy 4.0, 7.3, 8.6 µm.</li>
+</ul>
 </div>
 
 
@@ -2218,7 +2235,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Katedra Metrologii i Elektroniki</td></tr>
   <tr><td>Wydział</td><td>WEAIiIB — Wydział Elektrotechniki, Automatyki, Informatyki i Inżynierii Biomedycznej</td></tr>
   <tr><td>Uczelnia</td><td>AGH Akademia Górniczo-Hutnicza w Krakowie</td></tr>
-  <tr><td>Wersja</td><td><b>v3.2.0</b></td></tr>
+  <tr><td>Wersja</td><td><b>v3.2.1</b></td></tr>
   <tr><td>Repozytorium</td><td><a href="https://github.com/Mirek-Socha/SymulatorPirometru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPirometru</a></td></tr>
   <tr><td>Przeznaczenie</td><td>Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury</td></tr>
   <tr><td>Licencja</td><td>Użytek edukacyjny — AGH</td></tr>
@@ -2366,10 +2383,47 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
     pierwotnych. <i>Zalecane jako wstępne rozeznanie, a nie jako jedyne źródło.</i></span>
   </li>
 
+
+  <li class="bib-item">
+    <span class="bib-num">[16]</span>
+    <span><b>Touloukian Y.S., DeWitt D.P.</b> (red.) (1970). <i>Thermophysical Properties of Matter — Vol. 7: Thermal Radiative Properties: Metallic Elements and Alloys.</i>
+    IFI/Plenum, Nowy Jork &amp; Waszyngton.
+    — Główne źródło danych emisyjności dla metali (Fe, W, Mo, Ti, Ni, Cu, Al). Tabele ε(λ,T) dla szerokich zakresów. Stosowane jako baza modelu wielomianowego dla pierwiastków metalicznych w symulatorze.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[17]</span>
+    <span><b>Touloukian Y.S., DeWitt D.P.</b> (red.) (1972). <i>Thermophysical Properties of Matter — Vol. 8: Thermal Radiative Properties: Nonmetallic Solids.</i>
+    IFI/Plenum, Nowy Jork &amp; Waszyngton.
+    — Dane emisyjności dla niemetali: grafit, SiC, Al₂O₃, szkło, ceramika. Analogiczne do Vol. 7, stosowane dla materiałów niemetalicznych w modelu wielomianowym.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[18]</span>
+    <span><b>Siegel R., Howell J.R.</b> (2002). <i>Thermal Radiation Heat Transfer</i>, wyd. 4.
+    Taylor &amp; Francis, Nowy Jork. ISBN: 1-56032-839-8.
+    — Klasyczny podręcznik. Rozdz. 3–5: emisyjność spektralna i kierunkowa, równania Fresnela dla dielektryków i metali, teoria Drudego. Źródło modelu kierunkowości ε(θ) zastosowanego w symulatorze.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[19]</span>
+    <span><b>De Vos J.C.</b> (1954). A new determination of the emissivity of tungsten ribbon.
+    <i>Physica</i>, 20(7–12), 690–714.
+    <a href="https://doi.org/10.1016/S0031-8914(54)80182-X" target="_blank">DOI:10.1016/S0031-8914(54)80182-X</a>
+    — Klasyczne pomiary emisyjności spectralnej wolframu (0.4–3 µm, 1200–2700 K). Punkt odniesienia dla modelu wielomianowego W i walidacji modelu Fresnela.</span>
+  </li>
+
+  <li class="bib-item">
+    <span class="bib-num">[20]</span>
+    <span><b>Cagran C., Pottlacher G.</b> (2005). Normal spectral emissivities and optical properties of liquid Cu, Ag, and Au.
+    <i>Journal of Non-Crystalline Solids</i>, 354(32).
+    — Dane emisyjności spektralnej i optycznej Cu, Ag, Au w stanie ciekłym i stałym (bliskie IR). Uzupełnienie dla modelu Fresnela przy weryfikacji Cu i Al.</span>
+  </li>
+
 </ol>
 
 <p style="margin-top:12px;font-size:.75rem;color:var(--muted)">
-  Pozycje [1]–[10] to publikacje naukowe z linkami DOI. Pozycje [11]–[15] to polskojęzyczne lub bezpłatnie dostępne online zasoby przeznaczone dla studentów II roku.<br>
+  Pozycje [1]–[10] to publikacje naukowe z linkami DOI. Pozycje [11]–[15] to polskojęzyczne lub bezpłatnie dostępne online zasoby dla studentów. Pozycje [16]–[20] to źródła danych emisyjności i modeli optycznych.<br>
   Oznaczenia literaturowe <span class="cite">[n]</span> w tekście dokumentacji odnoszą się do powyższego wykazu.
   Linki DOI prowadzą do oryginalnych publikacji w wydawnictwach naukowych.
 </p>
@@ -2392,7 +2446,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
 /* ─────────────────────────────────────────────
    PHYSICS CONSTANTS & ENGINE
 ───────────────────────────────────────────── */
-const h_  = 6.626e-34, cL = 2.998e8, kB = 1.381e-23;
+const h_  = 6.62607e-34, cL = 2.99792e8, kB = 1.38065e-23;  // CODATA 2018
 const c2  = h_*cL/kB;   // 1.43878e-2 m·K
 const LAM_MIN = 0.10e-6, LAM_MAX = 16e-6, N = 1400;
 const DL = (LAM_MAX - LAM_MIN) / N;
@@ -2555,9 +2609,11 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
    MODEL EMISYJNOŚCI SPEKTRALNEJ
    ─────────────────────────────────────────────────────────────────
 
-   Dwa modele:
-   'grey'  — ciało szare: ε(λ,T) = ε_real = const  (dotychczasowy)
-   'hr'    — Hagen-Rubens: ε(λ,T) z oporności elektrycznej ρ(T)
+   Cztery modele:
+   'grey'    — ciało szare: ε(λ,T) = ε_real = const
+   'hr'      — Hagen-Rubens: ε(λ,T) z oporności elektrycznej ρ(T)
+   'poly'    — wielomian: ε(λ) = a₀+a₁λ+a₂λ² (dane TPRC)
+   'fresnel' — Fresnel: ε(θ,λ,T) kierunkowość (model Drudego n,k z ρ(T))
 
    Hagen-Rubens (długie fale, λ >> penetration depth):
      ε(λ,T) ≈ 0.365·√(ρ/λ) − 0.0667·(ρ/λ)
@@ -2636,7 +2692,7 @@ const POLY_MATERIALS = {
     label:'Wolfram (W)',
     a0: 0.497, a1:-0.076, a2: 0.0052,
     lam_range:[0.5, 5.0], T_range:[1200,3000],
-    source:'[C,E,F]',
+    source:'[16,19]',
     note:'Najlepiej zmierzone spośród metali (żarówki, wzorce lamp). ' +
          'ε silnie spada z λ; minimum ok. 1.2 µm → wzrost (anomalny skin effect). ' +
          'Dane: De Vos (1954), CRC 60th ed., Cagran (2005). ~1600 K.'
@@ -2645,7 +2701,7 @@ const POLY_MATERIALS = {
     label:'Molibden (Mo)',
     a0: 0.425, a1:-0.060, a2: 0.0038,
     lam_range:[0.5, 8.0], T_range:[1000,2800],
-    source:'[A,E]',
+    source:'[16]',
     note:'Podobny przebieg do W, nieznacznie wyższe ε przy długich λ. ' +
          '"Punkt x" emisyjności W i Mo przy ok. 1.27 µm (izotermalne skrzyżowanie). ' +
          'Dane: TPRC Vol.7; Cagran (2005). ~1400 K.'
@@ -2654,7 +2710,7 @@ const POLY_MATERIALS = {
     label:'Tytan (Ti)',
     a0: 0.600, a1:-0.080, a2: 0.0028,
     lam_range:[0.5, 5.0], T_range:[800,1700],
-    source:'[A]',
+    source:'[16]',
     note:'Wysoka ε w VIS/NIR, wyraźnie spada w IR. Silna zależność od stanu ' +
          'powierzchni i utlenienia (ε rośnie po utlenieniu). Dane: TPRC Vol.7. ~1000 K.'
   },
@@ -2662,7 +2718,7 @@ const POLY_MATERIALS = {
     label:'Żelazo polerowan (Fe)',
     a0: 0.370, a1:-0.038, a2: 0.0014,
     lam_range:[0.5, 8.0], T_range:[700,1500],
-    source:'[A,D]',
+    source:'[16]',
     note:'Czyste żelazo, powierzchnia polerowana. ε rośnie z T i spada z λ ' +
          '(typowe zachowanie metaliczne). Dane: Ward (1956), TPRC Vol.7. ~1000 K.'
   },
@@ -2670,7 +2726,7 @@ const POLY_MATERIALS = {
     label:'Nikiel (Ni)',
     a0: 0.310, a1:-0.035, a2: 0.0012,
     lam_range:[0.5, 8.0], T_range:[700,1400],
-    source:'[A,D]',
+    source:'[16]',
     note:'Poniżej temperatury Curie (358°C) ε może wykazywać anomalię. ' +
          'Dane: Ward (1956), TPRC Vol.7. Zakres ważności: 700–1400 K.'
   },
@@ -2678,7 +2734,7 @@ const POLY_MATERIALS = {
     label:'Grafit polikrystaliczny (C)',
     a0: 0.875, a1:-0.010, a2: 0.0002,
     lam_range:[0.5, 10.0], T_range:[500,3000],
-    source:'[B,H]',
+    source:'[17]',
     note:'Quasi-ciało doskonale czarne; ε ≈ 0.85–0.90 prawie niezależne od λ. ' +
          'Szeroko stosowany jako wzorzec. ε słabo rośnie z T (fononowe pochłanianie). ' +
          'Dane: TPRC Vol.8; Michalski (2001).'
@@ -2687,7 +2743,7 @@ const POLY_MATERIALS = {
     label:'Węglik krzemu (SiC)',
     a0: 0.920, a1:-0.008, a2: 0.0003,
     lam_range:[1.0, 10.0], T_range:[500,1700],
-    source:'[B,G]',
+    source:'[17]',
     note:'Wysoka i stabilna ε w zakresie 1–10 µm; rezonans fononu przy 12 µm obniża ε. ' +
          'Stosowany w piecach IR i jako materiał wzorcowy. ' +
          'Dane: TPRC Vol.8; Hanssen & Kaplan (NIST, 2001).'
@@ -2696,7 +2752,7 @@ const POLY_MATERIALS = {
     label:'Tlenek glinu (Al₂O₃)',
     a0: 0.22, a1: 0.062, a2:-0.0028,
     lam_range:[1.0, 10.0], T_range:[600,1800],
-    source:'[B]',
+    source:'[17]',
     note:'Niemetaliczny — ε ROŚNIE z λ (pasma fononu OH przy 2.7 µm i ~10 µm). ' +
          'ε ≈ 0.30 przy 1 µm → 0.90 przy 8 µm (wysoka w dalekiej IR!). ' +
          'Dane: TPRC Vol.8. ~1200 K.'
@@ -2737,15 +2793,19 @@ function polyEmissivity(lam_um, mat){
    ══════════════════════════════════════════════════════════════════ */
 
 // Oporność miedzi w µΩ·cm w T=293K (punkt odniesienia dla ρ_rel)
-const RHO_CU_REF = 1.72;
 
-/* fresnelNK: n i k Drudego z oporności [µΩ·cm] i λ [µm] */
+/* fresnelNK: n i k z teorii Drudego (granica długich fal IR)
+   Wyprowadzenie: n² = k² = λ[m]·σ[S/m] / (4π·c₀·ε₀)
+                           = λ[µm]·10⁻⁶ · (1/ρ[µΩcm]·10⁻⁸) / (4π·c₀·ε₀)
+                           = λ[µm] · DRUDE_A / ρ[µΩcm]
+   Stała DRUDE_A = 10² / (4π·c₀·ε₀) ≈ 2998  [µm·µΩcm → bezwymiarowa]
+   Zakres ważności: λ > 2 µm, czyste metale (Cu, Al, Au, W w IR) */
+const DRUDE_A = 2997.91;   // 10²/(4π·2.998e8·8.854e-12) [µm·µΩcm]
+
 function fresnelNK(rho_uOhm_cm, lam_um){
-  // Drude IR: n² ≈ k² ≈ ρ_rel·λ/2  (Hagen-Rubens limit ρ_rel·λ >> 1)
-  const rhoRel = rho_uOhm_cm / RHO_CU_REF;   // bezwymiarowa
-  const nk2 = rhoRel * lam_um / 2;            // n² = k²
-  const nk  = Math.sqrt(Math.max(nk2, 0.01)); // n ≈ k ≥ 0.1
-  return { n: nk, k: nk };                     // dla metali n ≈ k
+  const nk2 = DRUDE_A * lam_um / Math.max(rho_uOhm_cm, 0.1);  // n² = k²
+  const nk  = Math.sqrt(Math.max(nk2, 1.0));  // n,k ≥ 1 w IR dla metali
+  return { n: nk, k: nk };
 }
 
 /* fresnelEps: ε(θ) z Fresnela zespolonego dla metalu (n ≈ k >> 1) */
@@ -3093,10 +3153,10 @@ function compute(p){
   // 3. Emisyjność + odbicie + atmosfera (τ_win=1)
   let sig_atm=0;
   for(let i=0;i<=N;i++){
-    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2), es=epsSpectral(lam,Tobj_K,p);
+    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2,env), es=epsSpectral(lam,Tobj_K,p);
     const emR = reflOn ? es*planck(lam,Tobj_K)+(1-es)*planck(lam,Tsurr_K)
                        : es*planck(lam,Tobj_K);
-    const la=(1-ta)*planck(lam,p.Tatm+273.15);
+    const la=(1-ta)*planck(lam,Tatm_K);  // Tatm_K uwzględnia logikę env-override
     sig_atm += detResp(lam,det)*(ta*emR+la)*DL;
   }
   const T_atm_K = invertTemp(sig_atm, det, p.eps_assumed);
@@ -3929,7 +3989,7 @@ function buildDocsHTML(mode){
   <span>Drukuj → Zapisz jako PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pirometria v3.2.0 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pirometria v3.2.1 &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -5138,5 +5198,6 @@ window.addEventListener('load', ()=>{
   // KaTeX renderuje się przez onload na auto-render.min.js
 });
 </script>
+</body>
 </body>
 </html>
