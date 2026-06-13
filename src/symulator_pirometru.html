@@ -518,7 +518,11 @@ html{
 }
 .panel-hdr.cy{color:var(--cyan)}
 .panel-hdr.re{color:var(--red)}
-.panel-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+.panel-hdr::after{
+  content:'▾'; font-size:.75rem; color:var(--muted);
+  margin-left:auto; flex-shrink:0;
+  transition:transform .2s ease;
+}
 .sl-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .sl-name{
   font-family:'IBM Plex Mono',monospace;font-size:.68rem;
@@ -847,22 +851,22 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 .mode-seg button:hover:not(.active) { opacity:1; background:var(--surf) }
 @media (max-width:700px){ .mode-seg button { padding:6px 7px; font-size:.6rem } }
 
+
+/* ── Zwijane ctrl-panele ── */
+.ctrl-panel > *:not(
 /* ── Zwijane ctrl-panele ── */
 .panel-hdr { cursor:pointer; user-select:none; }
-.panel-hdr::after {
-  content:'▾'; margin-left:auto; font-size:.8rem;
-  color:var(--muted); transition:transform .22s; flex-shrink:0;
-}
 .ctrl-panel.collapsed > .panel-hdr::after { transform:rotate(-90deg); }
 .ctrl-panel > *:not(.panel-hdr) {
-  transition: max-height .22s cubic-bezier(.4,0,.2,1), opacity .18s ease,
-              margin .18s ease, padding .18s ease;
+  transition: max-height .22s cubic-bezier(.4,0,.2,1), opacity .18s ease;
+  overflow: visible;
 }
 .ctrl-panel.collapsed > *:not(.panel-hdr) {
-  max-height:0 !important; overflow:hidden !important;
-  margin-top:0 !important; margin-bottom:0 !important;
-  opacity:0; pointer-events:none;
+  max-height: 0 !important; overflow: hidden !important;
+  margin-top: 0 !important; margin-bottom: 0 !important;
+  opacity: 0; pointer-events: none;
 }
+.ctrl-panel.collapsed { padding-bottom: 4px; }
 </style>
 </head>
 <body class="theme-dark beginner">
