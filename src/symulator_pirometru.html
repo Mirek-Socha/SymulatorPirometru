@@ -3466,11 +3466,32 @@ function drawSpec(res, p){
   const ly = v => specTop + specH*(1 - Math.min(v/gMax, headroom)/headroom);
   const y100 = specTop + specH*(1 - 1/headroom);  // pozycja linii 100%
 
-  // y-grid — tylko strefa widma (specTop..specTop+specH)
-  ctx.strokeStyle=tv('--plot-grid'); ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){
-    const y = specTop + specH*i/4;
-    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
+  // y-grid + y-labels — siatka i etykiety uwzględniające headroom
+  // Wartości na osi Y: od 0% do headroom*100%, co ~25% lub ~20%
+  {
+    // Dobierz krok siatki: przy headroom>1 rób ~5-6 linii, zawsze przy 0% i 100%
+    const pctTop   = Math.round(headroom * 100);  // np. 160 przy max headroom
+    // Krok: zawsze 25%, ale gdy pctTop>125 dodaj wartości pośrednie
+    const rawStep  = pctTop <= 125 ? 25 : pctTop <= 150 ? 25 : 25;
+    const ticks    = [];
+    for(let pct = 0; pct <= pctTop; pct += rawStep) ticks.push(pct);
+    if(!ticks.includes(pctTop)) ticks.push(pctTop);  // zawsze górna granica
+
+    ctx.strokeStyle = tv('--plot-grid'); ctx.lineWidth = 1;
+    ctx.fillStyle   = tv('--muted');
+    ctx.font        = '10px IBM Plex Mono,monospace';
+    ctx.textAlign   = 'right';
+
+    ticks.forEach(pct => {
+      // ly(v) gdzie v = pct/100 * gRef
+      const v = pct / 100 * gRef;
+      const y = ly(v);
+      if(y < specTop - 2 || y > specTop + specH + 2) return; // poza obszarem
+      // linia siatki
+      ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(pL+W2, y); ctx.stroke();
+      // etykieta
+      ctx.fillText(pct + '%', pL - 4, y + 4);
+    });
   }
   // ── Strefa przesterowania (>100%): wyróżniona gdy sygnał przekracza CDC obiektu ──
   if(headroom > 1.001){
@@ -3507,11 +3528,7 @@ function drawSpec(res, p){
     }
   });
 
-  // y-axis labels — względem specTop/specH (poniżej strefy R)
-  ctx.fillStyle=tv('--muted'); ctx.font='10px IBM Plex Mono,monospace';
-  ctx.textAlign='right';
-  [['100%',0],['75%',1],['50%',2],['25%',3],['0%',4]].forEach(([v,i])=>
-    ctx.fillText(v, pL-4, specTop + specH*i/4 + 4));
+  // y-axis labels — rysowane w bloku y-grid powyżej
 
   // visible + UV spectrum bar
   const barY=pT+H2+3, barH=7;
