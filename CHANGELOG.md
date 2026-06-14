@@ -5,7 +5,115 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
-## [v3.1.1] — 2026-06-11 ✅ bieżąca
+## [v3.4.0] — 2026-06-14 ✅ bieżąca
+
+### Dodano — eksport danych (CSV, PNG, SVG)
+
+Trzy przyciski eksportu w nagłówku aplikacji:
+
+**⬇ CSV** — plik `pirometria_YYYY-MM-DD_T{temp}.csv` z trzema sekcjami:
+- **NASTAWY** — tryb UI, model ε, środowisko, T_obj, ε_real/ε_zał, droga L, RH, CO₂, T_atm, przesłona, detektor, odbicia (T_surr), efekt wnękowy (s/S), Fresnel (mat+θ)
+- **WYNIKI** — T_ind, ΔT, ΔT_ε, ΔT_refl, ΔT_atm, ΔT_win, τ_avg, λ_Wien, T_ratio (gdy dwubarwny)
+- **WIDMO** — tabela λ/L_bb/L_emit/L_refl/L_atm/L_det/R(λ)/ε(λ) (do 700 punktów), BOM UTF-8
+
+**⬇ PNG** — kompozytowy offscreen canvas łączący:
+- Wykres widmowy (specCanvas) + wykres τ(λ) (tauCanvas)
+- Legenda 2×5 z ikonami linii/wypełnienia (warunkowo: odbicia, przesłona, ε-model, ratio)
+- Stopka z pełnymi parametrami (T_obj, ε, λ_Wien, ΔT, L, RH, CO₂) i timestampem
+
+**⬇ SVG** — właściwy plik wektorowy (nie PNG opakowany w SVG):
+- `<path>` dla każdej krzywej widmowej, `<linearGradient>` dla paska UV-VIS-IR
+- Wykres τ(λ) jako oddzielna sekcja z siatką i etykietami
+- Legenda warunkowa (jak PNG) z ikonami wektorowymi
+- Podpis z parametrami atmosfery; kolory z `getComputedStyle()` — odzwierciedla aktywny motyw
+- Wymiary: 900×655px (widmo + τ + legenda)
+
+### Dodano — dokumentacja programistyczna
+
+Plik `docs/PRZEWODNIK_PROGRAMISTYCZNY.md` (719 linii):
+- Przegląd architektury: 10 modułów logicznych (MODULE 1–8)
+- Opis dwóch obiektów stanu (`state` vs `appState`) i uzasadnienie separacji
+- Wzorzec RAF debounce w `scheduleUpdate()` / `doUpdate()`
+- Moduł fizyki: Planck z clamping, Beer-Lambert multiplikatywny, Strategy Pattern EPS_MODELS
+- Silnik obliczeniowy: przepływ danych compute(), bisekcja 72-iter, dekompozycja ΔT
+- Rysowanie: Canvas 2D, obsługa DPI/Retina, tooltip przez mousemove + lastResult cache
+- System motywów CSS Custom Properties + helper `tv(name)`
+- Tryby UI: progressive disclosure, higiena stanu przy cofaniu trybu
+- Presety: Data-Driven Config przez `Object.assign(state, p)`
+- Eksport: CSV (RFC 4180 + BOM), PNG (offscreen canvas), SVG (template literals)
+- Pirometria dwubarwna: iloraz S₁/S₂, inwersja stosunkowa
+- Zestawienie 10 wzorców projektowych
+- Wskazówki debug z konsoli przeglądarki (F12)
+
+
+---
+
+## [v3.3.0] — 2026-06-14
+
+### Dodano — efekt wnękowy, zwijane panele, ulepszenia Fresnela
+
+**Efekt wnękowy** (tryb Ekspert, panel Model emisyjności):
+- Model Gouffé: `ε_eff = ε / [ε + (1−ε)·s/S]` gdzie s/S = apertura/powierzchnia wnęki
+- Checkbox + suwak s/S (0.01–0.99) + pole numeryczne
+- Diagram przekroju wnęki (canvas 220×110px): ścianki, apertura s (cyan), powierzchnia S (amber), strzałki odbić, wynik ε_eff i wzmocnienie Δε
+- Mnożnik `cavityBoost()` w `epsSpectral()` — komponuje się automatycznie z każdym z 4 modeli ε
+- Zmniejszona apertura → więcej odbić wewnętrznych → ε_eff → 1 (zasada wzorca Gouffé)
+
+**Zwijane panele**:
+- Kliknięcie nagłówka ctrl-panel zwija/rozwija zawartość
+- CSS sibling selektory `.panel-hdr+*, .panel-hdr~*` z `transition: max-height .22s`
+- Strzałka `▾` obraca się do `▸` przy zwinięciu
+- 8 paneli automatycznie zwijalne przez `initCollapsiblePanels()`
+
+**Ulepszenia diagramu biegunowego Fresnela**:
+- Tooltip hover: mousemove na polarCanvas → ε(θ) dla kąta pod kursorem bez poruszania suwakiem
+- Porównanie materiałów: select „Porównaj z" nakłada drugą krzywą (cyan, przerywana) z etykietą symbolu
+
+
+---
+
+## [v3.2.1] — 2026-06-14
+
+### Poprawki (audyt merytoryczny)
+
+**Błędy algorytmów (krytyczne):**
+- `fresnelNK()` — błąd jednostek stałej Drudego: `nk² = ρ_rel·λ/2` → `DRUDE_A·λ/ρ`
+  gdzie `DRUDE_A = 2997.91 = 10²/(4π·c₀·ε₀)` [jednostki µm·µΩcm]
+  Wynik: Cu@20°C,λ=10µm: n=k=132 (poprzednio 2.2), ε(0°)=0.015 (literatura ≈0.02 ✓)
+- `sig_atm` w dekompozycji: `p.Tatm+273.15` → `Tatm_K` (z logiką env-override)
+
+**Dokumentacja i cytowania:**
+- Cytowania `[A,B]` → `[16,17]`; dodano pozycje [16]–[20] do bibliografii
+  ([16] TPRC Vol.7, [17] TPRC Vol.8, [18] Siegel&Howell, [19] De Vos 1954, [20] Cagran 2005)
+- Sekcja s3: dodano h3 „Model domyślny PRO: ciało szare" z wzorem korekcji ΔT_ε
+- Sekcja s4: dodano opis NH₃ i SO₂ (środowiska specjalne)
+- Komentarz JS: „2 modele" → „4 modele"
+- Stałe fizyczne: zaktualizowane do CODATA 2018 (h=6.62607×10⁻³⁴, k_B=1.38065×10⁻²³)
+
+
+---
+
+## [v3.2.0] — 2026-06-14
+
+### Dodano — model Fresnela ε(θ,λ,T)
+
+Nowy model emisyjności kierunkowej w trybie Ekspert:
+
+- **Fizyka:** Równania Fresnela dla zespolonego ñ=n−ik; model Drudego: n≈k≈√(D_A·λ/ρ)
+  Indeksy n,k z tej samej tabeli oporności co Hagen-Rubens — zero nowych danych materiałowych
+- **Zakres ważności:** λ>2µm, czyste metale (Cu,Al,W,Au); Fe/Ti/Ni orientacyjnie; przy λ<2µm przybliżone
+- **Czwarty przycisk** w siatce 2×2 (EPS_MODELS rejestr — `compute()` bez zmian)
+- **Panel fresnel_params:** select materiału (6 opcji) + suwak θ (0–85°)
+- **Diagram biegunowy** ε(θ) — canvas 220×126px z live-update:
+  - Siatka łuków (ε=0.2/0.5/0.8), promienie co 30°
+  - Krzywa amber + wypełnienie; cyjanowy punkt = aktualne θ z wartością ε
+  - λ_eff z aktualnego detektora (det.lc), T z suwaka obiektu
+- **Dokumentacja:** sekcja h3 w s3 (.eo) z pełnymi równaniami KaTeX, charakterystyką ε(θ) metali
+
+
+---
+
+## [v3.1.1] — 2026-06-11
 
 ### Poprawki UI i wizualizacji odbić otoczenia
 
@@ -24,7 +132,7 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
   czerwonej emisji atmosfery), z wpisem w legendzie i obrysem krzywej
 
 
-## [v3.1.0] — 2026-06-11 ✅ bieżąca
+## [v3.1.0] — 2026-06-11
 
 ### Dodano — modelowanie odbić promieniowania otoczenia (tryb PRO)
 
@@ -41,7 +149,7 @@ Efekt dydaktyczny: błyszczący metal (ε≈0.1) odbija 90% promieniowania ścia
 przy gorącym otoczeniu pirometr drastycznie zawyża temperaturę.
 
 
-## [v3.0.0] — 2026-06-11 ✅ bieżąca
+## [v3.0.0] — 2026-06-11
 
 ### Dodano — trzeci tryb interfejsu: PRO
 
@@ -74,7 +182,7 @@ Architektura trybów rozszerzona z 2 do 3 poziomów:
   nowy wpis w rejestrze, bez zmian w `compute()`
 
 
-## [v2.9.0] — 2026-05-28 ✅ bieżąca
+## [v2.9.0] — 2026-05-28
 
 ### Dodano — interaktywny schemat blokowy
 
@@ -112,7 +220,7 @@ Najechanie na animowaną strzałkę między blokami pokazuje tooltip z:
 - Siatka spektralna N = 700 → 1400 punktów
 
 
-## [v2.8.0] — 2026-05-27 ✅ bieżąca
+## [v2.8.0] — 2026-05-27
 
 ### Zmieniono — Refactoring Faza 4: Konfiguracja
 
@@ -137,7 +245,7 @@ const CONFIG = {
 Brak zmian funkcjonalnych.
 
 
-## [v2.7.0] — 2026-05-27 ✅ bieżąca
+## [v2.7.0] — 2026-05-27
 
 ### Zmieniono — Refactoring Faza 3: Modularyzacja
 
@@ -161,7 +269,7 @@ w podglądzie kodu i panelu funkcji edytora.
 Brak zmian funkcjonalnych — wyłącznie komentarze/separatory.
 
 
-## [v2.6.0] — 2026-05-27 ✅ bieżąca
+## [v2.6.0] — 2026-05-27
 
 ### Zmieniono — Refactoring Faza 2: State Management
 
@@ -198,7 +306,7 @@ Brak zmian funkcjonalnych — logika aplikacji bez zmian.
 
 
 
-## [v2.5.0] — 2026-05-27 ✅ bieżąca
+## [v2.5.0] — 2026-05-27
 
 ### Zmieniono — Refactoring Faza 1: konsolidacja kodu
 

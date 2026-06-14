@@ -91,6 +91,8 @@ const appState = {
   logScale: false,     // skala logarytmiczna?
   isDark: true,        // motyw ciemny?
   theta: 0,            // kąt obserwacji [°] (model Fresnela)
+  fresnelMat:  'fe',   // materiał modelu Fresnela (klucz HR_MATERIALS)
+  fresnelMat2: '',     // drugi materiał do porównania na diagramie ('' = brak)
   cavityOn: false,     // efekt wnękowy?
   cavitySS: 0.1        // parametr wnęki s/S
 };
@@ -263,7 +265,7 @@ function epsSpectral(lam_m, T_K, p) {
   const model = EPS_MODELS[appState.epsModel] || EPS_MODELS.grey;
   const eps0 = model.fn(lam_m * 1e6, T_K, p);
   if (appState.cavityOn)
-    return cavityBoost(eps0, appState.cavitySS);  // efekt wnękowy
+    return cavityBoost(eps0, appState.cavitySS);  // efekt wnękowy Gouffé
   return eps0;
 }
 ```
@@ -715,5 +717,24 @@ Kolejność wywołań ma znaczenie: `initSliders()` musi być przed `scheduleUpd
 bo slider ustawia wartości `state`, które są potem odczytywane przez `compute()`.
 
 ---
+
+---
+
+## 15. Zmiany wersji
+
+Pełna historia zmian dostępna w [`CHANGELOG.md`](../CHANGELOG.md).
+Kluczowe wersje z perspektywy architektonicznej:
+
+| Wersja | Zmiana architektoniczna |
+|---|---|
+| v3.4.0 | `exportCSV()`, `exportSpectrum()`, `exportSVG()` — trzy formaty eksportu |
+| v3.3.0 | `cavityBoost()` w `epsSpectral()`, `initCollapsiblePanels()`, hover na polarCanvas |
+| v3.2.0 | `EPS_MODELS.fresnel` z `fresnelNK()` + `fresnelEps()`, `drawPolarPlot()` |
+| v3.2.1 | Stała `DRUDE_A=2997.91` (naprawa jednostek), `Tatm_K` w dekompozycji |
+| v3.0.0 | 3 tryby UI (`.bo`/`.xo`/`.eo`), `EPS_MODELS` rejestr, higiena stanu przy zmianie trybu |
+| v2.4.0 | `computeRatio()`, `invertTempRatio()` — pirometria dwubarwna |
+| v2.3.0 | `POLY_MATERIALS` + `polyEmissivity()` — model wielomianowy TPRC |
+| v2.2.0 | `HR_MATERIALS` + `hagenRubens()` + `rhoT()` — model Hagena-Rubensa |
+| v2.8.0 | Obiekt `CONFIG` — wszystkie stałe numeryczne w jednym miejscu |
 
 *Mirosław Socha · Katedra Metrologii i Elektroniki · WEAIiIB · AGH Kraków*
