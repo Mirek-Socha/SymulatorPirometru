@@ -131,12 +131,22 @@ Efekt wnękowy komponuje się z każdym modelem: `ε_eff = ε / [ε + (1−ε)·
 
 ```
 SymulatorPirometru/
+├── docs/
+│   └── PRZEWODNIK_PROGRAMISTYCZNY.md   # przewodnik implementacji i architektury
 ├── src/
-│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~5300 linii)
+│   └── symulator_pirometru.html        # standalone — HTML + CSS + JS (~5300 linii)
 ├── CHANGELOG.md
 ├── README.md
 └── .gitignore
 ```
+
+## Dokumentacja dla programistów
+
+Dla osób analizujących projekt od strony implementacyjnej dostępny jest osobny materiał:
+
+- **[Przewodnik programistyczny](docs/PRZEWODNIK_PROGRAMISTYCZNY.md)** — opis architektury aplikacji, zarządzania stanem, silnika obliczeniowego, renderowania Canvas/SVG, eksportu danych oraz zastosowanych wzorców projektowych.
+
+> Wersja angielska przewodnika zostanie dodana po aktualizacji gałęzi `en/english-translation` do bieżącej wersji projektu.
 
 ## Gałęzie
 
