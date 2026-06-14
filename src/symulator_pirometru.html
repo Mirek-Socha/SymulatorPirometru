@@ -5909,8 +5909,68 @@ function exportSVG(){
     defs.push(`<clipPath id="tauclip"><rect x="${pL}" y="${tY}" width="${W2}" height="${tH}"/></clipPath>`);
   }
 
+  // ── Legenda ──
+  {
+    // Pozycja: na prawo od wykresu τ LUB w prawym dolnym rogu widma
+    // Rysujemy jako blok poniżej wykresu τ
+    const tY = H + 50;           // górna krawędź τ (jak wyżej)
+    const tH = 100;
+    const legX = pL, legY = tY + tH + 28;
+    const legW = W2, legH = 60;
+    const col2 = col;            // alias
+
+    // Tło legendy
+    els.push(`<rect x="${legX}" y="${legY}" width="${legW}" height="${legH}" fill="${col('--surf')}" stroke="${col('--border')}" stroke-width="0.5" rx="3"/>`);
+    els.push(`<text x="${legX+8}" y="${legY+11}" font-family="IBM Plex Mono,monospace" font-size="8" font-weight="bold" fill="${col('--muted')}">LEGENDA</text>`);
+
+    // Pozycje kolumn (2 rzędy × 5 kolumn)
+    const lw = legW / 5, lh = 20;
+    const lx0 = legX + 4, ly0 = legY + 16;
+
+    function legLine(ix, iy, color, dash, label){
+      const x = lx0 + ix*lw, y = ly0 + iy*lh;
+      const lattr = dash ? ` stroke-dasharray="${dash}"` : '';
+      els.push(`<line x1="${x+2}" y1="${y+6}" x2="${x+22}" y2="${y+6}" stroke="${color}" stroke-width="2"${lattr}/>`);
+      els.push(`<text x="${x+26}" y="${y+10}" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="${col('--text')}">${esc(label)}</text>`);
+    }
+    function legFill(ix, iy, color, opacity, label){
+      const x = lx0 + ix*lw, y = ly0 + iy*lh;
+      els.push(`<rect x="${x+2}" y="${y+2}" width="20" height="8" fill="${color}" fill-opacity="${opacity}"/>`);
+      els.push(`<text x="${x+26}" y="${y+10}" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="${col('--text')}">${esc(label)}</text>`);
+    }
+
+    // Rząd 0 — zawsze widoczne
+    legLine(0, 0, col('--muted'),  '4,3', 'L_bb (CDC / ciało czarne)');
+    legLine(1, 0, col('--amber'),  '',    'L_emit (emisja obiektu)');
+    legFill(2, 0, col('--red'),    '0.35','Emisja atm. (fill)');
+    legLine(3, 0, col('--signal'), '',    'L_det (sygnał na detektorze)');
+    legLine(4, 0, col('--cyan'),   '7,4', 'Odczyt T_ind');
+
+    // Rząd 1 — R(λ) zawsze + warunkowo: refl, okno, eps-model, ratio
+    legFill(0, 1, col('--cyan'),   '0.22','R(λ) detektora [górna strefa]');
+    let col1 = 1;
+    if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+      legFill(col1++, 1, col('--violet'), '0.40', 'Odbicia otoczenia (fill)');
+      legLine(col1++, 1, col('--violet'), '2,3',  'L_emit + odbicia');
+    }
+    if(res.winKey && res.winKey !== 'none'){
+      legLine(col1++, 1, '#10b981', '2,3', 'τ_win (przesłona)');
+      legFill(col1++, 1, '#10b981', '0.28','Emisja przesłony');
+    }
+    if(appState.epsModel==='hr' || appState.epsModel==='poly'){
+      const epsLbl = appState.epsModel==='poly' ? 'ε(λ) wielomian' : 'ε(λ) H-R';
+      legLine(col1++, 1, col('--amber'), '5,3', epsLbl);
+    }
+    if(appState.ratioMode && res.ratio && res.ratio.R2){
+      legLine(col1++, 1, col('--green'), '3,4', 'R₂(λ) det. 2');
+    }
+
+    // Podpis τ(λ) pod wykresem τ
+    els.push(`<text x="${pL+W2/2}" y="${legY+legH+16}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}">τ(λ) — transmitancja atmosferyczna na drodze L=${state.path}m (RH=${state.rh}%, CO₂=${state.co2}ppm, T_atm=${state.Tatm}°C)</text>`);
+  }
+
   // ── Złóż SVG ──
-  const Htotal = H + 175;  // powiększony dokument: widmo + τ + paski
+  const Htotal = H + 175 + 80;  // widmo + τ + legenda + podpis  // powiększony dokument: widmo + τ + paski
   const svg = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${Htotal}" viewBox="0 0 ${W} ${Htotal}">`,
