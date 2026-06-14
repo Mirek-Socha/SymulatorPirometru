@@ -5618,23 +5618,206 @@ function exportSpectrum(fmt){
   }
 
   if(fmt==='svg'){
-    // SVG: odwzoruj canvas przez serializer (rysujemy na offscreen canvas → SVG wrapper)
-    const W = canvas.width, H = canvas.height;
-    // Pobierz obraz canvas jako data URL
-    const dataURL = canvas.toDataURL('image/png', 0.95);
-    const svg = [
-      `<?xml version="1.0" encoding="UTF-8"?>`,
-      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
-      `     width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`,
-      `  <title>Widmo promieniowania — SymulatorPirometru</title>`,
-      `  <desc>T_obj=${Math.round((lastResult?.Tobj_C||0))}°C  ε=${state.eps_real}  λ_Wien=${(lastResult?.wien_um||0).toFixed(2)}µm</desc>`,
-      `  <image x="0" y="0" width="${W}" height="${H}" xlink:href="${dataURL}"/>`,
-      `</svg>`,
-    ].join('\n');
-    const ts = new Date().toISOString().slice(0,10);
-    downloadBlob(svg, `widmo_pirometria_${ts}.svg`, 'image/svg+xml');
+    exportSVG();   // właściwy wektor — osobna funkcja
   }
 }
+/* ── Eksport SVG — właściwy plik wektorowy ── */
+function exportSVG(){
+  const res = lastResult;
+  if(!res){ alert('Brak danych — uruchom symulator.'); return; }
+
+  // Pobierz aktualne kolory motywu (z obliczonego CSS)
+  const cs = getComputedStyle(document.body);
+  const col = k => cs.getPropertyValue(k).trim() || '#888';
+
+  // Wymiary jak drawSpec
+  const W = 900, H = 480;
+  const pL = 46, pR = 12, pT = 14, pB = 38;
+  const W2 = W-pL-pR, H2 = H-pT-pB;
+
+  const lamArr = res.lam_um;
+  const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
+  const logScale = appState.logScale;
+  const lx = u => logScale
+    ? pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
+    : pL + W2 * (u-lamMin)/(lamMax-lamMin);
+
+  const gRef = Math.max(...res.Lbb, 1e-30);
+  const gPeak = Math.max(gRef, res.Ldet_max||0, ...(res.Latm||[]), ...(res.Lrefl||[]), 1e-30);
+  const headroom = Math.min(Math.max(gPeak/gRef, 1)*1.04, 1.6);
+
+  const Rz = Math.round(H2 * 0.22);   // CONFIG.RZONE_FRAC
+  const specTop = pT + Rz;
+  const specH   = H2 - Rz;
+  const ly = v => specTop + specH*(1 - Math.min(v/gRef, headroom)/headroom);
+  const y100 = specTop + specH*(1 - 1/headroom);
+
+  // Pomocniki SVG
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const r4  = v => parseFloat(v.toFixed(2));
+  const px  = v => r4(v);
+
+  // Buduj ścieżkę z tablicy punktów
+  function pts2path(xs, ys, close=false){
+    let d = '';
+    for(let i=0;i<xs.length;i++){
+      const x=r4(xs[i]), y=r4(ys[i]);
+      d += (i===0 ? `M${x},${y}` : ` L${x},${y}`);
+    }
+    if(close) d += ' Z';
+    return d;
+  }
+  function arr2path(arr, yfn, close=false){
+    return pts2path(arr.map((_,i)=>lx(lamArr[i])), arr.map(v=>yfn(v)), close);
+  }
+
+  const els = [];   // elementy SVG (stringi)
+
+  // ── Tło ──
+  els.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="${col('--bg')}"/>`);
+  els.push(`<rect x="${pL}" y="${pT}" width="${W2}" height="${H2}" fill="${col('--surf')}"/>`);
+
+  // ── Siatka Y ──
+  const pctTop = Math.round(headroom*100);
+  for(let pct=0; pct<=pctTop; pct+=25){
+    const y = r4(ly(pct/100*gRef));
+    if(y < specTop-2 || y > specTop+specH+2) continue;
+    els.push(`<line x1="${pL}" y1="${y}" x2="${pL+W2}" y2="${y}" stroke="${col('--plot-grid')}" stroke-width="1"/>`);
+    els.push(`<text x="${pL-4}" y="${y+4}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--muted')}">${pct}%</text>`);
+  }
+
+  // ── Strefa przesterowania ──
+  if(headroom > 1.001){
+    els.push(`<rect x="${pL}" y="${specTop}" width="${W2}" height="${r4(y100-specTop)}" fill="${col('--red')}" fill-opacity="0.10"/>`);
+    els.push(`<line x1="${pL}" y1="${r4(y100)}" x2="${pL+W2}" y2="${r4(y100)}" stroke="${col('--red')}" stroke-width="1" stroke-opacity="0.55" stroke-dasharray="5,3"/>`);
+    els.push(`<text x="${pL+4}" y="${r4(y100-3)}" font-family="IBM Plex Mono,monospace" font-size="9" fill="${col('--red')}" fill-opacity="0.7">100% (CDC obiektu) — powyżej: przesterowanie</text>`);
+  }
+
+  // ── Separator strefy R(λ) ──
+  els.push(`<line x1="${pL}" y1="${specTop}" x2="${pL+W2}" y2="${specTop}" stroke="${col('--cyan')}" stroke-width="0.5" stroke-opacity="0.3"/>`);
+
+  // ── Siatka X ──
+  const xTicks = logScale ? [0.2,0.4,0.7,1,2,3,5,8,12] : [1,2,3,4,5,6,8,10,12,14];
+  xTicks.forEach(v=>{
+    const x=r4(lx(v));
+    if(x>=pL && x<=pL+W2)
+      els.push(`<line x1="${x}" y1="${pT}" x2="${x}" y2="${pT+H2}" stroke="${col('--plot-grid')}" stroke-width="1"/>`);
+  });
+
+  // ── Etykiety X ──
+  const xLbls = logScale
+    ? [[0.2,'0.2'],[0.4,'0.4'],[1,'1'],[2,'2'],[3,'3'],[5,'5'],[8,'8'],[12,'12 µm']]
+    : [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[12,'12'],[14,'14 µm']];
+  xLbls.forEach(([v,l])=>{
+    const x=r4(lx(v));
+    if(x>pL+4 && x<pL+W2-4)
+      els.push(`<text x="${x}" y="${pT+H2+26}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--muted')}">${esc(l)}</text>`);
+  });
+  els.push(`<text x="${pL+W2+3}" y="${pT+H2+26}" text-anchor="start" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--muted')}">λ [µm]</text>`);
+
+  // ── R(λ) — wypełnienie i linia ──
+  const det = res.det;
+  if(det){
+    const [dmin,dmax] = det.range;
+    const NM = 400;
+    const seg = [], Rvals = [];
+    for(let i=0;i<=NM;i++){
+      const u = dmin + (dmax-dmin)*i/NM;
+      seg.push(u); Rvals.push(detResp(u*1e-6, det));
+    }
+    const maxR = Math.max(...Rvals, 0.01);
+    const ryR  = r => pT + Rz*(1 - r/maxR);
+    // Wypełnienie R
+    const xs = seg.map(u=>lx(u)), ys = Rvals.map(r=>ryR(r));
+    const d = `M${r4(xs[0])},${pT+Rz} ` + xs.map((x,i)=>`L${r4(x)},${r4(ys[i])}`).join(' ') + ` L${r4(xs[xs.length-1])},${pT+Rz} Z`;
+    els.push(`<path d="${d}" fill="${col('--cyan')}" fill-opacity="0.22" clip-path="url(#rzone)"/>`);
+    const dL = xs.map((x,i)=>(i===0?`M${r4(x)},${r4(ys[i])}`:`L${r4(x)},${r4(ys[i])}`)).join(' ');
+    els.push(`<path d="${dL}" fill="none" stroke="${col('--cyan')}" stroke-width="1.8" clip-path="url(#rzone)"/>`);
+    els.push(`<text x="${pL+W2-4}" y="${pT+10}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="8" font-weight="bold" fill="${col('--cyan')}">R(λ)</text>`);
+    // Granice detektora
+    [dmin,dmax].forEach(v=>{
+      const x=r4(lx(v));
+      if(x>pL&&x<pL+W2)
+        els.push(`<line x1="${x}" y1="${specTop}" x2="${x}" y2="${specTop+specH}" stroke="${col('--cyan')}" stroke-width="1" stroke-opacity="0.4" stroke-dasharray="3,4"/>`);
+    });
+  }
+
+  // ── Atmosfera fill ──
+  {
+    const xs = lamArr.map((_,i)=>lx(lamArr[i]));
+    const ys = res.Latm.map(v=>ly(v));
+    const N = xs.length;
+    const d = `M${r4(xs[0])},${r4(pT+H2)} ` + xs.map((x,i)=>`L${r4(x)},${r4(ys[i])}`).join(' ') + ` L${r4(xs[N-1])},${r4(pT+H2)} Z`;
+    els.push(`<path d="${d}" fill="${col('--red')}" fill-opacity="0.35"/>`);
+  }
+
+  // ── Odbicia otoczenia fill ──
+  if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+    const N = res.Lemit.length;
+    const xs = lamArr.map((_,i)=>lx(lamArr[i]));
+    let d = xs.map((x,i)=>(i===0?`M${r4(x)},${r4(ly(res.Lemit[i]))}`:`L${r4(x)},${r4(ly(res.Lemit[i]))}`)).join(' ');
+    for(let i=N-1;i>=0;i--) d += ` L${r4(xs[i])},${r4(ly(res.Lemit[i]+res.Lrefl[i]))}`;
+    d += ' Z';
+    els.push(`<path d="${d}" fill="${col('--violet')}" fill-opacity="0.40"/>`);
+  }
+
+  // ── Krzywe widmowe ──
+  const curves = [
+    { arr: res.Lbb,   color: col('--muted'),  lw:1,   dash:'4,4',  label:'L_bb (CDC)' },
+    { arr: res.Latm,  color: col('--red'),    lw:1,   dash:'',     label:'L_atm' },
+    { arr: res.Lemit, color: col('--amber'),  lw:2,   dash:'',     label:'L_emit' },
+    { arr: res.Ldet,  color: col('--signal'), lw:2.8, dash:'',     label:'L_det' },
+    { arr: res.Tind_arr, color: col('--cyan'),lw:1.5, dash:'7,4',  label:'T_ind' },
+  ];
+  if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+    const sum = res.Lemit.map((v,i)=>v+res.Lrefl[i]);
+    curves.splice(3,0,{arr:sum, color:col('--violet'), lw:1.4, dash:'2,3', label:'L_emit+refl'});
+  }
+  curves.forEach(({arr,color,lw,dash,label})=>{
+    if(!arr||!arr.length) return;
+    const d = arr.map((v,i)=>(i===0?`M${r4(lx(lamArr[i]))},${r4(ly(v))}`:`L${r4(lx(lamArr[i]))},${r4(ly(v))}`)).join(' ');
+    const dattr = dash ? ` stroke-dasharray="${dash}"` : '';
+    els.push(`<path d="${d}" fill="none" stroke="${color}" stroke-width="${lw}"${dattr}/>`);
+  });
+
+  // ── Marker Wiena ──
+  const wx = r4(lx(res.wien_um));
+  if(wx>pL && wx<pL+W2){
+    els.push(`<line x1="${wx}" y1="${pT}" x2="${wx}" y2="${pT+H2}" stroke="${col('--muted')}" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="3,4"/>`);
+    els.push(`<text x="${wx}" y="${pT+9}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}" fill-opacity="0.65">λ_max</text>`);
+  }
+
+  // ── Ramka ──
+  els.push(`<rect x="${pL}" y="${pT}" width="${W2}" height="${H2}" fill="none" stroke="${col('--border')}" stroke-width="1"/>`);
+
+  // ── Legenda ──
+  const ts = new Date().toISOString().slice(0,19).replace('T',' ');
+  const info = `T_obj=${Math.round(res.Tobj_C)}°C  ε=${state.eps_real.toFixed(3)}  λ_Wien=${res.wien_um.toFixed(2)}µm  ΔT=${res.dT.toFixed(1)}K`;
+  els.push(`<text x="${pL}" y="${H-6}" text-anchor="start" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}">${esc(info)}</text>`);
+  els.push(`<text x="${pL+W2}" y="${H-6}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}">SymulatorPirometru v3.4.0 · ${ts}</text>`);
+
+  // ── Złóż SVG ──
+  const svg = [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">`,
+    `  <title>Widmo promieniowania — SymulatorPirometru</title>`,
+    `  <desc>${esc(info)}</desc>`,
+    `  <defs>`,
+    `    <clipPath id="rzone"><rect x="${pL}" y="${pT}" width="${W2}" height="${Rz}"/></clipPath>`,
+    `    <clipPath id="spec"><rect x="${pL}" y="${specTop}" width="${W2}" height="${specH}"/></clipPath>`,
+    `  </defs>`,
+    ...els,
+    `</svg>`
+  ].join('\n');
+
+  const fname = `widmo_pirometria_${ts.slice(0,10)}_T${Math.round(res.Tobj_C)}.svg`;
+  const blob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'),{href:url,download:fname});
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},200);
+}
+
 
 window.addEventListener('load', ()=>{
   // body już ma klasę 'beginner' z HTML — nie nadpisujemy
