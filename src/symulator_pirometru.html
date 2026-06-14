@@ -5609,10 +5609,112 @@ function exportSpectrum(fmt){
   if(!canvas){ alert('Canvas nieznaleziony.'); return; }
 
   if(fmt==='png'){
-    // PNG: bezpośrednio z canvas
-    canvas.toBlob(blob=>{
-      const ts = new Date().toISOString().slice(0,10);
-      downloadBlob(blob, `widmo_pirometria_${ts}.png`, 'image/png');
+    const res = lastResult;
+    if(!res){ alert('Brak danych — uruchom symulator.'); return; }
+
+    const specC = document.getElementById('specCanvas');
+    const tauC  = document.getElementById('tauCanvas');
+    const Ws = specC.offsetWidth, Hs = specC.offsetHeight;
+    const Wt = tauC.offsetWidth,  Ht = tauC.offsetHeight;
+    const tv2 = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+    const col = tv2;
+
+    // Wymiary kompozytu
+    const GAP    = 10;   // przerwa między sekcjami
+    const LEG_H  = 68;   // wysokość legendy
+    const FOOT_H = 28;   // stopka z parametrami
+    const W = Math.max(Ws, Wt);
+    const H = Hs + GAP + Ht + GAP + LEG_H + FOOT_H + 20;
+
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const ctx = off.getContext('2d');
+
+    // Tło
+    ctx.fillStyle = col('--bg');
+    ctx.fillRect(0, 0, W, H);
+
+    // 1. Spektrum
+    ctx.drawImage(specC, 0, 0, Ws, Hs, 0, 0, W, Hs);
+
+    // 2. τ(λ)
+    const yTau = Hs + GAP;
+    ctx.drawImage(tauC, 0, 0, Wt, Ht, 0, yTau, W, Ht);
+
+    // 3. Legenda
+    const yLeg = yTau + Ht + GAP;
+    const pL = Math.round(Math.min(48, Math.max(36, W * 0.05)));
+
+    ctx.fillStyle = col('--surf');
+    ctx.fillRect(pL, yLeg, W - pL - 12, LEG_H);
+    ctx.strokeStyle = col('--border'); ctx.lineWidth = 0.5;
+    ctx.strokeRect(pL, yLeg, W - pL - 12, LEG_H);
+
+    ctx.fillStyle = col('--muted');
+    ctx.font = 'bold 9px IBM Plex Mono,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('LEGENDA', pL + 6, yLeg + 11);
+
+    const lw = (W - pL - 12) / 5;
+    const lx0 = pL + 4, ly0 = yLeg + 16;
+
+    function legLine(ix, iy, color, dash, label){
+      const x = lx0 + ix*lw, y = ly0 + iy*22;
+      ctx.save();
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      if(dash){ ctx.setLineDash(dash.split(',').map(Number)); }
+      ctx.beginPath(); ctx.moveTo(x+2, y+6); ctx.lineTo(x+22, y+6); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      ctx.fillStyle = col('--text'); ctx.font = '8.5px IBM Plex Mono,monospace';
+      ctx.textAlign = 'left'; ctx.fillText(label, x+26, y+10);
+    }
+    function legFill(ix, iy, color, alpha, label){
+      const x = lx0 + ix*lw, y = ly0 + iy*22;
+      ctx.save(); ctx.globalAlpha = alpha;
+      ctx.fillStyle = color; ctx.fillRect(x+2, y+2, 20, 8);
+      ctx.restore();
+      ctx.fillStyle = col('--text'); ctx.font = '8.5px IBM Plex Mono,monospace';
+      ctx.textAlign = 'left'; ctx.fillText(label, x+26, y+10);
+    }
+
+    // Rząd 0
+    legLine(0, 0, col('--muted'),  '4,3', 'L_bb (CDC / ciało czarne)');
+    legLine(1, 0, col('--amber'),  '',    'L_emit (emisja obiektu)');
+    legFill(2, 0, col('--red'),    0.35,  'Emisja atm. (fill)');
+    legLine(3, 0, col('--signal'), '',    'L_det (sygnał na detektorze)');
+    legLine(4, 0, col('--cyan'),   '7,4', 'Odczyt T_ind');
+
+    // Rząd 1
+    legFill(0, 1, col('--cyan'),   0.22,  'R(λ) detektora [górna strefa]');
+    let ci = 1;
+    if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+      legFill(ci++, 1, col('--violet'), 0.40, 'Odbicia otoczenia (fill)');
+      legLine(ci++, 1, col('--violet'), '2,3','L_emit + odbicia');
+    }
+    if(res.winKey && res.winKey !== 'none'){
+      legLine(ci++, 1, '#10b981', '2,3', 'τ_win (przesłona)');
+      legFill(ci++, 1, '#10b981', 0.28, 'Emisja przesłony');
+    }
+    if(appState.epsModel==='hr' || appState.epsModel==='poly'){
+      legLine(ci++, 1, col('--amber'), '5,3', appState.epsModel==='poly'?'ε(λ) wielomian':'ε(λ) H-R');
+    }
+    if(appState.ratioMode && res.ratio && res.ratio.R2){
+      legLine(ci++, 1, col('--green'), '3,4', 'R₂(λ) det. 2');
+    }
+
+    // 4. Stopka
+    const yFoot = yLeg + LEG_H + 6;
+    const ts = new Date().toISOString().slice(0,19).replace('T',' ');
+    const info = `T_obj=${Math.round(res.Tobj_C)}°C  ε=${state.eps_real.toFixed(3)}  λ_Wien=${res.wien_um.toFixed(2)}µm  ΔT=${res.dT.toFixed(1)}K  |  L=${state.path}m  RH=${state.rh}%  CO₂=${state.co2}ppm`;
+    ctx.fillStyle = col('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
+    ctx.textAlign = 'left'; ctx.fillText(info, pL, yFoot + 10);
+    ctx.textAlign = 'right'; ctx.fillText('SymulatorPirometru v3.4.0 · '+ts, W-12, yFoot + 10);
+
+    // Pobierz plik
+    off.toBlob(blob=>{
+      const fname = `widmo_pirometria_${ts.slice(0,10)}_T${Math.round(res.Tobj_C)}.png`;
+      downloadBlob(blob, fname, 'image/png');
     }, 'image/png', 0.95);
     return;
   }
