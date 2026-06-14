@@ -1,6 +1,6 @@
 # Pirometria — Symulator Toru Pomiarowego
 
-**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny 6-blokowy tor pomiarowy z **trzema trybami obsługi**, sześcioma środowiskami atmosferycznymi, trzema modelami emisyjności i modelowaniem odbić promieniowania otoczenia.
+**Interaktywna aplikacja edukacyjna** do demonstracji fizyki bezdotykowego pomiaru temperatury metodą pirometryczną. Modeluje pełny 6-blokowy tor pomiarowy z **trzema trybami obsługi**, sześcioma środowiskami atmosferycznymi, czterema modelami emisyjności, efektem wnękowym i modelowaniem odbić promieniowania otoczenia.
 
 > Materiał dydaktyczny — ćwiczenia laboratoryjne z metrologii temperatury  
 > **Mirosław Socha** · Katedra Metrologii i Elektroniki · WEAIiIB · AGH Kraków
@@ -37,13 +37,28 @@ Pełny tor pomiarowy bez elementów najbardziej zaawansowanych:
 - 7 typów detektorów z krzywą R(λ) na wykresie widmowym
 - Dwa wykresy: widmo promieniowania + transmitancja τ(λ), z wizualizacją przesterowania (>100%)
 - Budżet błędów 4-składowy: ΔT_ε + ΔT_refl + ΔT_atm + ΔT_win
+- **Zwijane panele**: kliknięcie tytułu panelu zwija/rozwija jego zawartość
 - Dokumentacja PRO: pełny opis toru z wzorami KaTeX
 
 ### 🔬 Tryb Eksperta
 PRO + elementy najbardziej zaawansowane:
-- **Model emisyjności**: szara / Hagen-Rubens ε(λ,T) (8 materiałów) / wielomianowy TPRC (9 materiałów)
+- **Model emisyjności** (siatka 2×2): szara · Hagen-Rubens ε(λ,T) · wielomianowy TPRC · **Fresnel ε(θ,λ,T)**
+- **Fresnel**: diagram biegunowy ε(θ) live-update, porównanie dwóch materiałów, tooltip hover; model Drudego n,k z ρ(T)
+- **Efekt wnękowy**: ε_eff = ε/[ε+(1−ε)·s/S], suwak s/S, diagram przekroju wnęki z wizualizacją
 - **Tryb procesora**: Jednobarwny / Dwubarwny (ratio S₁/S₂ → T_ratio)
-- Dokumentacja Ekspert = dokumentacja PRO + sekcja pirometrii dwubarwnej i modeli emisyjności (rozszerzenie)
+- Dokumentacja Ekspert: wszystkie modele emisyjności z wyprowadzeniami, bibliografia [1]–[20]
+
+---
+
+## Eksport danych
+
+Trzy przyciski w nagłówku aplikacji:
+
+| Przycisk | Format | Zawartość |
+|---|---|---|
+| **⬇ CSV** | CSV UTF-8 | Nastawy + Wyniki + Widmo widmowe (tabela λ/L_bb/L_emit/…/ε) |
+| **⬇ PNG** | PNG | Kompozyt: widmo + τ(λ) + legenda z ikonami + stopka z parametrami |
+| **⬇ SVG** | SVG wektor | Właściwy SVG z `<path>`, `<linearGradient>` UV-VIS-IR, wykres τ(λ), legenda |
 
 ---
 
@@ -65,13 +80,16 @@ L_det(λ) = τ_win(λ) · [ τ_atm(λ)·L_obj(λ)
 
 ---
 
-## Model emisyjności
+## Modele emisyjności
 
 | Model | Opis | Parametry |
 |---|---|---|
 | **Szara** | ε(λ,T) = const | suwak ε_real |
 | **Hagen-Rubens** | ε(λ,T) ≈ 0.365√(ρ/λ) − 0.0667(ρ/λ) | ρ₀ [µΩ·cm], α [K⁻¹], 8 materiałów |
 | **Wielomianowy** | ε(λ) = a₀ + a₁λ + a₂λ² z danych TPRC | 9 presetów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃, Custom) |
+| **Fresnel ε(θ,λ,T)** | Emisyjność kierunkowa z równań Fresnela | kąt θ 0–85°, 6 materiałów; model Drudego n,k z ρ(T) |
+
+Efekt wnękowy komponuje się z każdym modelem: `ε_eff = ε / [ε + (1−ε)·s/S]`
 
 ---
 
@@ -90,19 +108,22 @@ L_det(λ) = τ_win(λ) · [ τ_atm(λ)·L_obj(λ)
 
 ## Model fizyczny
 
-**Prawa promieniowania:** Planck · Wien · Stefan–Boltzmann · Kirchhoff
+**Prawa promieniowania:** Planck · Wien · Stefan–Boltzmann · Kirchhoff  
+**Stałe:** CODATA 2018 (h = 6.62607×10⁻³⁴ J·s, c = 2.99792×10⁸ m/s, k_B = 1.38065×10⁻²³ J/K)
 
-**Atmosfera:** Beer–Lambert z P/P₀ · 12 pasm H₂O · 7 pasm CO₂ · 7 pasm NH₃ · 4 pasma SO₂ · model wody ciekłej
+**Atmosfera:** Beer–Lambert z P/P₀ · 12 pasm H₂O · 7 pasm CO₂ · 7 pasm NH₃ · 4 pasma SO₂ · model wody ciekłej · emisja własna gazu (1−τ)·L_bb(T_atm)
 
-**Emisyjność metali:** Hagen-Rubens (1903) · ρ(T) = ρ₀[1+α(T−293)]
+**Emisyjność metali:** Hagen-Rubens (1903) · ρ(T) = ρ₀[1+α(T−293)] · 8 materiałów  
+**Emisyjność kierunkowa:** Fresnel (równania zespolone) + Drude IR: n≈k≈√(2998·λ/ρ) · 6 materiałów  
+**Efekt wnękowy:** model Gouffé — ε_eff = ε/[ε+(1−ε)·s/S]
 
 **Przesłona:** τ(λ,d) = τ_Fresnel · τ_bandpass(λ) · τ_bulk(d) + emisja własna (1−τ)·L_bb(T_win)
 
 **Detektory (7):** Si 0.65 µm · InGaAs 1.0/1.6 µm · InSb 3.9 µm · InSb 3–5 µm · MCT 8–14 µm · Termostos 1–18 µm
 
-**Inwersja temperatury:** bisekcja 72 iter. · zakres 1–15 000 K · zbieżność < 0.01 K · siatka N=700 · λ ∈ [0.10, 16] µm
+**Inwersja temperatury:** bisekcja 72 iter. · zakres 1–15 000 K · zbieżność < 0.01 K · siatka N=1400 · λ ∈ [0.10, 16] µm
 
-**Budżet błędów:** ΔT = ΔT_ε + ΔT_atm + ΔT_win (3 niezależne składowe)
+**Budżet błędów:** ΔT = ΔT_ε + ΔT_refl + ΔT_atm + ΔT_win (suma teleskopowa, 4 składowe)
 
 ---
 
@@ -111,7 +132,7 @@ L_det(λ) = τ_win(λ) · [ τ_atm(λ)·L_obj(λ)
 ```
 SymulatorPirometru/
 ├── src/
-│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~5100 linii)
+│   └── symulator_pirometru.html   # standalone — HTML + CSS + JS (~5300 linii)
 ├── CHANGELOG.md
 ├── README.md
 └── .gitignore
@@ -121,8 +142,8 @@ SymulatorPirometru/
 
 | Gałąź | Język | Wersja |
 |---|---|---|
-| `main` | 🇵🇱 Polski | **v3.2.0** |
-| `en/english-translation` | 🇬🇧 English | **v3.2.0-en** |
+| `main` | 🇵🇱 Polski | **v3.4.0** |
+| `en/english-translation` | 🇬🇧 English | **v3.1.1-en** (nieaktualna) |
 
 ---
 
@@ -130,32 +151,19 @@ SymulatorPirometru/
 
 | Wersja | Kluczowe zmiany |
 |---|---|
+| **v3.4.0** | Eksport CSV (nastawy+wyniki+widmo), PNG kompozytowy (spec+τ+legenda+stopka), SVG wektorowy (path, linearGradient UV-VIS-IR, τ(λ), legenda) |
+| **v3.3.0** | Efekt wnękowy ε_eff=ε/[ε+(1−ε)·s/S] z diagramem przekroju; zwijane panele (click nagłówka); diagram biegunowy Fresnela: tooltip hover + porównanie 2 materiałów |
+| **v3.2.1** | Audyt merytoryczny: stała Drudego DRUDE_A=2997.91 (błąd jednostek), Tatm_K w dekompozycji, bibliografia [16]–[20], opis ε=const w PRO, NH₃/SO₂ w dok. s4, stałe CODATA 2018 |
 | **v3.2.0** | Model Fresnela ε(θ,λ,T): emisyjność kierunkowa; diagram biegunowy live-update; model Drudego n,k z ρ(T) |
-| **v3.1.1** | Poprawki UI: kontrast przycisków trybu, reorganizacja paneli, pole T_otocz, wizualizacja przesterowania (>100%) i warstwy odbić |
+| v3.1.1 | Poprawki UI: kontrast przycisków trybu, reorganizacja paneli, pole T_otocz, wizualizacja przesterowania (>100%) i warstwy odbić |
 | v3.1.0 | Modelowanie odbić promieniowania otoczenia (1−ε)·L_bb(T_otocz), składowa błędu ΔT_refl (tryb PRO) |
 | v3.0.0 | Trzeci tryb UI — PRO między Podstawowym a Ekspertem; rozdzielenie dokumentacji PRO/Ekspert; rejestr EPS_MODELS |
 | v2.9.0 | Pełne tłumaczenie EN (gałąź en); interaktywny schemat blokowy |
-| v2.8.0 | Refactoring Faza 4: CONFIG object — magic numbers zastąpione nazwanymi stałymi |
-| v2.7.0 | Refactoring Faza 3: Modularyzacja — 8 sekcji MODULE w JS |
-| v2.6.0 | Refactoring Faza 2: State Management — `appState` object, 8 globals → 1 obiekt |
-| v2.5.0 | Refactoring Faza 1: konsolidacja CSS/JS (−50% rozmiaru pliku), fix duplikat UI, fix KaTeX |
-| v2.4.3 | Fix KaTeX Wien S₁/S₂ (backslash, `\night`) |
-| v2.4.2 | Fix KaTeX sekcja 8: `\approx` i `\right` zdegenerowane escape |
-| v2.4.1 | Bugfix: `computeRatio()`, R₂(λ) normalizacja, KaTeX polskie znaki |
-| v2.4.0 | Pirometria dwubarwna: S₁/S₂, T_ratio, ΔT_ratio, 3 pary przemysłowe, sekcja 8 doc |
-| v2.3.1 | ε(λ) w tooltipie, numer wersji w nagłówku |
-| v2.3.0 | Model wielomianowy ε(λ) z TPRC: 9 materiałów (W, Mo, Ti, Fe, Ni, C, SiC, Al₂O₃, Custom) |
-| v2.2.3 | Równanie toru wieloliniowe (KaTeX aligned), fix overflow przy druku PDF |
-| v2.2.2 | Aktualizacja dokumentacji: tor z τ_win, budżet 3-składowy, słownik 26 poz. |
-| v2.2.1 | Spis treści z linkami, druk PDF, dokumentacja w nowym oknie |
-| v2.2.0 | Model emisyjności Hagena-Rubensa ε(λ,T), 8 materiałów, krzywa ε(λ) |
-| v2.1.1 | Fix: RH/CO₂ suwaki, T_atm zakres Wenus, większe wykresy, sticky plots |
-| v2.1.0 | 6 środowisk atmosferycznych, Beer-Lambert z P/P₀, Safari/iPad fixes |
-| v2.0.0 | Tryb Podstawowy + Eksperta, nazwa „Pirometria", menu presetów |
-| v1.10.0 | Zakresy Gaussów ±5σ, adaptacyjna siatka R(λ) |
-| v1.8.x | Przesłona: grubość (Beer-Lambert) + temperatura (emisja własna) |
-| v1.7.0 | Przesłona optyczna, budżet błędów 3-składowy |
-| v1.5.0 | Pierwsza pełna wersja: atmosfera, dokumentacja KaTeX, responsywność |
+| v2.4.0 | Pirometria dwubarwna: S₁/S₂, T_ratio, ΔT_ratio, 3 pary przemysłowe |
+| v2.3.0 | Model wielomianowy ε(λ) z TPRC: 9 materiałów |
+| v2.2.0 | Model emisyjności Hagena-Rubensa ε(λ,T), 8 materiałów |
+| v2.1.0 | 6 środowisk atmosferycznych, Beer-Lambert z P/P₀ |
+| v2.0.0 | Tryb Podstawowy + Eksperta, menu presetów |
 
 Pełna historia: [CHANGELOG.md](CHANGELOG.md)
 
