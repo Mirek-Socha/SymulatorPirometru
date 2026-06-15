@@ -42,8 +42,8 @@
 }
 
 /* ─────────────────────────────────────────────
-   ROOT — color-scheme aktualizowany przez JS
-   Bez tego Safari/iPadOS renderuje button, select,
+   ROOT — color-scheme updated by JS
+   Without this Safari/iPadOS renders button, select,
    input in system theme regardless of CSS
 ───────────────────────────────────────────── */
 :root{
@@ -301,7 +301,7 @@ button{
 .bo { display:none !important; }           /* beginner-only: hidden by default */
 
 /* ── Tryby UI: beginner / pro / expert ──
-   .bo = tylko beginner | .xo = pro + expert | .eo = tylko expert */
+   .bo = beginner only | .xo = pro + expert | .eo = expert only */
 body.expert   .xo { display:revert !important; }
 body.expert   .eo { display:revert !important; }
 body.expert   .bo { display:none   !important; }
@@ -519,6 +519,17 @@ html{
 .panel-hdr.cy{color:var(--cyan)}
 .panel-hdr.re{color:var(--red)}
 .panel-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
+/* ── Collapsible ctrl-panels ── */
+.panel-hdr{cursor:pointer;user-select:none}
+.ctrl-panel>.panel-hdr+*,.ctrl-panel>.panel-hdr~*{
+  transition:max-height .22s cubic-bezier(.4,0,.2,1),opacity .18s ease;
+  overflow:hidden;max-height:800px;
+}
+.ctrl-panel.collapsed>.panel-hdr+*,.ctrl-panel.collapsed>.panel-hdr~*{
+  max-height:0!important;opacity:0;pointer-events:none;
+  margin-top:0!important;margin-bottom:0!important;
+}
+.ctrl-panel.collapsed>.panel-hdr::after{transform:rotate(-90deg)}
 .sl-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .sl-name{
   font-family:'IBM Plex Mono',monospace;font-size:.68rem;
@@ -834,7 +845,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
   line-height:1.6;border-left:3px solid var(--cyan);
 }
 
-/* ── Segment przycisków trybu ── */
+/* ── Mode button segment ── */
 .mode-seg { display:flex; gap:0; border:1px solid var(--border); border-radius:7px; overflow:hidden }
 .mode-seg button {
   background:var(--card); color:var(--text); border:none; cursor:pointer;
@@ -846,6 +857,16 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 .mode-seg button.active { background:var(--amber); color:#1a1208; opacity:1 }
 .mode-seg button:hover:not(.active) { opacity:1; background:var(--surf) }
 @media (max-width:700px){ .mode-seg button { padding:6px 7px; font-size:.6rem } }
+.export-group{display:flex;align-items:center;gap:4px}
+.export-split{display:flex;gap:2px}
+.export-group .icon-btn{
+  font-size:.65rem;padding:5px 7px;letter-spacing:.03em;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:5px;color:var(--text);cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.export-group .icon-btn:hover{background:var(--surf);color:var(--cyan)}
+@media(max-width:600px){.export-split .icon-btn{display:none}}
 </style>
 </head>
 <body class="theme-dark beginner">
@@ -855,7 +876,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 <header class="hdr">
   <div class="hdr-brand">
     <span class="hdr-title">Pyrometeria</span>
-    <span class="hdr-ver">v3.1.1-en</span>
+    <span class="hdr-ver">v3.4.0-en</span>
     <span class="hdr-sub xo">Chain: Object · Atmosphere · Window · Detector → T<sub>ind</sub></span>
     <span class="hdr-sub bo">Measurement non-contact — podstawy pyrometerii</span>
     <span class="beg-mode-badge bo">🎓 Basic Mode</span>
@@ -880,12 +901,19 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <button class="preset-drop-item xo" onclick="loadPreset('ideal');closePresets()">⬜ Idealny (τ=1, ε=1)</button>
         <button class="preset-drop-item xo" onclick="loadPreset('emissivity');closePresets()">⚠ Emissivity error</button>
         <button class="preset-drop-item xo" onclick="loadPreset('atmosphere');closePresets()">🌫 Atmosfera</button>
-        <button class="preset-drop-item xo" onclick="loadPreset('lowtemp');closePresets()">❄ Niska T / MCT</button>
+        <button class="preset-drop-item xo" onclick="loadPreset('lowtemp');closePresets()">❄ Low T / MCT</button>
         <button class="preset-drop-item xo" onclick="loadPreset('total');closePresets()">∫ Total power</button>
         <button class="preset-drop-item xo" onclick="loadPreset('plexiglas');closePresets()">🪟 Plexiglas window</button>
       </div>
     </div>
 
+    <div class="export-group">
+      <button class="icon-btn" onclick="exportCSV()" title="Export settings and results to CSV">⬇ CSV</button>
+      <div class="export-split">
+        <button class="icon-btn" onclick="exportSpectrum('png')" title="Export spectrum chart as PNG">⬇ PNG</button>
+        <button class="icon-btn" onclick="exportSpectrum('svg')" title="Export spectrum chart as SVG">⬇ SVG</button>
+      </div>
+    </div>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
     <button class="icon-btn xo" id="docsBtn" onclick="toggleDocs()" title="Documentation">📖 Documentation</button>
     <button class="icon-btn bo" id="docsBtnBeg" onclick="toggleDocs()" title="How does it work?">📖 How does it work?</button>
@@ -1106,15 +1134,18 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="panel-hdr am">🌑 Emissivity model</div>
 
       <!-- Model toggle -->
-      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="epsm-toggle" style="grid-template-columns:1fr 1fr">
         <button class="epsm-btn active" id="epsm_grey" onclick="setEpsModel('grey')">
-          <span class="epsm-ico">━</span> Szara<small>ε(λ) = const</small>
+          <span class="epsm-ico">━</span>Grey<small>ε = const</small>
         </button>
         <button class="epsm-btn" id="epsm_hr" onclick="setEpsModel('hr')">
-          <span class="epsm-ico">╲</span> Hagen-Rubens<small>ε(λ,T) from resistivity</small>
+          <span class="epsm-ico">╲</span>H-R<small>ε(λ,T)</small>
         </button>
         <button class="epsm-btn" id="epsm_poly" onclick="setEpsModel('poly')">
-          <span class="epsm-ico">∿</span> Wielomianowy<small>ε(λ) = a₀+a₁λ+a₂λ²</small>
+          <span class="epsm-ico">∿</span>Polynomial<small>ε(λ) TPRC</small>
+        </button>
+        <button class="epsm-btn" id="epsm_fresnel" onclick="setEpsModel('fresnel')">
+          <span class="epsm-ico">◑</span>Fresnel<small>ε(θ,λ,T)</small>
         </button>
       </div>
 
@@ -1123,8 +1154,8 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         <div class="sel-lbl">Material / literature data</div>
         <select id="sel_poly_mat" onchange="onPolyMat(this.value)">
           <option value="w">Tungsten (W)  [De Vos 1954, CRC]</option>
-          <option value="mo">Molibden (Mo)  [TPRC Vol.7, Cagran 2005]</option>
-          <option value="ti">Tytan (Ti)  [TPRC Vol.7]</option>
+          <option value="mo">Molybdenum (Mo)  [TPRC Vol.7, Cagran 2005]</option>
+          <option value="ti">Titanium (Ti)  [TPRC Vol.7]</option>
           <option value="fe">Iron (Fe)  [Ward 1956, TPRC Vol.7]</option>
           <option value="ni">Nickel (Ni)  [Ward 1956, TPRC Vol.7]</option>
           <option value="graphite">Graphite (C)  [TPRC Vol.8]</option>
@@ -1156,7 +1187,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         </div>
 
         <div class="env-note" id="poly_note" style="margin-top:4px">
-          Dane: De Vos (1954), CRC 60th ed. — wolfram ~1600 K
+          Data: De Vos (1954), CRC 60th ed. — tungsten ~1600 K
         </div>
         <div class="env-note" id="poly_range" style="margin-top:2px;border-left-color:var(--muted)">
           Range: λ = 0.5–5.0 µm · T = 1200–3000 K
@@ -1167,14 +1198,14 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
         </div>
       </div>
 
-      <!-- Panel specyficzny dla H-R (ukryty w grey) -->
+      <!-- H-R specific panel (hidden in grey mode) -->
       <div id="hr_params" style="display:none;margin-top:8px">
         <!-- Material selection -->
         <div class="sel-lbl">Material / metal</div>
         <select id="sel_hr_mat" onchange="onHrMat(this.value)">
           <option value="fe">Iron / carbon steel</option>
           <option value="fe_ox">Oxidized steel (Fe₂O₃)</option>
-          <option value="ti">Tytan</option>
+          <option value="ti">Titanium</option>
           <option value="ni">Nickel</option>
           <option value="cu">Copper</option>
           <option value="al">Aluminium</option>
@@ -1196,15 +1227,90 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
           <span class="sl-val" id="val_alpha_hr">6.5×10⁻³ /K</span>
         </div>
 
-        <!-- Nota informacyjna o materiale -->
+        <!-- Material info note -->
         <div class="env-note" id="hr_mat_note" style="margin-top:6px">
           Classic H-R: ε increases with T, decreases with λ
         </div>
 
-        <!-- ε_assumed: in H-R mode pyrometer still assumes grey body -->
+
+      <!-- CAVITY — cavity effect (Expert) -->
+      <div class="ctrl-panel eo" id="cavityPanel" style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <div class="panel-hdr am">🕳 Cavity effect</div>
+        <label class="chk-row" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" id="chk_cavity" onchange="setCavity(this.checked)">
+          <span style="font-size:.78rem">Include cavity effect (ε<sub>eff</sub> &gt; ε)</span>
+        </label>
+        <div id="cavity_params" style="display:none">
+          <div class="sl-row" style="margin-top:4px">
+            <span class="sl-name" style="white-space:nowrap">s/S</span>
+            <input type="range" id="sl_cavitySS" min="0.01" max="0.99" step="0.01" value="0.1"
+                   oninput="onCavitySS(this.value)">
+            <input type="number" id="num_cavitySS" class="sl-num" min="0.01" max="0.99"
+                   step="0.01" value="0.10" onchange="onCavitySS(this.value)"
+                   title="s/S: aperture-to-cavity-surface ratio">
+          </div>
+          <div class="sl-secondary">aperture / cavity surface area (0.01 = narrow opening)</div>
+          <canvas id="cavityCanvas" width="220" height="110"
+                  style="width:100%;max-width:220px;border:1px solid var(--border);
+                         background:var(--card);display:block;margin:6px auto 0"></canvas>
+        </div>
+      </div>
+
+      <!-- ε_assumed: in H-R mode pyrometer still assumes grey body -->
         <div class="env-note" style="margin-top:4px;border-left-color:var(--amber)">
           ⚠ Pyrometer processor still assumes ε_assumed = const.<br>
           Error arises from inconsistency ε(λ) ≠ ε_assumed.
+        </div>
+      </div>
+
+      <!-- FRESNEL params (directional emissivity model) -->
+      <div id="fresnel_params" style="display:none;margin-top:8px">
+        <div class="sel-lbl">Material (H-R data for n,k)</div>
+        <select id="sel_fresnel_mat" onchange="onFresnelMat(this.value)">
+          <option value="fe">Iron / carbon steel</option>
+          <option value="ti">Titanium</option>
+          <option value="ni">Nickel</option>
+          <option value="cu">Copper</option>
+          <option value="al">Aluminium</option>
+          <option value="w">Tungsten</option>
+        </select>
+        <div class="sl-row" style="margin-top:6px">
+          <span class="sl-name">θ</span>
+          <input type="range" id="sl_theta" min="0" max="85" step="1" value="0"
+                 oninput="onTheta(this.value)">
+          <input type="number" id="num_theta" class="sl-num" min="0" max="85"
+                 step="1" value="0" onchange="onTheta(this.value)"
+                 title="Observation angle [°] (0 = normal to surface)">
+        </div>
+        <div class="sl-secondary" style="margin-top:-4px">
+          Pyrometer observation angle relative to surface normal
+        </div>
+        <!-- Material comparison -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+          <span style="font-size:.72rem;color:var(--muted);white-space:nowrap">Compare:</span>
+          <select id="sel_fresnel_mat2" style="flex:1;font-size:.72rem"
+                  onchange="appState.fresnelMat2=this.value; drawPolarPlot()">
+            <option value="">— none —</option>
+            <option value="fe">Iron</option>
+            <option value="ti">Titanium</option>
+            <option value="ni">Nickel</option>
+            <option value="cu">Copper</option>
+            <option value="al">Aluminium</option>
+            <option value="w">Tungsten</option>
+          </select>
+        </div>
+        <div style="text-align:center;margin-top:8px">
+          <canvas id="polarCanvas" width="220" height="126"
+                  style="width:100%;max-width:220px;border:1px solid var(--border);
+                         background:var(--card);display:block;margin:0 auto"></canvas>
+          <div class="sl-secondary" style="margin-top:3px">
+            Polar diagram ε(θ) — cyan dot = current θ
+          </div>
+        </div>
+        <div class="env-note" style="margin-top:6px;border-left-color:var(--amber)">
+          ⚠ Drude model (n≈k from resistivity ρ(T)). Most accurate for good conductors (Cu, Al, W, Au) at λ&nbsp;&gt;&nbsp;2&nbsp;µm.
+          For Fe, Ti, Ni values are approximate (interband absorption). For oxides and dielectrics use the polynomial model.
+          At λ&nbsp;&lt;&nbsp;2&nbsp;µm (optical pyrometry 0.65–1 µm): Drude n,k are approximate — ε(θ) shape qualitatively correct.
         </div>
       </div>
 
@@ -1300,7 +1406,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     </div><!-- /ctrl-panel window -->
 
 
-    <!-- TRYB PROCESORA — tylko Expert -->
+    <!-- PROCESSOR MODE — Expert only -->
     <div class="ctrl-panel eo" id="ratioProcPanel">
       <div class="panel-hdr am">⚙ Processor mode</div>
       <div class="epsm-toggle" style="grid-template-columns:1fr 1fr">
@@ -1368,7 +1474,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
 
   <!-- ─── PLOTS ─── -->
   <main class="plots-col">
-    <div class="plot-hdr">Spectrum radiation w torze measurementowym
+    <div class="plot-hdr">Radiation spectrum in the measurement path
       <div class="scale-toggle">
         <button class="st-btn" id="btnLog" onclick="setScale('log')">log λ</button>
         <button class="st-btn active" id="btnLin" onclick="setScale('lin')">lin λ</button>
@@ -1380,7 +1486,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="leg"><div class="leg-line" style="background:var(--amber)"></div>ε·B(λ,T<sub>obj</sub>)</div>
       <div class="leg" id="leg-eps-model" style="display:none"><div class="leg-line" style="background:var(--amber);border-top:2px dashed var(--amber)"></div><span id="leg-eps-label">ε(λ)</span></div>
       <div class="leg"><div class="leg-fill" style="background:var(--red);opacity:.5"></div>Atm. emission</div>
-      <div class="leg" id="leg-refl" style="display:none"><div class="leg-fill" style="background:var(--violet);opacity:.5"></div>Odbicia otocz.</div>
+      <div class="leg" id="leg-refl" style="display:none"><div class="leg-fill" style="background:var(--violet);opacity:.5"></div>Surr. refl.</div>
       <div class="leg"><div class="leg-line" style="background:var(--signal);height:3px"></div>Signal at det.</div>
       <div class="leg"><div class="leg-line" style="background:var(--cyan);border-top:2px dashed var(--cyan)"></div>Reading T<sub>ind</sub></div>
       <div class="leg"><div class="leg-fill" style="background:var(--cyan);opacity:.3"></div>R(λ) det. [top]</div>
@@ -1444,7 +1550,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
       <div class="rb-lbl">Error components</div>
       <table class="err-tbl" id="err_tbl">
         <tr><td class="en">Δε-emissivity</td><td class="ev" id="e_eps">—</td></tr>
-        <tr class="xo" id="e_refl_row"><td class="en">Odbicia otocz.</td><td class="ev" id="e_refl">—</td></tr>
+        <tr class="xo" id="e_refl_row"><td class="en">Surr. refl.</td><td class="ev" id="e_refl">—</td></tr>
         <tr><td class="en">Atmosphere</td><td class="ev" id="e_atm">—</td></tr>
         <tr><td class="en">Window</td><td class="ev" id="e_win">—</td></tr>
         <tr><td class="en" style="color:var(--text)">Total ΔT</td><td class="ev" id="e_tot">—</td></tr>
@@ -1525,7 +1631,7 @@ canvas{width:100%;display:block;cursor:crosshair;min-height:80px}
     <div class="docs-title bo">How Does a Pyrometer Work? — Guide</div>
 
 <div class="toc toc-beg bo">
-  <div class="toc-title">📋 Przewodnik — co tu znajdziesz</div>
+  <div class="toc-title">📋 Guide — what you will find here</div>
   <ol>
     <li><a href="#beg-s1">What is a pyrometer?</a></li>
     <li><a href="#beg-s2">Emissivity — why does material matter?</a></li>
@@ -1562,8 +1668,8 @@ The amber curve below is what the measured object <b>actually emits</b> — alwa
 The violet curve is the <b>signal reaching the detector</b> after passing through the atmosphere.</p>
 <div class="beg-spectrum-legend">
   <div class="bsl-row"><div class="bsl-swatch" style="background:var(--muted);opacity:.6"></div><span><b>Szara przerywana</b> — wzorzec CDC (blackbody, ε = 1)</span></div>
-  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--amber)"></div><span><b>Amber</b> — radiation emitowane przez object (ε·B)</span></div>
-  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--signal)"></div><span><b>Violeta</b> — signal na detectorze (po atmosferze)</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--amber)"></div><span><b>Amber</b> — radiation emitted by object (ε·B)</span></div>
+  <div class="bsl-row"><div class="bsl-swatch" style="background:var(--signal)"></div><span><b>Violet</b> — signal at detector (after atmosphere)</span></div>
   <div class="bsl-row"><div class="bsl-swatch" style="background:var(--cyan)"></div><span><b>Cyan (dashed)</b> — detector sensitivity R(λ)</span></div>
 </div>
 <div class="beg-key-box">Move the temperature slider and observe how the curves grow and <b>shift to the left</b>.
@@ -1580,12 +1686,12 @@ The mirror reflects heat instead of emitting it (ε ≈ 0.05). The plate emits h
 Pyrometer skierowany na lusterko zobaczy prawie nic.</div>
 <h3>Typical emissivity values</h3>
 <table class="beg-eps-table">
-  <tr><th>Material</th><th>ε</th><th>Uwaga</th></tr>
-  <tr><td>Polished metal</td><td class="eps-val">0.05–0.15</td><td>Trudny do measurementu — odbija otoczenie</td></tr>
+  <tr><th>Material</th><th>ε</th><th>Notes</th></tr>
+  <tr><td>Polished metal</td><td class="eps-val">0.05–0.15</td><td>Difficult to measure — reflects surroundings</td></tr>
   <tr><td>Oxidized steel</td><td class="eps-val">0.60–0.80</td><td>Scale increases ε</td></tr>
   <tr><td>Ceramics, tlenki</td><td class="eps-val">0.85–0.95</td><td>Dobry object measurementowy</td></tr>
   <tr><td>Graphite, matte black</td><td class="eps-val">0.90–0.97</td><td>Near-ideal blackbody</td></tr>
-  <tr><td>CDC (reference)</td><td class="eps-val">1.00</td><td>Idealny — tylko teoretyczny</td></tr>
+  <tr><td>CDC (reference)</td><td class="eps-val">1.00</td><td>Ideal — theoretical only</td></tr>
 </table>
 <div class="beg-key-box">Try: set <b>Polished metal (ε = 0.10)</b> and observe how <b>ΔT becomes large</b>.
 To error — the pyrometer sees too little radiation and underestimates temperature. Switch to <b>CDC (ε = 1.00)</b> — ΔT wraca do zera.</div>
@@ -1672,8 +1778,8 @@ L_{\mathrm{det}}(\lambda) = \tau_{\mathrm{win}}(\lambda)\cdot\Bigl[
 
 <p style="font-size:.75rem;color:var(--muted);margin-top:2px">
 τ_atm(λ) — atmospheric transmittance · τ_win(λ) — window transmittance ·
-ε(λ,T) — emissivity objectu (grey model: const; model H-R: f(λ,T)) ·
-odbicia otoczenia (1−ε)·L_bb(T_otocz) — opcjonalne, panel „🪞 Otoczenie"
+ε(λ,T) — object emissivity (grey model: const; H-R model: f(λ,T)) ·
+surroundings reflections (1−ε)·L_bb(T_surr) — optional, panel "🪞 Surroundings"
 </p>
 
 <p>The pyrometer processor assumes a simplified model: grey body with emissivity ε_assumed,
@@ -1681,19 +1787,19 @@ no atmosphere or window (τ = 1). Mismatch with the actual signal generates erro
 decomposed into three components (see section 8).</p>
 
 <table class="beg-eps-table" style="margin-top:10px">
-  <tr><th>Blok</th><th>Model</th><th>Sterowany przez</th></tr>
-  <tr><td>1 · Object</td><td>T_obj, ε(λ,T) lub ε_const</td><td>suwaki T, ε; panel Emissivity model</td></tr>
+  <tr><th>Block</th><th>Model</th><th>Controlled by</th></tr>
+  <tr><td>1 · Object</td><td>T_obj, ε(λ,T) or ε_const</td><td>sliders T, ε; Emissivity model panel</td></tr>
   <tr><td>2 · Atmosphere</td><td>Beer-Lambert, H₂O+CO₂+NH₃+SO₂, P/P₀</td><td>panel Environment + sliders L, RH, CO₂, T_atm</td></tr>
-  <tr><td>3 · Window</td><td>τ_Fresnel · τ_bandpass · τ_bulk(d) + emisja T_win</td><td>panel Optical window</td></tr>
+  <tr><td>3 · Window</td><td>τ_Fresnel · τ_bandpass · τ_bulk(d) + self-emission T_win</td><td>panel Optical window</td></tr>
   <tr><td>4 · Detector</td><td>R(λ): Gaussian / rectangular / broadband</td><td>detector type selector</td></tr>
   <tr><td>5 · Processor</td><td>bisection 72 iter., range 1–15 000 K</td><td>ε_assumed (constant assumption)</td></tr>
-  <tr><td>6 · Result</td><td>T_ind ± ΔT (3 components)</td><td>panel Wyniki</td></tr>
+  <tr><td>6 · Result</td><td>T_ind ± ΔT (3 components)</td><td>Results panel</td></tr>
 </table>
 </div>
-<h3>Odbicia promieniowania otoczenia</h3>
+<h3>Surroundings radiation reflections</h3>
 <p>A real object (ε &lt; 1) not only emits but also <b>reflects</b> radiation incident from its surroundings.
 When chamber walls, a furnace or other hot surfaces surround the object, the radiance at the source is:</p>
-<div class="fml-math">$$L_{\mathrm{obj}}(\lambda) = \varepsilon(\lambda)\,L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\varepsilon(\lambda)]\,L_{bb}(\lambda,T_{\mathrm{otocz}})$$</div>
+<div class="fml-math">$$L_{\mathrm{obj}}(\lambda) = \varepsilon(\lambda)\,L_{bb}(\lambda,T_{\mathrm{obj}}) + [1-\varepsilon(\lambda)]\,L_{bb}(\lambda,T_{\mathrm{surr}})$$</div>
 <p>The second term is the reflected part of the surroundings radiation (by Kirchhoff's law the reflectance = 1−ε
 for an opaque surface). The effect is <b>stronger the lower the emissivity</b>: a shiny metal
 (ε ≈ 0.1) reflects 90% of the surroundings radiation. If the surroundings are hotter than the object, the pyrometer
@@ -1708,7 +1814,7 @@ This is the main reason measuring shiny metals inside a furnace is difficult.</d
 <h2>2. Prawo Plancka – blackbody</h2>
 <p>Spektralna luminancja energetyczna (radiance) blackbody (CDC) w temperature T <span class="cite">[1,5]</span>:</p>
 <div class="fml-math">$$L_{bb}(\lambda,\, T) = \frac{2\,h\,c^{2}}{\lambda^{5}} \cdot \frac{1}{\exp\!\left(\dfrac{h c}{\lambda\, k_{B}\, T}\right) - 1} \qquad \left[\mathrm{W \cdot m^{-2} \cdot sr^{-1} \cdot m^{-1}}\right]$$</div>
-<h3>Uproszczenie Wiena (λ → 0)</h3>
+<h3>Wien approximation (λ → 0)</h3>
 <p>For short waves (exp ≫ 1), i.e. when hc/λk_BT &gt; 6, Planck's law is approximated:</p>
 <div class="fml-math">$$L_{bb} \approx \frac{2\,h\,c^{2}}{\lambda^{5}}\cdot e^{-c_{2}/\lambda T}, \qquad c_{2} = \frac{hc}{k_{B}} = 1{,}43878\times10^{-2}\ \mathrm{m{\cdot}K}$$</div>
 <div class="info-box">Full Planck law is used (without Wien approximation). Constants: h = 6.626×10⁻³⁴ J·s, c = 2.998×10⁸ m/s, k_B = 1.381×10⁻²³ J/K.</div>
@@ -1731,7 +1837,7 @@ This is the main reason measuring shiny metals inside a furnace is difficult.</d
 <p>According to Kirchhoff's law <span class="cite">[4]</span>: <b>ε(λ,T) = α(λ,T)</b>, where α is spectral absorptance — a body absorbing radiation at a given wavelength must emit it with the same intensity.</p>
 <div class="warn-box">The default simulator model is a grey body (ε = const). Expert Mode offers additional models — <b>Hagen-Rubens</b> and <b>polynomial (TPRC)</b> — describing realistic emissivity as a function of λ and T (described below, visible in Expert Mode).</div>
 
-<div class="eo"><!-- modele zaawansowane: tylko expert -->
+<div class="eo"><!-- advanced models: expert only -->
 <h3>Model Hagena-Rubensa — emissivity spektralna metali</h3>
 <p>For metals at long wavelengths (λ ≫ penetration depth) emissivity follows electron theory using Fresnel equations at high electrical conductivity <span class="cite">[5,8]</span>:</p>
 Using Fresnel equations at high electrical conductivity <span class="cite">[5,8]</span>:</p>
@@ -1752,7 +1858,7 @@ range. This is exactly what justifies multi-spectral pyrometry.</div>
 <table class="beg-eps-table">
   <tr><th>Material</th><th>ρ₀ [µΩ·cm]</th><th>α [10⁻³/K]</th><th>ε(1 µm, 1000K)</th><th>ε(10 µm, 1000K)</th></tr>
   <tr><td>Iron / steel</td><td>10.1</td><td>6.5</td><td>~0.35</td><td>~0.13</td></tr>
-  <tr><td>Tytan</td><td>43.1</td><td>3.8</td><td>~0.55</td><td>~0.22</td></tr>
+  <tr><td>Titanium</td><td>43.1</td><td>3.8</td><td>~0.55</td><td>~0.22</td></tr>
   <tr><td>Nickel</td><td>6.9</td><td>6.8</td><td>~0.29</td><td>~0.10</td></tr>
   <tr><td>Tungsten</td><td>5.4</td><td>4.8</td><td>~0.26</td><td>~0.09</td></tr>
   <tr><td>Copper</td><td>1.72</td><td>4.3</td><td>~0.10</td><td>~0.03</td></tr>
@@ -1771,7 +1877,7 @@ range of λ and T. Outside the range result is extrapolated and may be less accu
   <tr><th>Material</th><th>a₀</th><th>a₁ [µm⁻¹]</th><th>a₂ [µm⁻²]</th><th>Range λ [µm]</th><th>Source</th></tr>
   <tr><td>Tungsten (W)</td><td>0.497</td><td>−0.076</td><td>+0.0052</td><td>0.5–5.0</td><td>De Vos (1954), CRC</td></tr>
   <tr><td>Molibden (Mo)</td><td>0.425</td><td>−0.060</td><td>+0.0038</td><td>0.5–8.0</td><td>TPRC Vol.7, Cagran (2005)</td></tr>
-  <tr><td>Tytan (Ti)</td><td>0.600</td><td>−0.080</td><td>+0.0028</td><td>0.5–5.0</td><td>TPRC Vol.7</td></tr>
+  <tr><td>Titanium (Ti)</td><td>0.600</td><td>−0.080</td><td>+0.0028</td><td>0.5–5.0</td><td>TPRC Vol.7</td></tr>
   <tr><td>Iron (Fe)</td><td>0.370</td><td>−0.038</td><td>+0.0014</td><td>0.5–8.0</td><td>Ward (1956), TPRC Vol.7</td></tr>
   <tr><td>Nickel (Ni)</td><td>0.310</td><td>−0.035</td><td>+0.0012</td><td>0.5–8.0</td><td>Ward (1956), TPRC Vol.7</td></tr>
   <tr><td>Graphite (C)</td><td>0.875</td><td>−0.010</td><td>+0.0002</td><td>0.5–10.0</td><td>TPRC Vol.8</td></tr>
@@ -1783,7 +1889,7 @@ Ward, Proc.Phys.Soc.B 69 (1956); Cagran et al., Int.J.Thermophys 26 (2005); CRC 
 
 <div class="info-box"><b>Key educational effect — Al₂O₃:</b> coefficient a₁ > 0 means ε <i>increases</i>
 with wavelength — opposite behaviour to metals! Al₂O₃ ceramics has ε ≈ 0.22 at
-1 µm (detector InGaAs) ale ε ≈ 0.90 przy 8 µm (detector MCT). Pyrometer InGaAs drastycznie
+1 µm (detector InGaAs) but ε ≈ 0.90 at 8 µm (MCT detector). InGaAs pyrometer drastically
 will underestimate ceramic temperature, while MCT may give correct result with proper ε_assumed.</div>
 
 <div class="warn-box">Coefficients are polynomial fits to tabular data —
@@ -1793,17 +1899,17 @@ surface condition, oxidation, roughness and thermal history of the material.</di
 </div><!-- /eo modele -->
 <h3>Korekcja temperature (pyrometer monochromatyczny)</h3>
 <p>If the pyrometer reads brightness temperature T_J, the true temperature T_obj at emissivity ε is:</p>
-<div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(przyblizenie Wiena)}$$</div>
+<div class="fml-math">$$\frac{1}{T_{\mathrm{obj}}} = \frac{1}{T_J} + \frac{\lambda}{c_2}\ln\varepsilon \qquad \text{(Wien approx.)}$$</div>
 <p>Error for assumed wrong emissivity (ε_real ≠ ε_assumed):</p>
-<div class="fml-math cy">$$\Delta T \approx -\frac{T^{2}\lambda}{c_{2}}\ln\frac{\varepsilon_{\mathrm{real}}}{\varepsilon_{\mathrm{assumed}}} \qquad \text{(przyblizenie Wiena)}$$</div>
+<div class="fml-math cy">$$\Delta T \approx -\frac{T^{2}\lambda}{c_{2}}\ln\frac{\varepsilon_{\mathrm{real}}}{\varepsilon_{\mathrm{assumed}}} \qquad \text{(Wien approx.)}$$</div>
 </div>
 
 <!-- ──── 4. MODEL ATMOSFERY ───────────────── -->
 <div class="doc-sec" id="doc-s4">
 <h2>4. Atmospheric transmittance model</h2>
 <p>Atmospheric transmittance τ(λ) describes what fraction of radiation passes through an atmospheric layer of thickness L. Based on Beer-Lambert law <span class="cite">[10]</span>:</p>
-<div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_{i} k_{i}(\lambda)\cdot c_{i}\cdot L\right), \qquad k_i\text{ -- wsp. absorpcji},\quad c_i\text{ -- stezenie}$$</div>
-<p>W symulatorze stosujemy uproszczony model pasmowy oparty na danych HITRAN <span class="cite">[9]</span>:</p>
+<div class="fml-math">$$\tau(\lambda) = \exp\!\left(-\sum_{i} k_{i}(\lambda)\cdot c_{i}\cdot L\right), \qquad k_i\text{ -- absorption coeff.},\quad c_i\text{ -- concentration}$$</div>
+<p>In the simulator we use a simplified band model based on HITRAN data <span class="cite">[9]</span>:</p>
 <h3>Absorpcja H₂O (water vapour, 12 pasm)</h3>
 <table class="sym-tbl">
   <tr><th>λ_centrum [µm]</th><th>Width [µm]</th><th>Band strength</th></tr>
@@ -1849,10 +1955,10 @@ Trzy window pyrometeryczne: 0.8–1.3 µm, 3–5 µm, 8–14 µm.</p>
 
 <h3>🔴 Mars — optical density paradox</h3>
 <p>Composition: 95.3% CO₂, 2.7% N₂, 1.6% Ar, trace H₂O. Pressure: 0.006 atm (600 Pa).</p>
-<div class="fml-math">$$\tau_{\mathrm{Mars}}(4.26\,\mu\mathrm{m}) \gg \tau_{\mathrm{Earth}}(4.26\,\mu\mathrm{m}) \quad \text{przy tym samym } L$$</div>
+<div class="fml-math">$$\tau_{\mathrm{Mars}}(4.26\,\mu\mathrm{m}) \gg \tau_{\mathrm{Earth}}(4.26\,\mu\mathrm{m}) \quad \text{at the same } L$$</div>
 <p>Despite CO₂ concentration 2400× higher than on Earth, the 4.26 µm band on Mars is weaker
 for the same geometric distance. The result shows that the proper measure of absorption is
-<b>kolumnowa amount gasu</b> [mol/m²], nie concentration molowe.</p>
+<b>column amount of gas</b> [mol/m²], not molar concentration.</p>
 <div class="info-box">Experiment: set L = 10 m and compare τ(4.26 µm) for Earth and Mars.
 Earth (400 ppm CO₂, 1 atm): τ ≈ 0.85. Mars (953 000 ppm CO₂, 0.006 atm): τ ≈ 0.94.
 The Martian atmosphere is <i>more transparent</i> — despite rich CO₂!</div>
@@ -1874,10 +1980,10 @@ Historically Venera probes used contact thermometers and radar.</div>
 <p>Water absorbs infrared extremely strongly — through intense O-H vibrations (stretching and bending).
 The absorption coefficient α(λ) increases by several orders of magnitude between 0.5 and 2.5 µm:</p>
 <table class="beg-eps-table">
-  <tr><th>Range λ</th><th>α [m⁻¹]</th><th>τ przy L = 0.1 m</th><th>Uwaga</th></tr>
-  <tr><td>0.45–0.65 µm (VIS)</td><td>0.02–0.08</td><td>~99%</td><td>Okno widzialne — morze jest niebieskie</td></tr>
+  <tr><th>Range λ</th><th>α [m⁻¹]</th><th>τ at L = 0.1 m</th><th>Notes</th></tr>
+  <tr><td>0.45–0.65 µm (VIS)</td><td>0.02–0.08</td><td>~99%</td><td>Visible window — sea appears blue</td></tr>
   <tr><td>0.9–1.0 µm</td><td>4–15</td><td>67–22%</td><td>Silna absorpcja</td></tr>
-  <tr><td>1.45 µm (pasmo OH)</td><td>300</td><td>&lt;0.01%</td><td>Praktycznie zerowa transmisja</td></tr>
+  <tr><td>1.45 µm (OH band)</td><td>300</td><td>&lt;0.01%</td><td>Practically zero transmittance</td></tr>
   <tr><td>&gt; 2.5 µm</td><td>&gt;200</td><td>≈0</td><td>Total cutoff</td></tr>
 </table>
 <p>The only sensible detector choice in water is <b>Si 0.65 µm</b>. Hence underwater cameras
@@ -1914,7 +2020,7 @@ operate in the "window" between CO₂ bands. The industrial standard is <b>InSb 
 <h3>Summary — detector selection vs environment</h3>
 <table class="beg-eps-table">
   <tr><th>Environment</th><th>Zablokowane λ</th><th>Optymalny detector</th></tr>
-  <tr><td>🌍 Earth (sucha)</td><td>1.4, 1.9, 2.7, 4.26, 6–8 µm (H₂O+CO₂)</td><td>dowolny w oknie</td></tr>
+  <tr><td>🌍 Earth (dry)</td><td>1.4, 1.9, 2.7, 4.26, 6–8 µm (H₂O+CO₂)</td><td>any in window</td></tr>
   <tr><td>🔴 Mars</td><td>4.26 µm (weak), 2.7 µm</td><td>InSb 3–5 µm or Si</td></tr>
   <tr><td>🟡 Wenus</td><td>virtually all IR</td><td>not feasible</td></tr>
   <tr><td>💧 Water</td><td>wszystko &gt; 1.1 µm</td><td>Si 0.65 µm</td></tr>
@@ -1935,11 +2041,11 @@ operate in the "window" between CO₂ bands. The industrial standard is <b>InSb 
 </ol>
 
 <h3>Full channel equation with window</h3>
-<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{po\ atm}}(\lambda)}_{\text{sygnal objectu przez window}} + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{emisja wlasna window}}$$</div>
+<div class="fml-math">$$L_{\mathrm{det}}(\lambda) = \underbrace{\tau_{\mathrm{win}}(\lambda)\cdot L_{\mathrm{po\ atm}}(\lambda)}_{\text{object signal through window}} + \underbrace{[1-\tau_{\mathrm{win}}(\lambda)]\cdot L_{bb}(\lambda,T_{\mathrm{win}})}_{\text{window self-emission}}$$</div>
 <p>Self-emission is analogous to atmospheric emission — a hot window (e.g. 300–500°C in a furnace wall) can <b>bias the pyrometer reading upward</b>, even when τ_win seems sufficient.</p>
 
 <h3>Transmittance model — Beer–Lambert with component breakdown</h3>
-<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda,\, d) = \underbrace{\tau_{\mathrm{Fresnel}}}_{\text{stale}} \cdot \underbrace{S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)}_{\text{odciecia pasmowe}} \cdot \underbrace{\tau_{\mathrm{bulk}}(\lambda,d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}}}_{\text{absorpcja objetosciowa (Beer-Lambert)}}$$</div>
+<div class="fml-math">$$\tau_{\mathrm{win}}(\lambda,\, d) = \underbrace{\tau_{\mathrm{Fresnel}}}_{\text{const}} \cdot \underbrace{S_{\mathrm{UV}}(\lambda)\cdot S_{\mathrm{IR}}(\lambda)}_{\text{bandpass cutoffs}} \cdot \underbrace{\tau_{\mathrm{bulk}}(\lambda,d_{\mathrm{ref}})^{\,d/d_{\mathrm{ref}}}}_{\text{bulk absorption (Beer-Lambert)}}$$</div>
 
 <h3>Scaling with thickness — Beer–Lambert law</h3>
 <p>Volume absorption scales exponentially with thickness (Beer-Lambert law <span class="cite">[10]</span>). For a material with absorption τ_bulk(λ) at reference thickness d_ref:</p>
@@ -1973,12 +2079,12 @@ operate in the "window" between CO₂ bands. The industrial standard is <b>InSb 
 
 <h3>Implemented optical window materials</h3>
 <table class="sym-tbl">
-  <tr><th>Material</th><th>Range [µm]</th><th>τ<sub>Fresnel</sub></th><th>d<sub>ref</sub> [mm]</th><th>Charakterystyczne pasma absorpcji</th></tr>
-  <tr><td>Szyba float (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>4</td><td>OH przy 1.40 i 1.90 µm; fundamentalne Si-O przy 2.7 µm</td></tr>
+  <tr><th>Material</th><th>Range [µm]</th><th>τ<sub>Fresnel</sub></th><th>d<sub>ref</sub> [mm]</th><th>Characteristic absorption bands</th></tr>
+  <tr><td>Float glass (SiO₂)</td><td>0.32 – 2.7</td><td>0.91</td><td>4</td><td>OH bands at 1.40 and 1.90 µm; fundamental Si-O at 2.7 µm</td></tr>
   <tr><td>Plexiglas (PMMA)</td><td>0.35 – 2.8</td><td>0.92</td><td>5</td><td>C-H: 1.15, 1.41, 1.69, 2.18 µm (drgania harmoniczne)</td></tr>
   <tr><td>Fused silica (SiO₂)</td><td>0.15 – 4.5</td><td>0.945</td><td>5</td><td>Weak OH band at 2.72 µm (domieszka wody)</td></tr>
   <tr><td>Fluoryt (CaF₂)</td><td>0.13 – 9.5</td><td>0.944</td><td>2</td><td>Brak istotnych pasm absorpcji</td></tr>
-  <tr><td>Zinc selenide (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>3</td><td>Weak band at 6.5 µm; n ≈ 2.4 → straty Fresnela ~17%</td></tr>
+  <tr><td>Zinc selenide (ZnSe)</td><td>0.55 – 16</td><td>0.70</td><td>3</td><td>Weak band at 6.5 µm; n ≈ 2.4 → Fresnel losses ~17%</td></tr>
   <tr><td>Germanium (Ge)</td><td>1.8 – 16</td><td>0.46</td><td>3</td><td>Blocks all UV/VIS (band gap); opaque below 1.8 µm</td></tr>
 </table>
 
@@ -1988,7 +2094,7 @@ operate in the "window" between CO₂ bands. The industrial standard is <b>InSb 
 
 <!-- ──── 7. DETEKTORY ──────────────────────── -->
 <div class="doc-sec">
-<h2 id="doc-s7">7. Modele funkcji odpowiedzi detectora R(λ)</h2>
+<h2 id="doc-s7">7. Detector response models R(λ)</h2>
 
 <h3>Pyrometer pasmowy (gauss)</h3>
 <div class="fml-math">$$R(\lambda) = R_p\cdot\exp\!\left[-\frac{1}{2}\left(\frac{\lambda-\lambda_c}{\sigma}\right)^{\!2}\right], \qquad \sigma = \frac{\Delta\lambda}{2{,}355}$$</div>
@@ -2000,7 +2106,7 @@ operate in the "window" between CO₂ bands. The industrial standard is <b>InSb 
 
 <h3>Total-power pyrometer (broadband)</h3>
 <div class="fml-math cy">$$R(\lambda) \approx R_p = \mathrm{const}, \qquad \lambda \in [1{,}0\;\mu\text{m},\;17\;\mu\text{m}] \quad \text{(termostos, termopilek, bolometr)}$$</div>
-<p>Measures total power. Very sensitive to emissivity, as there is no possibility to choose a "good" spectral window. Zgodny z prawem Stefana–Boltzmanna: M = ε·σ·T⁴.</p>
+<p>Measures total power. Very sensitive to emissivity, as there is no possibility to choose a "good" spectral window. Follows the Stefan–Boltzmann law: M = ε·σ·T⁴.</p>
 <div class="warn-box">Total-power pyrometer: \(T_{\mathrm{ind}} = \left(\dfrac{S}{\varepsilon_{\mathrm{assumed}}\,\sigma}\right)^{1/4}\). Emissivity error proportional to \(T^4\) — highly sensitive!</div>
 </div>
 
@@ -2015,36 +2121,36 @@ in industrial conditions. Two-color pyrometry (<i>ratio pyrometry</i>) measures
 <b>signal ratio</b> at two wavelengths, eliminating ε for grey bodies.</p>
 
 <h3>Zasada fizyczna</h3>
-<p>Signaly przy λ₁ i λ₂ (uproszczone — bez atmosfery i window) <span class="cite">[5,8]</span>:</p>
+<p>Signals at λ₁ and λ₂ (simplified — no atmosphere or window) <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$S_1 = \int R_1(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$
 $$S_2 = \int R_2(\lambda)\cdot\varepsilon(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda$$</div>
 
 <p>For a <b>grey body</b> ε(λ) = const → ε cancels from integrals and the ratio becomes:</p>
-<div class="fml-math">$$\frac{S_1}{S_2} = \frac{\int R_1(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda}{\int R_2(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda} = f(T) \quad \text{(niezal. od } \varepsilon\text{!)}$$</div>
+<div class="fml-math">$$\frac{S_1}{S_2} = \frac{\int R_1(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda}{\int R_2(\lambda)\cdot L_{bb}(\lambda,T)\,\mathrm{d}\lambda} = f(T) \quad \text{(independent of } \varepsilon\text{!)}$$</div>
 
 <p>Inversion: find T<sub>ratio</sub> such that the above ratio (at ε=1) equals the measured S₁/S₂. Algorytm: bisekcja 80 iteracji.</p>
 
 <h3>Wien approximation (narrow-band detectors)</h3>
 <p>For band pyrometers (Gaussian) with Wien condition satisfied (hc/λk_BT ≫ 1):</p>
 <div class="fml-math">$$\frac{S_1}{S_2} \approx \frac{R_{\mathrm{p1}}}{R_{\mathrm{p2}}}\cdot\left(\frac{\lambda_2}{\lambda_1}\right)^5 \cdot \exp\!\left[\frac{c_2}{T}\left(\frac{1}{\lambda_2}-\frac{1}{\lambda_1}\right)\right]$$</div>
-<p>Inwersja analityczna (szacunkowa):</p>
+<p>Analytical inversion (approximate):</p>
 <div class="fml-math">$$T_{\mathrm{ratio}} \approx \frac{c_2\!\left(\dfrac{1}{\lambda_2}-\dfrac{1}{\lambda_1}\right)}{\ln\!\left(\dfrac{S_1}{S_2}\cdot\dfrac{R_{\mathrm{p2}}}{R_{\mathrm{p1}}}\right) + 5\ln\!\left(\dfrac{\lambda_2}{\lambda_1}\right)}$$</div>
 <p style="font-size:.75rem;color:var(--muted)">c₂ = 1.43878×10⁻² m·K; λ₁ &lt; λ₂ (shorter/longer wavelengths). For grey body ε(λ₁)/ε(λ₂) = 1 → T_ratio is exact.</p>
-<p>Gdy object nie jest szary, stosunek zawiera dodatkowy czynnik emissivity:</p>
+<p>When the object is not grey, the ratio contains an additional emissivity factor:</p>
 <div class="fml-math">$$\frac{S_1}{S_2} = \frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}\cdot f(T)$$</div>
 <p><p>The processor ignores this factor and computes incorrect T<sub>ratio</sub>. Error:</p>
 <div class="fml-math">$$\Delta T_{\mathrm{ratio}} \approx \frac{T^2}{c_2\!\left(\dfrac{1}{\lambda_2}-\dfrac{1}{\lambda_1}\right)}\cdot\ln\!\frac{\varepsilon(\lambda_1)}{\varepsilon(\lambda_2)}$$</div></div>
 
 <div class="info-box"><b>Experiment — Al₂O₃ (polynomial model):</b> select pair Si 0.65 / InGaAs 1.0 µm.
-Przy Al₂O₃ (a₁ &gt; 0) ε(0.65 µm) ≈ 0.28 i ε(1.0 µm) ≈ 0.50 → ε₁/ε₂ ≈ 0.56. Procesor ratio
+For Al₂O₃ (a₁ &gt; 0) ε(0.65 µm) ≈ 0.28 and ε(1.0 µm) ≈ 0.50 → ε₁/ε₂ ≈ 0.56. The ratio processor
 "sees" too small a ratio and underestimates T<sub>ratio</sub>. For graphite (near grey) ΔT<sub>ratio</sub> ≈ 0.</div>
 
 <h3>Typical industrial detector pairs</h3>
 <table class="beg-eps-table">
-  <tr><th>Para λ₁ / λ₂</th><th>Range T</th><th>Zastosowanie</th><th>Uwagi</th></tr>
+  <tr><th>Pair λ₁ / λ₂</th><th>Range T</th><th>Application</th><th>Notes</th></tr>
   <tr><td>Si 0.65 µm / InGaAs 1.0 µm</td><td>800–3500°C</td><td>Metals, smelting furnaces</td><td>Large Δλ → high T sensitivity</td></tr>
-  <tr><td>InGaAs 1.0 / 1.6 µm</td><td>500–1500°C</td><td>Stal, nikiel, stopy</td><td>Dobra para dla modelu H-R</td></tr>
-  <tr><td>InSb 3.9 / window 3–5 µm</td><td>400–1200°C</td><td>Piece z gasem CO₂</td><td>Omija pasmo CO₂ 4.26 µm</td></tr>
+  <tr><td>InGaAs 1.0 / 1.6 µm</td><td>500–1500°C</td><td>Steel, nickel, alloys</td><td>Good pair for H-R model</td></tr>
+  <tr><td>InSb 3.9 / window 3–5 µm</td><td>400–1200°C</td><td>Furnaces with CO₂ gas</td><td>Avoids CO₂ band at 4.26 µm</td></tr>
   <tr><td>MCT 8–12 / 10–14 µm</td><td>50–400°C</td><td>Plastics, ceramics</td><td>Narrow Δλ → low sensitivity T</td></tr>
 </table>
 
@@ -2075,7 +2181,7 @@ from real signals accounts for τ(λ).</div>
 λ ∈ [0.10, 16] µm, integration by rectangle method (step DL = (LAM_MAX − LAM_MIN)/N).</p>
 <div class="fml-math">$$S \approx \sum_{i=0}^{N} R(\lambda_i)\cdot L_{\mathrm{det}}(\lambda_i)\cdot\Delta\lambda$$</div>
 
-<h3>Inwersja temperature — algorytm bisekcji</h3>
+<h3>Temperature inversion — bisection algorithm</h3>
 <p>The pyrometer processor assumes a simplified model (grey body with emissivity ε_assumed, no atmosphere
 and window) and finds T_ind satisfying <span class="cite">[5,8]</span>:</p>
 <div class="fml-math">$$\text{find}\;T_{\mathrm{ind}}:\quad\sum_{i=0}^{N} R(\lambda_i)\cdot\varepsilon_{\mathrm{assumed}}\cdot L_{bb}(\lambda_i,\,T_{\mathrm{ind}})\cdot\Delta\lambda \;=\; S$$</div>
@@ -2085,7 +2191,7 @@ Computational complexity: ~72 × (N+1) ≈ 50 700 Planck law evaluations per sli
 <div class="info-box"><b>Note on ε model in inversion:</b> processor always uses ε_assumed = const,
 even if the Hagen-Rubens model is selected. The inconsistency ε(λ) ≠ ε_assumed is <i>intentional</i>
 — exactly how a real pyrometer works, which does not know the true spectral emissivity of the object.
-Ten error jest visible w componentsj ΔT_ε.</div>
+This error is visible in the ΔT_ε component.</div>
 
 <h3>Error decomposition — 3 independent components</h3>
 <p>Total error ΔT = T_ind − T_obj is decomposed into three orthogonal components,
@@ -2106,8 +2212,8 @@ $$\Delta T = \Delta T_{\varepsilon} + \Delta T_{\mathrm{atm}} + \Delta T_{\mathr
 </table>
 
 <p>In the code decomposition is performed by three separate integrations with progressively
-included effects. Wyniki: <code>dT_eps</code>, <code>dT_atm</code>, <code>dT_win</code>
-w obiekcie zwracanym przez <code>compute()</code>.</p>
+included effects. Results: <code>dT_eps</code>, <code>dT_atm</code>, <code>dT_win</code>
+in the object returned by <code>compute()</code>.</p>
 </div>
 
 <!-- ──── 10. GLOSSARY ──────────────────── -->
@@ -2123,16 +2229,16 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>ρ₀</td><td>Electrical resistivity of metal at T₀ = 293 K — H-R model parameter</td><td>µΩ·cm</td></tr>
   <tr><td>α (H-R)</td><td>Temperature coefficient of resistivity — H-R model parameter: ρ(T)=ρ₀[1+α(T−T₀)]</td><td>K⁻¹</td></tr>
   <tr><td>τ_atm(λ)</td><td>Spektralna atmospheric transmittance — model Beer-Lambert z P/P₀</td><td>—</td></tr>
-  <tr><td>τ_win(λ)</td><td>Spektralna window transmittance optycznej — τ_Fresnel·τ_bandpass·τ_bulk(d)</td><td>—</td></tr>
+  <tr><td>τ_win(λ)</td><td>Spectral optical window transmittance — τ_Fresnel·τ_bandpass·τ_bulk(d)</td><td>—</td></tr>
   <tr><td>τ̄</td><td>Weighted average transmittance in detector window (weight: R(λ))</td><td>—</td></tr>
   <tr><td>R(λ)</td><td>Spektralna funkcja odpowiedzi detectora (znormalizowana)</td><td>—</td></tr>
   <tr><td>S</td><td>Signal (power) at detector output — integral ∫R(λ)·L_det(λ)dλ</td><td>W·m⁻²·sr⁻¹</td></tr>
-  <tr><td>T_obj</td><td>Temperature termodynamiczna objectu mierzonego</td><td>°C lub K</td></tr>
-  <tr><td>T_ind</td><td>Indicated temperature przez pyrometer (result inwersji Plancka)</td><td>°C</td></tr>
+  <tr><td>T_obj</td><td>Thermodynamic temperature of the measured object</td><td>°C or K</td></tr>
+  <tr><td>T_ind</td><td>Temperature indicated by pyrometer (result of Planck inversion)</td><td>°C</td></tr>
   <tr><td>T_atm</td><td>Atmosphere temperature along the optical path</td><td>°C</td></tr>
   <tr><td>T_win</td><td>Temperature of optical window (affects its self-emission)</td><td>°C</td></tr>
   <tr><td>T_J</td><td>Brightness temperature — T_ind at λ = const and τ = 1</td><td>°C</td></tr>
-  <tr><td>ΔT</td><td>Error measurementu: T_ind − T_obj = ΔT_ε + ΔT_atm + ΔT_win</td><td>K</td></tr>
+  <tr><td>ΔT</td><td>Measurement error: T_ind − T_obj = ΔT_ε + ΔT_atm + ΔT_win</td><td>K</td></tr>
   <tr><td>ΔT_ε</td><td>Error component from emissivity (without atmosphere and window)</td><td>K</td></tr>
   <tr><td>ΔT_atm</td><td>Error component from atmosphere (attenuation + gas self-emission)</td><td>K</td></tr>
   <tr><td>ΔT_win</td><td>Error component from window (attenuation + window self-emission)</td><td>K</td></tr>
@@ -2145,7 +2251,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>k_B</td><td>Boltzmann constant</td><td>1.381×10⁻²³ J·K⁻¹</td></tr>
   <tr><td>c</td><td>Speed of light in vacuum</td><td>2.998×10⁸ m·s⁻¹</td></tr>
   <tr><td>N = 700</td><td>Number of integration grid points λ ∈ [0.10, 16] µm</td><td>—</td></tr>
-  <tr><td>P/P₀</td><td>Czynnik pressure w Beer-Lambert (P₀ = 1 atm = 101 325 Pa)</td><td>—</td></tr>
+  <tr><td>P/P₀</td><td>Pressure factor in Beer-Lambert (P₀ = 1 atm = 101 325 Pa)</td><td>—</td></tr>
 </table>
 </div>
 
@@ -2158,7 +2264,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <tr><td>Jednostka</td><td>Department of Metrology and Electronics</td></tr>
   <tr><td>Faculty</td><td>WEAIiIB — Faculty of Electrical Engineering, Automatics, Computer Science and Biomedical Engineering</td></tr>
 <tr><td>University</td><td>AGH University of Science and Technology, Kraków, Poland</td></tr>
-  <tr><td>Version</td><td><b>v3.1.1-en</b></td></tr>
+  <tr><td>Version</td><td><b>v3.4.0-en</b></td></tr>
   <tr><td>Repository</td><td><a href="https://github.com/Mirek-Socha/SymulatorPyrometeru" target="_blank" style="color:var(--cyan)">github.com/Mirek-Socha/SymulatorPyrometeru</a></td></tr>
   <tr><td>Purpose</td><td>Educational material — laboratory exercises in temperature metrology</td></tr>
   <tr><td>License</td><td>Educational use — AGH</td></tr>
@@ -2267,7 +2373,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
   <li class="bib-item">
     <span class="bib-num">[12]</span>
     <span><b>GUM — Central Office of Measures: Temperature Laboratory.</b>
-    Przewodnik po dziedzinie termometrii (2018).
+    Guide to thermometry (2018). [Polish language document]
     <a href="https://www.gum.gov.pl/ftp/pdf/Przewodniki/w-termometria-08_2018.pdf" target="_blank">gum.gov.pl [PDF]</a>
     — official GUM guide describing thermometer calibration methods,
     ITS-90 scale in laboratory practice and measurement capabilities of the GUM Temperature Laboratory.
@@ -2327,7 +2433,7 @@ w obiekcie zwracanym przez <code>compute()</code>.</p>
 <script>
 
 /* ═══════════════════════════════════════════════════
-   MODULE 1 — PHYSICS  ·  Obliczenia fizyczne (czyste funkcje, brak DOM)
+   MODULE 1 — PHYSICS  ·  Physical calculations (pure functions, no DOM)
    ═══════════════════════════════════════════════════ */
 /* ─────────────────────────────────────────────
    PHYSICS CONSTANTS & ENGINE
@@ -2391,9 +2497,9 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
       if(u < 1.00) return 4.00;
       if(u < 1.20) return 15.0;
       if(u < 1.40) return 8.00;
-      if(u < 1.50) return 300.0;   // pasmo OH 1.45 µm
+      if(u < 1.50) return 300.0;   // OH band 1.45 µm
       if(u < 1.80) return 40.0;
-      if(u < 1.90) return 500.0;   // pasmo OH 1.9 µm
+      if(u < 1.90) return 500.0;   // OH band 1.9 µm
       if(u < 2.50) return 200.0;
       return 1000.0;  // λ>2.5 µm: totalna absorpcja
     })();
@@ -2502,7 +2608,7 @@ function atmTau(lam_m, pathLen, rh_pct, co2_ppm, env_override){
    Hagen-Rubens (long waves, λ >> penetration depth):
      ε(λ,T) ≈ 0.365·√(ρ/λ) − 0.0667·(ρ/λ)
    where ρ [µΩ·cm], λ [µm]. Valid for: λ > ~1 µm for metals.
-   Przy short λ (VIS): poprawka krzywej Fresnela — model
+   At short λ (VIS): Fresnel curve correction — model
    smoothly transitions to Fresnel values (n,k).
 
    T dependence: ρ(T) = ρ₀·[1 + α·(T − T₀)]
@@ -2521,21 +2627,21 @@ const HR_MATERIALS = {
            rho0:1e5, alpha:5e-4,  note:'Oxides — quasi-non-metallic, ε high and weakly dependent on λ'},
   fe:     {label:'Pure iron / carbon steel',short:'Fe',
            rho0:10.1, alpha:6.5e-3, note:'Classic H-R: ε increases with T, decreases with λ'},
-  ti:     {label:'Tytan',short:'Ti',
+  ti:     {label:'Titanium',short:'Ti',
            rho0:43.1, alpha:3.8e-3, note:'High resistivity → higher ε than noble metals'},
   ni:     {label:'Nickel',short:'Ni',
            rho0:6.9,  alpha:6.8e-3, note:'Strong T dependence, Curie point changes trend'},
   cu:     {label:'Copper',short:'Cu',
-           rho0:1.72, alpha:4.3e-3, note:'Niska ε, minimum przy ~10 µm (anomalny skin effect)'},
+           rho0:1.72, alpha:4.3e-3, note:'Low ε, minimum at ~10 µm (anomalous skin effect)'},
   al:     {label:'Aluminium',short:'Al',
-           rho0:2.65, alpha:4.2e-3, note:'Bardzo niska ε w IR (0.02–0.06)'},
+           rho0:2.65, alpha:4.2e-3, note:'Very low ε in IR (0.02–0.06)'},
   w:      {label:'Tungsten',short:'W',
            rho0:5.39, alpha:4.8e-3, note:'Lamps, lamp standards — well measured'},
   custom: {label:'Custom (rho₀ and α manually)',short:'custom',
            rho0:10.0, alpha:5.0e-3, note:'Enter parameters ρ₀ and α manually'}
 };
 
-/* Oporność w temperature T [K] → ρ [µΩ·cm] */
+/* Resistivity at temperature T [K] → ρ [µΩ·cm] */
 function rhoT(mat, T_K){
   const rho0 = mat.rho0, alpha = mat.alpha;
   const T0 = 293;
@@ -2578,20 +2684,20 @@ const POLY_MATERIALS = {
     lam_range:[0.5, 5.0], T_range:[1200,3000],
     source:'[C,E,F]',
     note:'Best measured among metals (lamps, lamp standards). ' +
-         'ε silnie spada z λ; minimum ok. 1.2 µm → wzrost (anomalny skin effect). ' +
-         'Dane: De Vos (1954), CRC 60th ed., Cagran (2005). ~1600 K.'
+         'ε strongly decreases with λ; minimum ~1.2 µm → rises again (anomalous skin effect). ' +
+         'Data: De Vos (1954), CRC 60th ed., Cagran (2005). ~1600 K.'
   },
   mo: {
-    label:'Molibden (Mo)',
+    label:'Molybdenum (Mo)',
     a0: 0.425, a1:-0.060, a2: 0.0038,
     lam_range:[0.5, 8.0], T_range:[1000,2800],
     source:'[A,E]',
     note:'Similar trend to W, slightly higher ε at long λ. ' +
          '"Crossover point" emissivity of W and Mo at ~1.27 µm (isothermal crossing). ' +
-         'Dane: TPRC Vol.7; Cagran (2005). ~1400 K.'
+         'Data: TPRC Vol.7; Cagran (2005). ~1400 K.'
   },
   ti: {
-    label:'Tytan (Ti)',
+    label:'Titanium (Ti)',
     a0: 0.600, a1:-0.080, a2: 0.0028,
     lam_range:[0.5, 5.0], T_range:[800,1700],
     source:'[A]',
@@ -2604,7 +2710,7 @@ const POLY_MATERIALS = {
     lam_range:[0.5, 8.0], T_range:[700,1500],
     source:'[A,D]',
     note:'Pure iron, polished surface. ε increases with T and decreases with λ ' +
-         '(typowe zachowanie metaliczne). Dane: Ward (1956), TPRC Vol.7. ~1000 K.'
+         '(typical metallic behaviour). Data: Ward (1956), TPRC Vol.7. ~1000 K.'
   },
   ni: {
     label:'Nickel (Ni)',
@@ -2621,7 +2727,7 @@ const POLY_MATERIALS = {
     source:'[B,H]',
     note:'Quasi-blackbody; ε ≈ 0.85–0.90 nearly independent of λ. ' +
          'Widely used as reference. ε weakly increases with T (phonon absorption). ' +
-         'Dane: TPRC Vol.8; Michalski (2001).'
+         'Data: TPRC Vol.8; Michalski (2001).'
   },
   sic: {
     label:'Silicon carbide (SiC)',
@@ -2630,7 +2736,7 @@ const POLY_MATERIALS = {
     source:'[B,G]',
     note:'High and stable ε in range 1–10 µm; phonon resonance at 12 µm reduces ε. ' +
          'Used in IR furnaces and as reference material. ' +
-         'Dane: TPRC Vol.8; Hanssen & Kaplan (NIST, 2001).'
+         'Data: TPRC Vol.8; Hanssen & Kaplan (NIST, 2001).'
   },
   al2o3: {
     label:'Aluminium oxide (Al₂O₃)',
@@ -2638,8 +2744,8 @@ const POLY_MATERIALS = {
     lam_range:[1.0, 10.0], T_range:[600,1800],
     source:'[B]',
     note:'Non-metallic — ε INCREASES with λ (OH phonon bands at 2.7 µm and ~10 µm). ' +
-         'ε ≈ 0.30 przy 1 µm → 0.90 przy 8 µm (wysoka w dalekiej IR!). ' +
-         'Dane: TPRC Vol.8. ~1200 K.'
+         'ε ≈ 0.30 at 1 µm → 0.90 at 8 µm (high in far IR!). ' +
+         'Data: TPRC Vol.8. ~1200 K.'
   },
   custom: {
     label:'Custom a₀, a₁, a₂',
@@ -2658,12 +2764,70 @@ function polyEmissivity(lam_um, mat){
   return Math.max(0.01, Math.min(0.99, e));
 }
 
-/* Główna funkcja emissivity: zwraca ε dla λ [m], T [K], state */
-/* ── Rejestr modeli emisyjności ──
+/* Main emissivity function: returns ε for λ [m], T [K], state */
+/* ── Emissivity model registry ──
    Each model: { label, fn(lam_um, T_K, p) → ε }
    Rozszerzenia (planowane): fresnel (ε(θ)), thinfilm (interferencja),
    and modifiers: cavity effect, roughness.
    Nowy model = nowy wpis w rejestrze, bez zmian w compute(). */
+/* fresnelNK: n and k from Drude theory (long-wavelength IR limit)
+   Derivation: n² = k² = λ[m]·σ[S/m] / (4π·c₀·ε₀)
+                        = λ[µm]·10⁻⁶ · (1/ρ[µΩcm]·10⁻⁸) / (4π·c₀·ε₀)
+                        = λ[µm] · DRUDE_A / ρ[µΩcm]
+   Constant DRUDE_A = 10² / (4π·c₀·ε₀) ≈ 2998  [µm·µΩcm → dimensionless]
+   Valid range: λ > 2 µm, pure metals (Cu, Al, Au, W in IR) */
+const DRUDE_A = 2997.91;   // 10²/(4π·2.998e8·8.854e-12) [µm·µΩcm]
+
+function fresnelNK(rho_uOhm_cm, lam_um){
+  const nk2 = DRUDE_A * lam_um / Math.max(rho_uOhm_cm, 0.1);  // n² = k²
+  const nk  = Math.sqrt(Math.max(nk2, 1.0));  // n,k ≥ 1 in IR for metals
+  return { n: nk, k: nk };
+}
+
+/* fresnelEps: ε(θ) from complex Fresnel equations for metal (n ≈ k >> 1) */
+function fresnelEps(n, k, theta_deg){
+  const th = Math.min(theta_deg, 89.5) * Math.PI / 180;
+  const cos_t = Math.cos(th);
+  const sin_t = Math.sin(th);
+  const sin2  = sin_t * sin_t;
+
+  // ñ² = (n-ik)²  — compute real and imaginary parts
+  const nr2 = n*n - k*k;   // Re(ñ²)
+  const ni2 = -2*n*k;       // Im(ñ²)  — negative: Im((n-ik)²) = -2nk
+
+  // M² = ñ² - sin²θ  →  M = complex sqrt
+  const Mr2 = nr2 - sin2;
+  const Mi2 = ni2;
+  const Mabs = Math.sqrt(Mr2*Mr2 + Mi2*Mi2);
+  const Mang = Math.atan2(Mi2, Mr2) / 2;
+  const Mre  = Math.sqrt(Mabs) * Math.cos(Mang);  // Re(M)
+  const Mim  = Math.sqrt(Mabs) * Math.sin(Mang);  // Im(M)
+
+  // r_s = (cos_t - M) / (cos_t + M)
+  const rs_re_num = cos_t - Mre, rs_im_num = -Mim;
+  const rs_re_den = cos_t + Mre, rs_im_den =  Mim;
+  const rs_den2 = rs_re_den*rs_re_den + rs_im_den*rs_im_den;
+  const Rs = (rs_re_num*rs_re_num + rs_im_num*rs_im_num) / (rs_den2 || 1e-30);
+
+  // r_p = (ñ²·cos_t - M) / (ñ²·cos_t + M)
+  const n2c_re = nr2*cos_t, n2c_im = ni2*cos_t;
+  const rp_re_num = n2c_re - Mre, rp_im_num = n2c_im - Mim;
+  const rp_re_den = n2c_re + Mre, rp_im_den = n2c_im + Mim;
+  const rp_den2 = rp_re_den*rp_re_den + rp_im_den*rp_im_den;
+  const Rp = (rp_re_num*rp_re_num + rp_im_num*rp_im_num) / (rp_den2 || 1e-30);
+
+  const eps = 1 - (Rs + Rp) / 2;
+  return Math.max(0.001, Math.min(0.999, eps));
+}
+
+/* fresnelEmissivity: ε(λ, T, θ) using HR_MATERIALS for n,k */
+function fresnelEmissivity(lam_um, T_K, theta_deg, matKey){
+  const mat = HR_MATERIALS[matKey] || HR_MATERIALS.fe;
+  const rho  = rhoT(mat, T_K);           // resistivity in µΩ·cm (from H-R model)
+  const { n, k } = fresnelNK(rho, lam_um);
+  return fresnelEps(n, k, theta_deg);
+}
+
 const EPS_MODELS = {
   grey: {
     label: 'ε = const (grey body)',
@@ -2677,20 +2841,39 @@ const EPS_MODELS = {
     }
   },
   poly: {
-    label: 'Wielomian ε(λ) — dane TPRC',
+    label: 'Polynomial ε(λ) — TPRC data',
     fn: (lam_um, T_K, p) => {
       const mat = POLY_MATERIALS[appState.polyMat] || POLY_MATERIALS.w;
       return polyEmissivity(lam_um, mat);
     }
   },
+  fresnel: {
+    label: 'Fresnel ε(θ,λ,T) — directional',
+    fn: (lam_um, T_K, p) => {
+      return fresnelEmissivity(lam_um, T_K, appState.theta, appState.fresnelMat);
+    }
+  },
 };
+
+/* ── Cavity effect (simplified Gouffé model) ───────────────────────────
+   ε_eff = ε / [ε + (1−ε)·(s/S)]
+   where s/S is the ratio of aperture area to total cavity surface area.
+   s/S → 0 (small aperture):  ε_eff → 1  (ideal blackbody)
+   s/S → 1 (flat surface):    ε_eff = ε  (no cavity effect)
+   Ref: Gouffe A. (1945). Rev. Opt. 24, 1-10. [21] */
+function cavityBoost(eps, sSS){
+  if(!appState.cavityOn || sSS >= 1) return eps;
+  const denom = eps + (1 - eps) * Math.max(sSS, 1e-4);
+  return Math.min(0.999, eps / denom);
+}
 
 function epsSpectral(lam_m, T_K, p){
   const model = EPS_MODELS[appState.epsModel] || EPS_MODELS.grey;
-  return model.fn(lam_m * 1e6, T_K, p);
+  const eps0 = model.fn(lam_m * 1e6, T_K, p);
+  return cavityBoost(eps0, appState.cavitySS);  // cavity effect modifier
 }
 
-/* Tablica ε(λ) dla całej siatki lam[] — dla chartów */
+/* Array of ε(λ) for the full wavelength grid lam[] — for charts */
 function epsArray(T_K, p){
   return lams.map(lam => epsSpectral(lam, T_K, p));
 }
@@ -2753,7 +2936,7 @@ const ENVS = {
     nh3_ppm:500000, so2_ppm:0, h2_frac:0.5, h2o_pure:false,
     L_max:1, L_def:0.2,
     det_hint:'band_100',
-    note:'GaN growth (LEDs, lasers, HEMT transistors) in MOCVD reactors. NH₃ blocks IR at 2.97 µm and 6.15 µm — window pyrometeryczne przy 0.9–1.1 µm (InGaAs) jest jedyną opcją. H₂ carrier gas is optically transparent (no dipole moment).',
+    note:'GaN growth (LEDs, lasers, HEMT transistors) in MOCVD reactors. NH₃ blocks IR at 2.97 µm and 6.15 µm — window pyrometers at 0.9–1.1 µm (InGaAs) are the only viable option. H₂ carrier gas is optically transparent (no dipole moment).',
     color:'#a78bfa'
   },
 
@@ -2795,7 +2978,7 @@ function ss(x, e0, e1){ const t=Math.max(0,Math.min(1,(x-e0)/(e1-e0))); return t
  *              τ_bulk(d) = τ_bulk(d_ref)^(d/d_ref)
  */
 /* ═══════════════════════════════════════════════════
-   MODULE 1b — OPTICS  ·  Optical window i detector
+   MODULE 1b — OPTICS  ·  Optical window and detector
    ═══════════════════════════════════════════════════ */
 
 function windowTau(lam_m, type, thick_mm){
@@ -2945,7 +3128,7 @@ function compute(p){
     sig_eps += detResp(lams[i],det)*epsSpectral(lams[i],Tobj_K,p)*planck(lams[i],Tobj_K)*DL;
   const T_eps_K = invertTemp(sig_eps, det, p.eps_assumed);
 
-  // 2. Emisyjność + odbicie otoczenia (τ_atm=1, τ_win=1)
+  // 2. Emissivity + surroundings reflection (τ_atm=1, τ_win=1)
   let sig_refl=0;
   for(let i=0;i<=N;i++){
     const lam=lams[i], es=epsSpectral(lam,Tobj_K,p);
@@ -2955,13 +3138,13 @@ function compute(p){
   }
   const T_refl_K = invertTemp(sig_refl, det, p.eps_assumed);
 
-  // 3. Emisyjność + odbicie + atmosfera (τ_win=1)
+  // 3. Emissivity + reflection + atmosphere (τ_win=1)
   let sig_atm=0;
   for(let i=0;i<=N;i++){
-    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2), es=epsSpectral(lam,Tobj_K,p);
+    const lam=lams[i], ta=atmTau(lam,p.path,p.rh,p.co2,env), es=epsSpectral(lam,Tobj_K,p);
     const emR = reflOn ? es*planck(lam,Tobj_K)+(1-es)*planck(lam,Tsurr_K)
                        : es*planck(lam,Tobj_K);
-    const la=(1-ta)*planck(lam,p.Tatm+273.15);
+    const la=(1-ta)*planck(lam,Tatm_K);  // Tatm_K respects env-override logic
     sig_atm += detResp(lam,det)*(ta*emR+la)*DL;
   }
   const T_atm_K = invertTemp(sig_atm, det, p.eps_assumed);
@@ -3007,12 +3190,12 @@ function compute(p){
    Inversion: bisection on signal ratio with τ=1, ε=1.
 
    Ref: DeWitt & Nutter, "Theory & Practice of Radiation Thermometry"
-        (Wiley, 1988), rozdz. 5; Michalski (2001), rozdz. 4.3.
+        (Wiley, 1988), ch. 5; Michalski (2001), ch. 4.3.
 ──────────────────────────────────────────────────────────────────── */
 
-// Aktywna para detectorów
+// Active detector pair
 
-// Para wstępnie zdefiniowanych par detectorów (λ₁=aktywny det., λ₂=poniżej)
+// Pre-defined detector pairs (λ₁=active det., λ₂=below)
 const RATIO_PAIRS = [
   {label:'Si 0.65 µm / InGaAs 1.0 µm',  d1:'band_065', d2:'band_100',  note:'Wysokie T (>1000°C); metale w VIS/NIR'},
   {label:'InGaAs 1.0 µm / 1.6 µm',       d1:'band_100', d2:'band_160',  note:'Mid T (700–1500°C); stal, nikiel'},
@@ -3021,7 +3204,7 @@ const RATIO_PAIRS = [
   {label:'Custom pair (det. + λ₂)',       d1:null,       d2:null,        note:'Select λ₁ = active detector, λ₂ below'},
 ];
 
-/* Oblicza signal S dla danego detectora, pełny tor */
+/* Computes signal S for a given detector, full measurement path */
 function computeSignalForDet(det, p, env, Tobj_K, Tatm_K, Twin_K, thick){
   let sig = 0;
   for(let i=0;i<=N;i++){
@@ -3037,7 +3220,7 @@ function computeSignalForDet(det, p, env, Tobj_K, Tatm_K, Twin_K, thick){
   return sig;
 }
 
-/* Inwersja stosunkowa: znajdź T takie że S₁(T)/S₂(T) = ratio_meas
+/* Ratio inversion: find T such that S₁(T)/S₂(T) = ratio_meas
    Uses grey ε=1 (ε cancels for grey body), simplified full channel */
 function invertTempRatio(ratio_meas, det1, det2, p, env, Tatm_K, Twin_K, thick){
   if(ratio_meas<=0 || !isFinite(ratio_meas)) return null;
@@ -3229,6 +3412,248 @@ function drawGrid(ctx, pL, pR, pT, pB, W, H, yN){
 }
 
 /* ─────────────────────────────────────────────
+   CAVITY DIAGRAM
+───────────────────────────────────────────── */
+function drawCavityDiagram(){
+  const canvas = document.getElementById('cavityCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const tv = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+  ctx.clearRect(0,0,W,H);
+
+  const sSS    = appState.cavitySS || 0.1;
+  const eps    = state ? state.eps_real : 0.7;
+  const epsEff = Math.min(0.999, eps / (eps + (1-eps)*Math.max(sSS,1e-4)));
+  const boost  = epsEff - eps;
+
+  // ── Cavity geometry (rectangular cross-section) ──────────────────
+  const Wc = W * 0.34;          // cavity width
+  const Dc = H * 0.62;          // cavity depth
+  const xL = W * 0.08;          // left wall
+  const xR = xL + Wc;           // right wall
+  const yT = H * 0.10;          // top (opening)
+  const yB = yT + Dc;           // bottom
+  const cx = (xL + xR) / 2;
+
+  // Aperture width proportional to sqrt(s/S) × cavity width
+  const totalS  = Wc + 2 * Dc;
+  const aperW   = Math.min(Wc, sSS * totalS);
+  const aL = cx - aperW / 2;
+  const aR = cx + aperW / 2;
+
+  // Cavity fill
+  ctx.fillStyle = tv('--card');
+  ctx.fillRect(xL+1, yT, Wc-2, Dc);
+
+  // Cavity walls
+  ctx.strokeStyle = tv('--text'); ctx.lineWidth = 2; ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(aL, yT);
+  ctx.lineTo(xL, yT);
+  ctx.lineTo(xL, yB);
+  ctx.lineTo(xR, yB);
+  ctx.lineTo(xR, yT);
+  ctx.lineTo(aR, yT);
+  ctx.stroke();
+
+  // Total surface S (dashed)
+  ctx.strokeStyle = tv('--amber'); ctx.lineWidth=1.5; ctx.setLineDash([2,2]);
+  ctx.beginPath();
+  ctx.moveTo(xL+2, yT+2); ctx.lineTo(xL+2, yB-1);
+  ctx.lineTo(xR-2, yB-1); ctx.lineTo(xR-2, yT+2);
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // ── Aperture s (cyan) ──────────────────────────────────────────
+  ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(aL, yT-1); ctx.lineTo(aR, yT-1); ctx.stroke();
+
+  ctx.fillStyle = tv('--cyan'); ctx.font='bold 8px IBM Plex Mono,monospace';
+  ctx.textAlign='center';
+  ctx.fillText('s', cx, yT - 4);
+
+  ctx.fillStyle = tv('--amber'); ctx.font='8px IBM Plex Mono,monospace';
+  ctx.textAlign='left';
+  ctx.fillText('S', xR+4, yT + Dc*0.5);
+
+  // ── Reflection rays (zigzag inside cavity) ──────────────────────
+  ctx.strokeStyle = tv('--red'); ctx.lineWidth = 0.8; ctx.globalAlpha=0.6;
+  const nBounce = Math.max(1, Math.min(6, Math.round(1.5 / sSS)));
+  let rx = cx - aperW*0.25, ry = yT + 4;
+  let dx = Wc * 0.38, dy = Dc * 0.35;
+  ctx.beginPath(); ctx.moveTo(rx, ry);
+  for(let i=0; i<nBounce; i++){
+    rx += dx; ry += dy;
+    if(rx < xL+3 || rx > xR-3){ dx = -dx; rx += dx*2; }
+    if(ry > yB-3){ dy = -dy; ry += dy*2; }
+    ctx.lineTo(Math.max(xL+2, Math.min(xR-2, rx)),
+               Math.max(yT+2, Math.min(yB-2, ry)));
+  }
+  ctx.stroke(); ctx.globalAlpha=1;
+
+  // ── Results (right side) ─────────────────────────────────────────
+  const xV = xR + 12, yV = yT + 4;
+  ctx.fillStyle = tv('--muted'); ctx.font='8px IBM Plex Mono,monospace';
+  ctx.textAlign='left';
+  ctx.fillText('s/S='+sSS.toFixed(2), xV, yV);
+  ctx.fillText('ε ='+eps.toFixed(3),  xV, yV+13);
+
+  ctx.fillStyle = tv('--signal');
+  ctx.font='bold 9px IBM Plex Mono,monospace';
+  ctx.fillText('ε_eff='+epsEff.toFixed(3), xV, yV+28);
+
+  const barW=W-xV-6, barH=7;
+  ctx.fillStyle=tv('--border');
+  ctx.fillRect(xV, yV+34, barW, barH);
+  ctx.fillStyle=tv('--signal');
+  ctx.fillRect(xV, yV+34, barW*Math.min(1,epsEff), barH);
+  ctx.fillStyle=tv('--muted'); ctx.font='7px IBM Plex Mono,monospace';
+  ctx.fillText('+'+((boost*100).toFixed(1))+'%', xV, yV+52);
+}
+
+
+/* ── Polar plot ε(θ) — thumbnail in Fresnel panel ── */
+function drawPolarPlot(){
+  const canvas = document.getElementById('polarCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H * 0.94;
+  const R  = Math.min(W * 0.42, cy - 14);
+  const tv = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+
+  ctx.clearRect(0, 0, W, H);
+
+  // ── Grid: arcs at ε = 0.2 / 0.5 / 0.8 ──
+  ctx.strokeStyle = tv('--border'); ctx.lineWidth = 0.7; ctx.globalAlpha = 0.5;
+  [0.2, 0.5, 0.8].forEach(eps => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * eps, Math.PI, 0, false);
+    ctx.stroke();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = tv('--muted');
+    ctx.font = '8px IBM Plex Mono,monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(eps.toFixed(1), cx - R * eps - 2, cy + 2);
+    ctx.globalAlpha = 0.5;
+  });
+
+  // ── Radial lines every 30° ──
+  [0, 30, 60, 90, 120, 150, 180].forEach(deg => {
+    const rad = (90 - deg) * Math.PI / 180;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(rad), cy - R * Math.sin(rad));
+    ctx.stroke();
+  });
+  ctx.globalAlpha = 1;
+
+  // ── Normal axis (0° = top) ──
+  ctx.strokeStyle = tv('--muted'); ctx.lineWidth = 1; ctx.setLineDash([3,2]);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - R); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── Angle labels ──
+  const lbls = [[0,'0°',cx+3,cy-R-3,'left'],
+                [30,'30°',cx+R*Math.sin(30*Math.PI/180)+3,cy-R*Math.cos(30*Math.PI/180)-1,'left'],
+                [60,'60°',cx+R*Math.sin(60*Math.PI/180)+3,cy-R*Math.cos(60*Math.PI/180)+4,'left'],
+                [90,'90°',cx+R+3,cy+3,'left']];
+  ctx.fillStyle = tv('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
+  lbls.forEach(([,lbl,x,y,al]) => { ctx.textAlign=al; ctx.fillText(lbl,x,y); });
+
+  // ── λ_eff from current detector (DETS uses lc = center wavelength [µm]) ──
+  const detKey  = (typeof state !== 'undefined') ? state.detKey : 'band_065';
+  const det     = (typeof DETS  !== 'undefined') ? DETS[detKey] : null;
+  const lam_eff = (det && det.lc) ? det.lc : 1.0;
+
+  // ── T and material ──
+  const T_K     = (typeof state !== 'undefined') ? state.Tobj : 1473;
+  const matKey  = appState.fresnelMat || 'fe';
+  const mat     = (typeof HR_MATERIALS !== 'undefined') ? (HR_MATERIALS[matKey] || HR_MATERIALS.fe) : null;
+  if(!mat){ return; }
+
+  const rho = rhoT(mat, T_K);
+  const {n, k} = fresnelNK(rho, lam_eff);
+  const curTheta = appState.theta || 0;
+
+  // ── ε(θ) curve — 0° to 90° ──
+  ctx.beginPath();
+  ctx.strokeStyle = tv('--amber'); ctx.lineWidth = 2;
+  let first = true;
+  for(let deg = 0; deg <= 90; deg += 0.5){
+    const eps = fresnelEps(n, k, deg);
+    const rad = (90 - deg) * Math.PI / 180;
+    const px  = cx + R * eps * Math.cos(rad);
+    const py  = cy - R * eps * Math.sin(rad);
+    if(first){ ctx.moveTo(px, py); first=false; } else ctx.lineTo(px, py);
+  }
+  // Mirror symmetry (left side)
+  for(let deg = 90; deg >= 0; deg -= 0.5){
+    const eps = fresnelEps(n, k, deg);
+    const rad = (90 + deg) * Math.PI / 180;
+    const px  = cx + R * eps * Math.cos(rad);
+    const py  = cy - R * eps * Math.sin(rad);
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.globalAlpha = 0.15; ctx.fillStyle = tv('--amber'); ctx.fill();
+  ctx.globalAlpha = 1; ctx.stroke();
+
+  // ── Second curve: material comparison ──
+  if(appState.fresnelMat2 && appState.fresnelMat2 !== matKey){
+    const mat2    = HR_MATERIALS[appState.fresnelMat2];
+    if(mat2){
+      const rho2  = rhoT(mat2, T_K);
+      const {n:n2,k:k2} = fresnelNK(rho2, lam_eff);
+      ctx.beginPath(); ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,3]);
+      let first2 = true;
+      for(let deg=0; deg<=90; deg+=0.5){
+        const eps2 = fresnelEps(n2, k2, deg);
+        const rad2 = (90-deg)*Math.PI/180;
+        const px2  = cx + R*eps2*Math.cos(rad2);
+        const py2  = cy - R*eps2*Math.sin(rad2);
+        if(first2){ctx.moveTo(px2,py2); first2=false;} else ctx.lineTo(px2,py2);
+      }
+      for(let deg=90; deg>=0; deg-=0.5){
+        const eps2 = fresnelEps(n2, k2, deg);
+        const rad2 = (90+deg)*Math.PI/180;
+        ctx.lineTo(cx + R*eps2*Math.cos(rad2), cy - R*eps2*Math.sin(rad2));
+      }
+      ctx.closePath();
+      ctx.globalAlpha=0.08; ctx.fillStyle=tv('--cyan'); ctx.fill();
+      ctx.globalAlpha=1; ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=tv('--cyan'); ctx.font='8px IBM Plex Mono,monospace';
+      ctx.textAlign='right';
+      ctx.fillText(mat2.short||appState.fresnelMat2, W-2, H-4);
+    }
+  }
+
+  // ── Current θ indicator ──
+  const epsAt  = fresnelEps(n, k, curTheta);
+  const radAt  = (90 - curTheta) * Math.PI / 180;
+  ctx.strokeStyle = tv('--cyan'); ctx.lineWidth = 1; ctx.setLineDash([3,2]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + R * Math.cos(radAt), cy - R * Math.sin(radAt));
+  ctx.stroke(); ctx.setLineDash([]);
+  [[radAt], [(90 + curTheta) * Math.PI / 180]].forEach(([rad]) => {
+    const px = cx + R * epsAt * Math.cos(rad);
+    const py = cy - R * epsAt * Math.sin(rad);
+    ctx.beginPath(); ctx.arc(px, py, 4, 0, 2*Math.PI);
+    ctx.fillStyle = tv('--cyan'); ctx.fill();
+  });
+
+  // ── ε and θ label ──
+  ctx.fillStyle = tv('--amber'); ctx.font = 'bold 9px IBM Plex Mono,monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText((HR_MATERIALS[matKey]?.short||matKey)+' θ='+curTheta.toFixed(0)+'° ε='+epsAt.toFixed(3), 4, 12);
+  ctx.fillStyle = tv('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
+  ctx.fillText('λ≈' + lam_eff.toFixed(2) + 'µm  T=' + Math.round(T_K - 273) + '°C', 4, 23);
+}
+
+
+/* ─────────────────────────────────────────────
    DRAW SPECTRAL PLOT
 ───────────────────────────────────────────── */
 function drawSpec(res, p){
@@ -3257,17 +3682,17 @@ function drawSpec(res, p){
 
   // Skala odniesienia: radiancja CDC obiektu = poziom 100%
   const gRef = Math.max(...res.Lbb, 1e-30);
-  // Rzeczywisty szczyt wszystkich krzywych (sygnał z odbiciami/atmosferą może przekroczyć 100%)
+  // True peak of all curves (signal with reflections/atmosphere may exceed 100%)
   const gPeak = Math.max(gRef, res.Ldet_max||0,
                          ...(res.Latm||[]), ...(res.Lrefl||[]), 1e-30);
   const overshoot = gPeak / gRef;                 // >1 oznacza przesterowanie
-  // Headroom: jeśli sygnał przekracza 100%, skaluj tak by zmieścić szczyt (max +60%)
+  // Headroom: if signal exceeds 100%, scale to fit peak (max +60%)
   const headroom = Math.min(Math.max(overshoot, 1) * 1.04, 1.6);
   const gMax = gRef;                              // 100% odniesienia = CDC obiektu
   const Rz = Math.round(H2*CONFIG.RZONE_FRAC);
   const specTop = pT + Rz;
   const specH   = H2 - Rz;
-  // ly: v/gRef=1 → poziom 100%; cała oś mieści headroom (1.0..1.6)
+  // ly: v/gRef=1 → 100% level; full axis fits headroom (1.0..1.6)
   const ly = v => specTop + specH*(1 - Math.min(v/gMax, headroom)/headroom);
   const y100 = specTop + specH*(1 - 1/headroom);  // pozycja linii 100%
 
@@ -3277,7 +3702,7 @@ function drawSpec(res, p){
     const y = specTop + specH*i/4;
     ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+W2,y); ctx.stroke();
   }
-  // ── Strefa przesterowania (>100%): wyróżniona gdy sygnał przekracza CDC obiektu ──
+  // ── Overrange zone (>100%): highlighted when signal exceeds object CDC ──
   if(headroom > 1.001){
     ctx.save();
     ctx.beginPath(); ctx.rect(pL, specTop, W2, y100 - specTop); ctx.clip();
@@ -3386,6 +3811,7 @@ function drawSpec(res, p){
       ctx.font = 'bold 8px IBM Plex Mono,monospace'; ctx.textAlign = 'left';
       const epsLbl = appState.epsModel==='poly'
         ? `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`
+        : appState.epsModel==='fresnel' ? 'ε(θ,λ) Fresnel'
         : 'ε(λ) H-R';
       ctx.fillText(epsLbl, pL + 4, pT + 10); ctx.globalAlpha = 1;
     }
@@ -3418,7 +3844,7 @@ function drawSpec(res, p){
     ctx.rect(pL, pT, W2, Rzone);   // clip: TYLKO strefa R, bez zachodzenia na spectrum
     ctx.clip();
 
-    // wypełnienie
+    // fill
     ctx.beginPath();
     ctx.moveTo(lx(seg[0]), pT + Rzone);
     seg.forEach((u,i) => ctx.lineTo(lx(u), ryR(Rvals[i])));
@@ -3463,10 +3889,10 @@ function drawSpec(res, p){
   ctx.lineTo(lx(lamArr[res.Latm.length-1]),pT+H2); ctx.closePath();
   ctx.globalAlpha=0.35 * _alpha('Latm'); ctx.fillStyle=tv('--red'); ctx.fill(); ctx.globalAlpha=1;
 
-  // ── Warstwa odbić otoczenia (1−ε)·L_bb(T_otocz) — wypełnienie między Lemit a Lemit+Lrefl ──
+  // ── Surroundings reflection layer (1−ε)·L_bb(T_surr) — fill between Lemit and Lemit+Lrefl ──
   if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
     ctx.beginPath();
-    // dolna krawędź: emisja obiektu (Lemit); górna: emisja + odbicie
+    // lower edge: object emission (Lemit); upper: emission + reflection
     res.Lemit.forEach((v,i)=>{ const x=lx(lamArr[i]),y=ly(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
     for(let i=res.Lemit.length-1;i>=0;i--){
       ctx.lineTo(lx(lamArr[i]), ly(res.Lemit[i]+res.Lrefl[i]));
@@ -3479,7 +3905,7 @@ function drawSpec(res, p){
   curve(res.Lbb,   tv('--muted'),   1, [4,4], 'Lbb');
   curve(res.Latm,  tv('--red'),     1, [], 'Latm');
   curve(res.Lemit, tv('--amber'),   2.0, [], 'Lemit');
-  // obrys sumy emisja+odbicie (górna krawędź warstwy odbić)
+  // outline of emission+reflection sum (upper edge of reflection layer)
   if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
     const sumRefl = res.Lemit.map((v,i)=>v+res.Lrefl[i]);
     curve(sumRefl, tv('--violet'), 1.4, [2,3], 'Lrefl');
@@ -3656,7 +4082,7 @@ const BEG_PRESETS = {
    DOCS — NOWE OKNO I DRUKOWANIE
 ───────────────────────────────────────────── */
 /* ═══════════════════════════════════════════════════
-   MODULE 4 — DOCS  ·  Documentation wbudowana
+   MODULE 4 — DOCS  ·  Built-in documentation
    ═══════════════════════════════════════════════════ */
 
 function buildDocsHTML(mode){
@@ -3671,7 +4097,7 @@ function buildDocsHTML(mode){
     ? 'Pyrometry — Physical and Algorithmic Documentation'
     : 'Pyrometry — Guide: How does a pyrometer work?';
 
-  // Klonuj docsBody i usuń sekcje niewidoczne w bieżącym trybie
+  // Clone docsBody and remove sections not visible in current mode
   const clone = body.cloneNode(true);
   const removeSel = uiMode==='expert' ? '.bo'
                   : uiMode==='pro'    ? '.bo, .eo'
@@ -3791,10 +4217,10 @@ function buildDocsHTML(mode){
 <div class="doc-toolbar no-print">
   <button onclick="window.print()">🖨 Print / Zapisz PDF</button>
   <button onclick="window.close()">✕ Close</button>
-  <span>Print → Zapisz jako PDF</span>
+  <span>Print → Save as PDF</span>
 </div>
 <h1>${title}</h1>
-<div class="doc-meta">Pyrometry v3.1.1-en &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
+<div class="doc-meta">Pyrometry v3.4.0-en &nbsp;·&nbsp; Mirosław Socha &nbsp;·&nbsp; Katedra Metrologii i Elektroniki &nbsp;·&nbsp; WEAIiIB &nbsp;·&nbsp; AGH Kraków</div>
 ${clone.innerHTML}
 <script src="${katexJS}"><\/script>
 <script src="${katexAR}" onload="${katexInit}"><\/script>
@@ -3825,7 +4251,7 @@ function printDocs(){
    EMISSIVITY MODEL SWITCHING
 ───────────────────────────────────────────── */
 /* ═══════════════════════════════════════════════════
-   MODULE 5 — UI EXPERT  ·  Handlery interfejsu — Expert Mode
+   MODULE 5 — UI EXPERT  ·  Interface handlers — Expert Mode
    ═══════════════════════════════════════════════════ */
 
 function setEpsModel(model){
@@ -3834,21 +4260,58 @@ function setEpsModel(model){
     const k = b.id.replace('epsm_','');
     if(k===model) b.classList.add('active'); else b.classList.remove('active');
   });
-  const hrDiv   = document.getElementById('hr_params');
-  const polyDiv = document.getElementById('poly_params');
-  if(hrDiv)   hrDiv.style.display   = (model==='hr')   ? 'block' : 'none';
-  if(polyDiv) polyDiv.style.display = (model==='poly') ? 'block' : 'none';
+  const hrDiv      = document.getElementById('hr_params');
+  const polyDiv    = document.getElementById('poly_params');
+  const fresnelDiv = document.getElementById('fresnel_params');
+  if(hrDiv)      hrDiv.style.display      = (model==='hr')      ? 'block' : 'none';
+  if(polyDiv)    polyDiv.style.display    = (model==='poly')    ? 'block' : 'none';
+  if(fresnelDiv) fresnelDiv.style.display = (model==='fresnel') ? 'block' : 'none';
 
-  // Zablokuj suwak eps_real gdy H-R lub Poly
+  // Lock eps_real slider when H-R, Poly or Fresnel
   const slEps  = document.getElementById('sl_eps_real');
   const numEps = document.getElementById('num_eps_real');
-  const lockEps = (model==='hr' || model==='poly');
+  const lockEps = (model==='hr' || model==='poly' || model==='fresnel');
   if(slEps) { slEps.disabled=lockEps; slEps.style.opacity=lockEps?'0.3':'1'; }
   if(numEps){ numEps.disabled=lockEps; numEps.style.opacity=lockEps?'0.3':'1'; }
 
-  // Legenda
+  // Legend
   const legEps = document.getElementById('leg_eps');
   if(legEps) legEps.style.display = (model!=='grey') ? 'inline-flex' : 'none';
+  scheduleUpdate();
+}
+
+function onFresnelMat(key){
+  appState.fresnelMat = key;
+  drawPolarPlot();
+  scheduleUpdate();
+}
+
+function setCavity(on){
+  appState.cavityOn = !!on;
+  const prm = document.getElementById('cavity_params');
+  if(prm) prm.style.display = on ? 'block' : 'none';
+  drawCavityDiagram();
+  scheduleUpdate();
+}
+function onCavitySS(val){
+  const v = Math.max(0.01, Math.min(0.99, parseFloat(val)||0.1));
+  appState.cavitySS = v;
+  const sl  = document.getElementById('sl_cavitySS');
+  const num = document.getElementById('num_cavitySS');
+  if(sl)  { sl.value = v; slPct(sl); }
+  if(num)   num.value = v.toFixed(2);
+  drawCavityDiagram();
+  scheduleUpdate();
+}
+
+function onTheta(val){
+  const v = Math.max(0, Math.min(85, parseFloat(val)||0));
+  appState.theta = v;
+  const sl  = document.getElementById('sl_theta');
+  const num = document.getElementById('num_theta');
+  if(sl)  { sl.value = v; slPct(sl); }
+  if(num)   num.value = v;
+  drawPolarPlot();
   scheduleUpdate();
 }
 
@@ -4070,7 +4533,7 @@ function setEnv(key){
 /* ─────────────────────────────────────────────
    MODE SWITCHING
 ───────────────────────────────────────────── */
-/* Tryby: beginner (uproszczony) → pro (pełny tor) → expert (pro + ratio + modele ε) */
+/* Modes: beginner (simplified) → pro (full path) → expert (pro + ratio + ε models) */
 const UI_MODES = { beginner:{}, pro:{}, expert:{} };
 let uiMode = 'beginner';
 
@@ -4079,13 +4542,13 @@ function setUiMode(mode){
   uiMode = mode;
   document.body.classList.remove('beginner','pro','expert');
   document.body.classList.add(mode);
-  // Podświetl aktywny przycisk segmentu
+  // Highlight active segment button
   ['beginner','pro','expert'].forEach(k=>{
     const b = document.getElementById('mseg_'+k);
     if(b) b.classList.toggle('active', k===mode);
   });
-  // Higiena stanu: ukryte panele nie mogą sterować obliczeniami
-  if(mode !== 'expert'){          // ratio i modele ε: tylko expert
+  // State hygiene: hidden panels must not drive calculations
+  if(mode !== 'expert'){          // ratio and ε models: expert only
     if(appState.ratioMode) setRatioMode(false);
     if(appState.epsModel !== 'grey') setEpsModel('grey');
   }
@@ -4102,7 +4565,7 @@ function setUiMode(mode){
   });
 }
 
-/* Zgodność wsteczna: cykliczne przełączanie (dokumentacja odsyła do trybów) */
+/* Backwards compatibility: cyclic toggle (documentation links to modes) */
 function toggleMode(){
   setUiMode(uiMode==='beginner' ? 'pro' : uiMode==='pro' ? 'expert' : 'beginner');
 }
@@ -4130,7 +4593,7 @@ document.addEventListener('click',e=>{
    BEGINNER CONTROL HANDLERS
 ───────────────────────────────────────────── */
 /* ═══════════════════════════════════════════════════
-   MODULE 5b — UI BEGINNER  ·  Handlery interfejsu — Basic Mode
+   MODULE 5b — UI BEGINNER  ·  Interface handlers — Basic Mode
    ═══════════════════════════════════════════════════ */
 
 function begOnT(el){
@@ -4187,13 +4650,18 @@ function begSetDet(key,btnId){
 ═══════════════════════════════════════════════ */
 const appState = {
   env:       'earth',      // active atmospheric environment
-  epsModel:  'grey',       // model emissivity: 'grey' | 'hr' | 'poly'
+  epsModel:  'grey',       // model emissivity: 'grey' | 'hr' | 'poly' | 'fresnel'
   hrMat:     'fe',         // Hagen-Rubens material
   polyMat:   'w',          // polynomial material
-  det2Key:   'band_100',   // drugi detector (tryb ratio)
+  det2Key:   'band_100',   // second detector (ratio mode)
   ratioMode: false,        // false = single-color, true = two-color
   logScale:  false,        // false = linear, true = logarithmic
-  isDark:    true,         // motyw ciemny
+  isDark:    true,         // dark theme
+  theta:        0,          // pyrometer observation angle [°] (Fresnel)
+  fresnelMat:  'fe',        // Fresnel material (uses HR_MATERIALS keys)
+  fresnelMat2: '',          // comparison material for polar plot ('' = none)
+  cavityOn:     false,      // cavity effect enabled?
+  cavitySS:     0.1,        // s/S — aperture/cavity surface ratio (0.01–0.99)
 };
 
 const state = {
@@ -4234,11 +4702,13 @@ function updateLegend(res, p){
   const legEpsModel = document.getElementById('leg-eps-model');
   const legEpsLabel = document.getElementById('leg-eps-label');
   if(legEpsModel){
-    const showEps = appState.epsModel === 'hr' || appState.epsModel === 'poly';
+    const showEps = appState.epsModel === 'hr' || appState.epsModel === 'poly' || appState.epsModel === 'fresnel';
     legEpsModel.style.display = showEps ? '' : 'none';
     if(legEpsLabel && showEps){
       legEpsLabel.textContent = appState.epsModel === 'hr'
         ? `ε(λ) H-R (${(HR_MATERIALS[appState.hrMat]||HR_MATERIALS.fe).label})`
+        : appState.epsModel === 'fresnel'
+        ? `ε(θ,λ) Fresnel ${appState.theta}°`
         : `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
     }
   }
@@ -4263,6 +4733,8 @@ function doUpdate(){
   lastResult = res;
   drawSpec(res, p);
   drawTau(res);
+  if(appState.epsModel==='fresnel') drawPolarPlot();
+  if(appState.cavityOn) drawCavityDiagram();
   updateChain(res, p);
   updateResults(res, p);
   updateLegend(res, p);
@@ -4514,7 +4986,7 @@ function onWinChange(){
    MODULE 7 — INIT  ·  Initialising sliders and event listeners
    ═══════════════════════════════════════════════════ */
 
-/* ═══ Interakcja schemat ↔ spectrum (opcja A hover / B klik / C tooltip strzałki) ═══ */
+/* ═══ Chain ↔ spectrum interaction (option A hover / B click / C arrow tooltip) ═══ */
 function initChainInteraction(){
 
   // Mapa: id bloku → tablica krzywych [curve_id, ...]
@@ -4620,7 +5092,7 @@ function initChainInteraction(){
   });
 }
 
-// Eksportuj mapę do drawSpec
+// Export highlight map to drawSpec
 function getHighlightedCurves(){
   if(!highlightBlock) return null;
   const map = {
@@ -4642,6 +5114,9 @@ function initSliders(){
     ['sl_windowThick','windowThick'],['sl_windowTemp','windowTemp'],
     ['sl_Tsurr','Tsurr'],
   ];
+  // sl_theta separately (appState, not state)
+  const slTheta = document.getElementById('sl_theta');
+  if(slTheta){ slTheta.value = appState.theta || 0; slPct(slTheta); }
   map.forEach(([id,key])=>{
     const el=document.getElementById(id);
     if(!el) return;
@@ -4708,7 +5183,7 @@ const PRESETS={
 };
 
 /* ═══════════════════════════════════════════════════
-   MODULE 8 — PRESETS & THEME  ·  Presety, motyw, tryb, documentation
+   MODULE 8 — PRESETS & THEME  ·  Presets, theme, mode, documentation
    ═══════════════════════════════════════════════════ */
 
 function loadPreset(name){
@@ -4784,8 +5259,9 @@ specCanvas.addEventListener('mousemove', e=>{
   const absVal = v => v.toExponential(2)+' W·m⁻²·sr⁻¹·m⁻¹';
   // — etykiety emissivity
   const epsVal  = res.Eps ? res.Eps[idx] : state.eps_real;
-  const epsLabel = appState.epsModel==='grey'  ? 'ε (szara)'
-                 : appState.epsModel==='hr'    ? 'ε(λ) H-R'
+  const epsLabel = appState.epsModel==='grey'    ? 'ε (grey)'
+                 : appState.epsModel==='hr'      ? 'ε(λ) H-R'
+                 : appState.epsModel==='fresnel' ? `ε(θ,λ) Fresnel`
                  : `ε(λ) ${(POLY_MATERIALS[appState.polyMat]||POLY_MATERIALS.w).label.split(' ')[0]}`;
 
   // — wiersz emisji atmosphericj (signal czerwony)
@@ -4830,6 +5306,606 @@ function hideTT(){ document.getElementById('tooltip').style.display='none'; }
 /* ─────────────────────────────────────────────
    INIT
 ───────────────────────────────────────────── */
+function initCollapsiblePanels(){
+  document.querySelectorAll('.ctrl-panel .panel-hdr').forEach(hdr=>{
+    hdr.addEventListener('click',()=>
+      hdr.closest('.ctrl-panel').classList.toggle('collapsed'));
+  });
+}
+
+/* ── Hover tooltip on Fresnel polar diagram ── */
+function initPolarHover(){
+  const canvas = document.getElementById('polarCanvas');
+  if(!canvas) return;
+  canvas.addEventListener('mousemove', e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    const W = canvas.width, H = canvas.height;
+    const cx = W/2, cy = H * 0.94;
+    const dx = mx - cx, dy = cy - my;
+    const thetaHov = Math.round(Math.atan2(Math.abs(dx), Math.max(dy,0.1)) * 180/Math.PI);
+    if(thetaHov < 0 || thetaHov > 90) return;
+    const mat  = HR_MATERIALS[appState.fresnelMat] || HR_MATERIALS.fe;
+    const T_K  = state ? state.Tobj : 1473;
+    const detK = state ? state.detKey : 'band_065';
+    const det  = DETS[detK];
+    const lam_eff = det ? det.lc : 1.0;
+    const rho  = rhoT(mat, T_K);
+    const {n,k}= fresnelNK(rho, lam_eff);
+    const eps  = fresnelEps(n, k, thetaHov);
+    const tt = document.getElementById('tooltip');
+    if(tt){
+      tt.style.display='block';
+      tt.style.left=(e.clientX+14)+'px';
+      tt.style.top =(e.clientY-30)+'px';
+      tt.innerHTML =
+        `<div class="tt-r"><span class="tt-l">θ:</span><span>${thetaHov}°</span></div>`+
+        `<div class="tt-r"><span class="tt-l">ε(θ):</span><span>${eps.toFixed(4)}</span></div>`+
+        `<div class="tt-r"><span class="tt-l">λ:</span><span>${lam_eff.toFixed(2)}µm</span></div>`;
+    }
+  });
+  canvas.addEventListener('mouseleave', ()=>{ hideTT && hideTT(); });
+}
+
+/* ─────────────────────────────────────────────
+   EXPORT FUNCTIONS
+───────────────────────────────────────────── */
+function downloadBlob(data, filename, mime){
+  const blob = data instanceof Blob ? data : new Blob([data], {type: mime});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {href:url, download:filename});
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+}
+
+function exportCSV(){
+  const res = lastResult;
+  if(!res){ alert('No data — run the simulator first.'); return; }
+  const p   = {...state};
+  const env = ENVS[appState.env] || ENVS.earth;
+  const det = res.det || {};
+  const r   = (v,d=4) => (typeof v==='number'?v.toFixed(d):'—');
+  const ts  = new Date().toISOString().slice(0,19).replace('T',' ');
+
+  const rows = [];
+
+  // ── Header ──
+  rows.push(['# SymulatorPirometru v3.4.0-en','','','']);
+  rows.push(['# Export:',ts,'','']);
+  rows.push(['','','','']);
+
+  // ── Settings ──
+  rows.push(['=== SETTINGS ===','','','']);
+  rows.push(['UI Mode', uiMode,'','']);
+  rows.push(['Emissivity model', appState.epsModel,'','']);
+  rows.push(['Environment', env.label || appState.env,'','']);
+  rows.push(['T_object [°C]', r(p.Tobj-273.15,1),'','']);
+  rows.push(['T_object [K]',  r(p.Tobj,2),'','']);
+  rows.push(['ε_real', r(p.eps_real,4),'','']);
+  rows.push(['ε_assumed', r(p.eps_assumed,4),'','']);
+  rows.push(['Atmosphere path L [m]', r(p.path,1),'','']);
+  rows.push(['Relative humidity RH [%]', r(p.rh,1),'','']);
+  rows.push(['CO₂ [ppm]', r(p.co2,0),'','']);
+  rows.push(['T_atmosphere [°C]', r(p.Tatm,1),'','']);
+  rows.push(['Window', p.windowKey,'','']);
+  rows.push(['Window thickness [mm]', r(p.windowThick,1),'','']);
+  rows.push(['T_window [°C]', r(p.windowTemp,1),'','']);
+  rows.push(['Detector', det.label||p.detKey,'','']);
+  rows.push(['Surroundings reflections', p.reflOn?'YES':'NO','','']);
+  if(p.reflOn) rows.push(['T_surroundings [°C]', r(p.Tsurr,1),'','']);
+  rows.push(['Cavity effect', appState.cavityOn?'YES':'NO','','']);
+  if(appState.cavityOn) rows.push(['s/S cavity', r(appState.cavitySS,3),'','']);
+  if(appState.epsModel==='fresnel'){
+    rows.push(['Fresnel material', appState.fresnelMat,'','']);
+    rows.push(['Angle θ [°]', r(appState.theta,1),'','']);
+  }
+  rows.push(['','','','']);
+
+  // ── Results ──
+  rows.push(['=== RESULTS ===','','','']);
+  rows.push(['T_ind [°C]', r(res.T_ind,2),'','']);
+  rows.push(['T_ind [K]',  r(res.T_ind_K,2),'','']);
+  rows.push(['ΔT [K]',     r(res.dT,3),'','']);
+  rows.push(['ΔT_ε [K]',   r(res.dT_eps,3),'','']);
+  if(res.reflOn) rows.push(['ΔT_refl [K]', r(res.dT_refl,3),'','']);
+  rows.push(['ΔT_atm [K]', r(res.dT_atm,3),'','']);
+  rows.push(['ΔT_win [K]', r(res.dT_win,3),'','']);
+  rows.push(['τ_avg', r(res.tau_avg,4),'','']);
+  rows.push(['λ_Wien [µm]', r(res.wien_um,3),'','']);
+  if(appState.ratioMode && res.T_ratio_K){
+    rows.push(['T_ratio [K]', r(res.T_ratio_K,2),'','']);
+    rows.push(['T_ratio [°C]', r(res.T_ratio_C,2),'','']);
+  }
+  rows.push(['','','','']);
+
+  // ── Spectrum table ──
+  rows.push(['=== RADIATION SPECTRUM ===','','','']);
+  rows.push(['λ [µm]','L_bb [W/m²/sr/m]','L_emit','L_refl','L_atm','L_det','R(λ)','ε(λ)']);
+  const N = res.lam_um.length;
+  const step = Math.max(1, Math.floor(N/700));
+  for(let i=0; i<N; i+=step){
+    rows.push([
+      res.lam_um[i].toFixed(4),
+      (res.Lbb[i]||0).toExponential(4),
+      (res.Lemit[i]||0).toExponential(4),
+      (res.Lrefl&&res.Lrefl[i]?res.Lrefl[i]:0).toExponential(4),
+      (res.Latm[i]||0).toExponential(4),
+      (res.Ldet[i]||0).toExponential(4),
+      (res.R[i]||0).toFixed(5),
+      (res.Eps[i]||0).toFixed(5),
+    ]);
+  }
+
+  const csv = rows.map(r=>r.map(c=>
+    String(c).includes(',') ? '"'+String(c).replace(/"/g,'""')+'"' : c
+  ).join(',')).join('\r\n');
+
+  const fname = `pyrometry_${ts.slice(0,10)}_T${Math.round(p.Tobj-273)}.csv`;
+  downloadBlob('\uFEFF'+csv, fname, 'text/csv;charset=utf-8');
+}
+
+/* ── SVG/PNG: export spectrum chart ── */
+function exportSpectrum(fmt){
+  const canvas = document.getElementById('specCanvas');
+  if(!canvas){ alert('Canvas not found.'); return; }
+
+  if(fmt==='png'){
+    const res = lastResult;
+    if(!res){ alert('No data — run the simulator first.'); return; }
+
+    const specC = document.getElementById('specCanvas');
+    const tauC  = document.getElementById('tauCanvas');
+    const Ws = specC.offsetWidth, Hs = specC.offsetHeight;
+    const Wt = tauC.offsetWidth,  Ht = tauC.offsetHeight;
+    const tv2 = v => getComputedStyle(document.body).getPropertyValue(v).trim();
+    const col = tv2;
+
+    const GAP    = 10;
+    const LEG_H  = 68;
+    const FOOT_H = 28;
+    const W = Math.max(Ws, Wt);
+    const H = Hs + GAP + Ht + GAP + LEG_H + FOOT_H + 20;
+
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const ctx = off.getContext('2d');
+
+    ctx.fillStyle = col('--bg');
+    ctx.fillRect(0, 0, W, H);
+
+    // 1. Spectrum
+    ctx.drawImage(specC, 0, 0, Ws, Hs, 0, 0, W, Hs);
+
+    // 2. τ(λ)
+    const yTau = Hs + GAP;
+    ctx.drawImage(tauC, 0, 0, Wt, Ht, 0, yTau, W, Ht);
+
+    // 3. Legend
+    const yLeg = yTau + Ht + GAP;
+    const pL = Math.round(Math.min(48, Math.max(36, W * 0.05)));
+
+    ctx.fillStyle = col('--surf');
+    ctx.fillRect(pL, yLeg, W - pL - 12, LEG_H);
+    ctx.strokeStyle = col('--border'); ctx.lineWidth = 0.5;
+    ctx.strokeRect(pL, yLeg, W - pL - 12, LEG_H);
+
+    ctx.fillStyle = col('--muted');
+    ctx.font = 'bold 9px IBM Plex Mono,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('LEGEND', pL + 6, yLeg + 11);
+
+    const lw = (W - pL - 12) / 5;
+    const lx0 = pL + 4, ly0 = yLeg + 16;
+
+    function legLine(ix, iy, color, dash, label){
+      const x = lx0 + ix*lw, y = ly0 + iy*22;
+      ctx.save();
+      ctx.strokeStyle = color; ctx.lineWidth = 2;
+      if(dash){ ctx.setLineDash(dash.split(',').map(Number)); }
+      ctx.beginPath(); ctx.moveTo(x+2, y+6); ctx.lineTo(x+22, y+6); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+      ctx.fillStyle = col('--text'); ctx.font = '8.5px IBM Plex Mono,monospace';
+      ctx.textAlign = 'left'; ctx.fillText(label, x+26, y+10);
+    }
+    function legFill(ix, iy, color, alpha, label){
+      const x = lx0 + ix*lw, y = ly0 + iy*22;
+      ctx.save(); ctx.globalAlpha = alpha;
+      ctx.fillStyle = color; ctx.fillRect(x+2, y+2, 20, 8);
+      ctx.restore();
+      ctx.fillStyle = col('--text'); ctx.font = '8.5px IBM Plex Mono,monospace';
+      ctx.textAlign = 'left'; ctx.fillText(label, x+26, y+10);
+    }
+
+    // Row 0
+    legLine(0, 0, col('--muted'),  '4,3', 'L_bb (CDC / blackbody)');
+    legLine(1, 0, col('--amber'),  '',    'L_emit (object emission)');
+    legFill(2, 0, col('--red'),    0.35,  'Atm. emission (fill)');
+    legLine(3, 0, col('--signal'), '',    'L_det (signal at detector)');
+    legLine(4, 0, col('--cyan'),   '7,4', 'T_ind reading');
+
+    // Row 1
+    legFill(0, 1, col('--cyan'),   0.22,  'R(λ) detector [upper zone]');
+    let ci = 1;
+    if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+      legFill(ci++, 1, col('--violet'), 0.40, 'Surr. reflections (fill)');
+      legLine(ci++, 1, col('--violet'), '2,3','L_emit + reflections');
+    }
+    if(res.winKey && res.winKey !== 'none'){
+      legLine(ci++, 1, '#10b981', '2,3', 'τ_win (window)');
+      legFill(ci++, 1, '#10b981', 0.28, 'Window self-emission');
+    }
+    if(appState.epsModel==='hr' || appState.epsModel==='poly' || appState.epsModel==='fresnel'){
+      const epsLbl = appState.epsModel==='poly' ? 'ε(λ) polynomial'
+                   : appState.epsModel==='fresnel' ? 'ε(θ,λ) Fresnel'
+                   : 'ε(λ) H-R';
+      legLine(ci++, 1, col('--amber'), '5,3', epsLbl);
+    }
+    if(appState.ratioMode && res.ratio && res.ratio.R2){
+      legLine(ci++, 1, col('--green'), '3,4', 'R₂(λ) det. 2');
+    }
+
+    // 4. Footer
+    const yFoot = yLeg + LEG_H + 6;
+    const ts = new Date().toISOString().slice(0,19).replace('T',' ');
+    const info = `T_obj=${Math.round(res.Tobj_C)}°C  ε=${state.eps_real.toFixed(3)}  λ_Wien=${res.wien_um.toFixed(2)}µm  ΔT=${res.dT.toFixed(1)}K  |  L=${state.path}m  RH=${state.rh}%  CO₂=${state.co2}ppm`;
+    ctx.fillStyle = col('--muted'); ctx.font = '8px IBM Plex Mono,monospace';
+    ctx.textAlign = 'left'; ctx.fillText(info, pL, yFoot + 10);
+    ctx.textAlign = 'right'; ctx.fillText('SymulatorPirometru v3.4.0-en · '+ts, W-12, yFoot + 10);
+
+    off.toBlob(blob=>{
+      const fname = `spectrum_pyrometry_${ts.slice(0,10)}_T${Math.round(res.Tobj_C)}.png`;
+      downloadBlob(blob, fname, 'image/png');
+    }, 'image/png', 0.95);
+    return;
+  }
+
+  if(fmt==='svg'){
+    exportSVG();
+  }
+}
+
+/* ── SVG export — full vector file ── */
+function exportSVG(){
+  const res = lastResult;
+  if(!res){ alert('No data — run the simulator first.'); return; }
+
+  const cs = getComputedStyle(document.body);
+  const col = k => cs.getPropertyValue(k).trim() || '#888';
+
+  const W = 900, H = 480;
+  const pL = 46, pR = 12, pT = 14, pB = 38;
+  const W2 = W-pL-pR, H2 = H-pT-pB;
+
+  const lamArr = res.lam_um;
+  const lamMin = lamArr[0], lamMax = lamArr[lamArr.length-1];
+  const logScale = appState.logScale;
+  const lx = u => logScale
+    ? pL + W2 * Math.log(u/lamMin) / Math.log(lamMax/lamMin)
+    : pL + W2 * (u-lamMin)/(lamMax-lamMin);
+
+  const gRef = Math.max(...res.Lbb, 1e-30);
+  const gPeak = Math.max(gRef, res.Ldet_max||0, ...(res.Latm||[]), ...(res.Lrefl||[]), 1e-30);
+  const headroom = Math.min(Math.max(gPeak/gRef, 1)*1.04, 1.6);
+
+  const Rz = Math.round(H2 * 0.22);
+  const specTop = pT + Rz;
+  const specH   = H2 - Rz;
+  const ly = v => specTop + specH*(1 - Math.min(v/gRef, headroom)/headroom);
+  const y100 = specTop + specH*(1 - 1/headroom);
+
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const r4  = v => parseFloat(v.toFixed(2));
+
+  function arr2path(arr, yfn){
+    return arr.map((v,i)=>(i===0?`M${r4(lx(lamArr[i]))},${r4(yfn(v))}`:`L${r4(lx(lamArr[i]))},${r4(yfn(v))}`)).join(' ');
+  }
+
+  const els = [];
+  const defs = [];
+
+  // Background
+  els.push(`<rect x="0" y="0" width="${W}" height="${H}" fill="${col('--bg')}"/>`);
+  els.push(`<rect x="${pL}" y="${pT}" width="${W2}" height="${H2}" fill="${col('--surf')}"/>`);
+
+  // Y grid
+  const pctTop = Math.round(headroom*100);
+  for(let pct=0; pct<=pctTop; pct+=25){
+    const y = r4(ly(pct/100*gRef));
+    if(y < specTop-2 || y > specTop+specH+2) continue;
+    els.push(`<line x1="${pL}" y1="${y}" x2="${pL+W2}" y2="${y}" stroke="${col('--plot-grid')}" stroke-width="1"/>`);
+    els.push(`<text x="${pL-4}" y="${y+4}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--muted')}">${pct}%</text>`);
+  }
+
+  // Overrange zone
+  if(headroom > 1.001){
+    els.push(`<rect x="${pL}" y="${specTop}" width="${W2}" height="${r4(y100-specTop)}" fill="${col('--red')}" fill-opacity="0.10"/>`);
+    els.push(`<line x1="${pL}" y1="${r4(y100)}" x2="${pL+W2}" y2="${r4(y100)}" stroke="${col('--red')}" stroke-width="1" stroke-opacity="0.55" stroke-dasharray="5,3"/>`);
+    els.push(`<text x="${pL+4}" y="${r4(y100-3)}" font-family="IBM Plex Mono,monospace" font-size="9" fill="${col('--red')}" fill-opacity="0.7">100% (CDC object) — above: overrange</text>`);
+  }
+
+  // R(λ) zone separator
+  els.push(`<line x1="${pL}" y1="${specTop}" x2="${pL+W2}" y2="${specTop}" stroke="${col('--cyan')}" stroke-width="0.5" stroke-opacity="0.3"/>`);
+
+  // X grid
+  const xTicks = logScale ? [0.2,0.4,0.7,1,2,3,5,8,12] : [1,2,3,4,5,6,8,10,12,14];
+  xTicks.forEach(v=>{
+    const x=r4(lx(v));
+    if(x>=pL && x<=pL+W2)
+      els.push(`<line x1="${x}" y1="${pT}" x2="${x}" y2="${pT+H2}" stroke="${col('--plot-grid')}" stroke-width="1"/>`);
+  });
+
+  // X labels
+  const xLbls = logScale
+    ? [[0.2,'0.2'],[0.4,'0.4'],[1,'1'],[2,'2'],[3,'3'],[5,'5'],[8,'8'],[12,'12 µm']]
+    : [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6'],[8,'8'],[10,'10'],[12,'12'],[14,'14 µm']];
+  xLbls.forEach(([v,l])=>{
+    const x=r4(lx(v));
+    if(x>pL+4 && x<pL+W2-4)
+      els.push(`<text x="${x}" y="${pT+H2+26}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--muted')}">${esc(l)}</text>`);
+  });
+  els.push(`<text x="${pL+W2+3}" y="${pT+H2+26}" text-anchor="start" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--muted')}">λ [µm]</text>`);
+
+  // R(λ) fill + line
+  const det = res.det;
+  if(det){
+    const [dmin,dmax] = det.range;
+    const NM = 400;
+    const seg = [], Rvals = [];
+    for(let i=0;i<=NM;i++){
+      const u = dmin + (dmax-dmin)*i/NM;
+      seg.push(u); Rvals.push(detResp(u*1e-6, det));
+    }
+    const maxR = Math.max(...Rvals, 0.01);
+    const ryR  = r => pT + Rz*(1 - r/maxR);
+    const xs = seg.map(u=>lx(u)), ys = Rvals.map(r=>ryR(r));
+    const d = `M${r4(xs[0])},${pT+Rz} ` + xs.map((x,i)=>`L${r4(x)},${r4(ys[i])}`).join(' ') + ` L${r4(xs[xs.length-1])},${pT+Rz} Z`;
+    els.push(`<path d="${d}" fill="${col('--cyan')}" fill-opacity="0.22" clip-path="url(#rzone)"/>`);
+    const dL = xs.map((x,i)=>(i===0?`M${r4(x)},${r4(ys[i])}`:`L${r4(x)},${r4(ys[i])}`)).join(' ');
+    els.push(`<path d="${dL}" fill="none" stroke="${col('--cyan')}" stroke-width="1.8" clip-path="url(#rzone)"/>`);
+    els.push(`<text x="${pL+W2-4}" y="${pT+10}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="8" font-weight="bold" fill="${col('--cyan')}">R(λ)</text>`);
+    [dmin,dmax].forEach(v=>{
+      const x=r4(lx(v));
+      if(x>pL&&x<pL+W2)
+        els.push(`<line x1="${x}" y1="${specTop}" x2="${x}" y2="${specTop+specH}" stroke="${col('--cyan')}" stroke-width="1" stroke-opacity="0.4" stroke-dasharray="3,4"/>`);
+    });
+  }
+
+  // Atmosphere fill
+  {
+    const xs = lamArr.map((_,i)=>lx(lamArr[i]));
+    const ys = res.Latm.map(v=>ly(v));
+    const N = xs.length;
+    const d = `M${r4(xs[0])},${r4(pT+H2)} ` + xs.map((x,i)=>`L${r4(x)},${r4(ys[i])}`).join(' ') + ` L${r4(xs[N-1])},${r4(pT+H2)} Z`;
+    els.push(`<path d="${d}" fill="${col('--red')}" fill-opacity="0.35"/>`);
+  }
+
+  // Surroundings reflection fill
+  if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+    const N = res.Lemit.length;
+    const xs = lamArr.map((_,i)=>lx(lamArr[i]));
+    let d = xs.map((x,i)=>(i===0?`M${r4(x)},${r4(ly(res.Lemit[i]))}`:`L${r4(x)},${r4(ly(res.Lemit[i]))}`)).join(' ');
+    for(let i=N-1;i>=0;i--) d += ` L${r4(xs[i])},${r4(ly(res.Lemit[i]+res.Lrefl[i]))}`;
+    d += ' Z';
+    els.push(`<path d="${d}" fill="${col('--violet')}" fill-opacity="0.40"/>`);
+  }
+
+  // Spectral curves
+  const curves = [
+    { arr: res.Lbb,      color: col('--muted'),  lw:1,   dash:'4,4', label:'L_bb (CDC)' },
+    { arr: res.Latm,     color: col('--red'),    lw:1,   dash:'',    label:'L_atm' },
+    { arr: res.Lemit,    color: col('--amber'),  lw:2,   dash:'',    label:'L_emit' },
+    { arr: res.Ldet,     color: col('--signal'), lw:2.8, dash:'',    label:'L_det' },
+    { arr: res.Tind_arr, color: col('--cyan'),   lw:1.5, dash:'7,4', label:'T_ind' },
+  ];
+  if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+    const sum = res.Lemit.map((v,i)=>v+res.Lrefl[i]);
+    curves.splice(3,0,{arr:sum, color:col('--violet'), lw:1.4, dash:'2,3', label:'L_emit+refl'});
+  }
+  curves.forEach(({arr,color,lw,dash,label})=>{
+    if(!arr||!arr.length) return;
+    const d = arr2path(arr, ly);
+    const dattr = dash ? ` stroke-dasharray="${dash}"` : '';
+    els.push(`<path d="${d}" fill="none" stroke="${color}" stroke-width="${lw}"${dattr}/>`);
+  });
+
+  // Wien marker
+  const wx = r4(lx(res.wien_um));
+  if(wx>pL && wx<pL+W2){
+    els.push(`<line x1="${wx}" y1="${pT}" x2="${wx}" y2="${pT+H2}" stroke="${col('--muted')}" stroke-width="1" stroke-opacity="0.3" stroke-dasharray="3,4"/>`);
+    els.push(`<text x="${wx}" y="${pT+9}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}" fill-opacity="0.65">λ_max</text>`);
+  }
+
+  // Frame
+  els.push(`<rect x="${pL}" y="${pT}" width="${W2}" height="${H2}" fill="none" stroke="${col('--border')}" stroke-width="1"/>`);
+
+  // Footer
+  const ts = new Date().toISOString().slice(0,19).replace('T',' ');
+  const info = `T_obj=${Math.round(res.Tobj_C)}°C  ε=${state.eps_real.toFixed(3)}  λ_Wien=${res.wien_um.toFixed(2)}µm  ΔT=${res.dT.toFixed(1)}K`;
+  els.push(`<text x="${pL}" y="${H-6}" text-anchor="start" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}">${esc(info)}</text>`);
+  els.push(`<text x="${pL+W2}" y="${H-6}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}">SymulatorPirometru v3.4.0-en · ${ts}</text>`);
+
+  // UV-VIS-IR bar
+  const barY = pT + H2 + 3, barH = 7;
+  {
+    const xUV1 = Math.max(pL, lx(0.10)), xUV2 = Math.min(pL+W2, lx(0.380));
+    if(xUV2 > xUV1){
+      const id = 'gradUV';
+      defs.push(`<linearGradient id="${id}" x1="${r4(xUV1)}" y1="0" x2="${r4(xUV2)}" y2="0" gradientUnits="userSpaceOnUse">`+
+        `<stop offset="0"   stop-color="rgba(40,0,80,0)"/>`+
+        `<stop offset="0.6" stop-color="rgba(80,0,140,0.55)"/>`+
+        `<stop offset="1"   stop-color="rgba(110,0,200,0.85)"/>`+
+        `</linearGradient>`);
+      els.push(`<rect x="${r4(xUV1)}" y="${barY}" width="${r4(xUV2-xUV1)}" height="${barH}" fill="url(#${id})"/>`);
+      if(xUV2-xUV1 > 20)
+        els.push(`<text x="${r4((xUV1+xUV2)/2)}" y="${barY+barH-1}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" font-weight="bold" fill="${col('--pale')}">UV</text>`);
+    }
+    const x1v = Math.max(pL, lx(0.380)), x2v = Math.min(pL+W2, lx(0.700));
+    if(x2v > x1v){
+      const id = 'gradVIS';
+      defs.push(`<linearGradient id="${id}" x1="${r4(x1v)}" y1="0" x2="${r4(x2v)}" y2="0" gradientUnits="userSpaceOnUse">`+
+        `<stop offset="0.00" stop-color="rgb(100,0,180)"/>`+
+        `<stop offset="0.09" stop-color="rgb(75,0,255)"/>`+
+        `<stop offset="0.20" stop-color="rgb(0,0,255)"/>`+
+        `<stop offset="0.29" stop-color="rgb(0,100,255)"/>`+
+        `<stop offset="0.35" stop-color="rgb(0,200,255)"/>`+
+        `<stop offset="0.42" stop-color="rgb(0,255,160)"/>`+
+        `<stop offset="0.50" stop-color="rgb(0,255,30)"/>`+
+        `<stop offset="0.58" stop-color="rgb(160,255,0)"/>`+
+        `<stop offset="0.65" stop-color="rgb(255,230,0)"/>`+
+        `<stop offset="0.72" stop-color="rgb(255,130,0)"/>`+
+        `<stop offset="0.84" stop-color="rgb(255,20,0)"/>`+
+        `<stop offset="1.00" stop-color="rgb(140,0,0)"/>`+
+        `</linearGradient>`);
+      els.push(`<rect x="${r4(x1v)}" y="${barY}" width="${r4(x2v-x1v)}" height="${barH}" fill="url(#${id})"/>`);
+      els.push(`<rect x="${r4(x1v)}" y="${barY}" width="${r4(x2v-x1v)}" height="${barH}" fill="none" stroke="rgba(128,128,128,0.3)" stroke-width="0.5"/>`);
+      if(x2v-x1v>14)
+        els.push(`<text x="${r4((x1v+x2v)/2)}" y="${barY+barH-1}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" font-weight="bold" fill="rgba(0,0,0,0.7)">VIS</text>`);
+    }
+    const xIR = lx(0.700);
+    if(xIR>pL && xIR<pL+W2-24)
+      els.push(`<text x="${r4(xIR+3)}" y="${barY+barH-1}" text-anchor="start" font-family="IBM Plex Mono,monospace" font-size="7" fill="${col('--muted')}">IR →</text>`);
+    [[0.38,'0.38'],[0.70,'0.70 µm']].forEach(([lm,label])=>{
+      const xp=r4(lx(lm));
+      if(xp>=pL && xp<=pL+W2)
+        els.push(`<text x="${xp}" y="${barY+barH+8}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="7" fill="${col('--muted')}">${label}</text>`);
+    });
+    if(xIR>pL && xIR<pL+W2)
+      els.push(`<line x1="${r4(xIR)}" y1="${pT}" x2="${r4(xIR)}" y2="${pT+H2}" stroke="${col('--text')}" stroke-width="1" stroke-opacity="0.18" stroke-dasharray="2,4"/>`);
+  }
+
+  // τ(λ) chart
+  {
+    const tH = 100;
+    const tY = H + 50;
+    const OVER = 0.08;
+    const tly = v => tY + tH * (1 - v/(1+OVER));
+
+    [0, 0.25, 0.50, 0.75, 1.0].forEach(v=>{
+      const y = r4(tly(v));
+      els.push(`<line x1="${pL}" y1="${y}" x2="${pL+W2}" y2="${y}" stroke="${col('--plot-grid')}" stroke-width="1"/>`);
+      els.push(`<text x="${pL-4}" y="${y+4}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="${col('--muted')}">${Math.round(v*100)}%</text>`);
+    });
+    xTicks.forEach(v=>{
+      const x=r4(lx(v)); if(x>=pL&&x<=pL+W2)
+        els.push(`<line x1="${x}" y1="${tY}" x2="${x}" y2="${tY+tH}" stroke="${col('--plot-grid')}" stroke-width="1"/>`);
+    });
+
+    els.push(`<rect x="${pL}" y="${tY}" width="${W2}" height="${tH}" fill="${col('--surf')}"/>`);
+
+    if(det){
+      const [dmin,dmax] = det.range;
+      const x1d=r4(Math.max(pL,lx(dmin))), x2d=r4(Math.min(pL+W2,lx(dmax)));
+      els.push(`<rect x="${x1d}" y="${tY}" width="${r4(x2d-x1d)}" height="${tH}" fill="${col('--cyan')}" fill-opacity="0.18"/>`);
+    }
+
+    {
+      const N = res.tau.length;
+      const xs = lamArr.map((_,i)=>r4(lx(lamArr[i])));
+      const ys = res.tau.map(v=>r4(tly(v)));
+      const d = `M${xs[0]},${r4(tly(0))} ` + xs.map((x,i)=>`L${x},${ys[i]}`).join(' ') + ` L${xs[N-1]},${r4(tly(0))} Z`;
+      els.push(`<path d="${d}" fill="${col('--cyan')}" fill-opacity="0.22" clip-path="url(#tauclip)"/>`);
+      const dL = xs.map((x,i)=>(i===0?`M${x},${ys[i]}`:`L${x},${ys[i]}`)).join(' ');
+      els.push(`<path d="${dL}" fill="none" stroke="${col('--cyan')}" stroke-width="1.8" clip-path="url(#tauclip)"/>`);
+    }
+
+    els.push(`<text x="${pL+6}" y="${tY+tH-6}" text-anchor="start" font-family="IBM Plex Mono,monospace" font-size="10" fill="${col('--cyan')}" fill-opacity="0.8">τ̄_det = ${res.tau_avg.toFixed(3)}</text>`);
+    [{c:1.75,l:'1–2.5 µm'},{c:4.0,l:'3–5 µm'},{c:11.0,l:'8–14 µm'}].forEach(w=>{
+      const xw=r4(lx(w.c)); if(xw>pL&&xw<pL+W2)
+        els.push(`<text x="${xw}" y="${tY+10}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--cyan')}" fill-opacity="0.5">${esc(w.l)}</text>`);
+    });
+    xLbls.forEach(([v,l])=>{
+      const x=r4(lx(v)); if(x>pL+4&&x<pL+W2-4)
+        els.push(`<text x="${x}" y="${tY+tH+16}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="${col('--muted')}">${esc(l)}</text>`);
+    });
+    els.push(`<rect x="${pL}" y="${tY}" width="${W2}" height="${tH}" fill="none" stroke="${col('--border')}" stroke-width="1"/>`);
+    defs.push(`<clipPath id="tauclip"><rect x="${pL}" y="${tY}" width="${W2}" height="${tH}"/></clipPath>`);
+  }
+
+  // Legend block
+  {
+    const tY = H + 50;
+    const tH = 100;
+    const legX = pL, legY = tY + tH + 28;
+    const legW = W2, legH = 60;
+
+    els.push(`<rect x="${legX}" y="${legY}" width="${legW}" height="${legH}" fill="${col('--surf')}" stroke="${col('--border')}" stroke-width="0.5" rx="3"/>`);
+    els.push(`<text x="${legX+8}" y="${legY+11}" font-family="IBM Plex Mono,monospace" font-size="8" font-weight="bold" fill="${col('--muted')}">LEGEND</text>`);
+
+    const lw2 = legW / 5, lh = 20;
+    const lx0 = legX + 4, ly0 = legY + 16;
+
+    function legLineSVG(ix, iy, color, dash, label){
+      const x = lx0 + ix*lw2, y = ly0 + iy*lh;
+      const dattr = dash ? ` stroke-dasharray="${dash}"` : '';
+      els.push(`<line x1="${x+2}" y1="${y+6}" x2="${x+22}" y2="${y+6}" stroke="${color}" stroke-width="2"${dattr}/>`);
+      els.push(`<text x="${x+26}" y="${y+10}" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="${col('--text')}">${esc(label)}</text>`);
+    }
+    function legFillSVG(ix, iy, color, opacity, label){
+      const x = lx0 + ix*lw2, y = ly0 + iy*lh;
+      els.push(`<rect x="${x+2}" y="${y+2}" width="20" height="8" fill="${color}" fill-opacity="${opacity}"/>`);
+      els.push(`<text x="${x+26}" y="${y+10}" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="${col('--text')}">${esc(label)}</text>`);
+    }
+
+    // Row 0
+    legLineSVG(0, 0, col('--muted'),  '4,3', 'L_bb (CDC / blackbody)');
+    legLineSVG(1, 0, col('--amber'),  '',    'L_emit (object emission)');
+    legFillSVG(2, 0, col('--red'),    '0.35','Atm. emission (fill)');
+    legLineSVG(3, 0, col('--signal'), '',    'L_det (signal at detector)');
+    legLineSVG(4, 0, col('--cyan'),   '7,4', 'T_ind reading');
+
+    // Row 1
+    legFillSVG(0, 1, col('--cyan'),   '0.22','R(λ) detector [upper zone]');
+    let col1 = 1;
+    if(res.reflOn && res.Lrefl && res.Lrefl.some(v=>v>1e-30)){
+      legFillSVG(col1++, 1, col('--violet'), '0.40', 'Surr. reflections (fill)');
+      legLineSVG(col1++, 1, col('--violet'), '2,3',  'L_emit + reflections');
+    }
+    if(res.winKey && res.winKey !== 'none'){
+      legLineSVG(col1++, 1, '#10b981', '2,3', 'τ_win (window)');
+      legFillSVG(col1++, 1, '#10b981', '0.28','Window self-emission');
+    }
+    if(appState.epsModel==='hr' || appState.epsModel==='poly' || appState.epsModel==='fresnel'){
+      const epsLbl = appState.epsModel==='poly' ? 'ε(λ) polynomial'
+                   : appState.epsModel==='fresnel' ? 'ε(θ,λ) Fresnel'
+                   : 'ε(λ) H-R';
+      legLineSVG(col1++, 1, col('--amber'), '5,3', epsLbl);
+    }
+    if(appState.ratioMode && res.ratio && res.ratio.R2){
+      legLineSVG(col1++, 1, col('--green'), '3,4', 'R₂(λ) det. 2');
+    }
+
+    // τ(λ) caption
+    els.push(`<text x="${pL+W2/2}" y="${legY+legH+16}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8" fill="${col('--muted')}">τ(λ) — atmospheric transmittance at path L=${state.path}m (RH=${state.rh}%, CO₂=${state.co2}ppm, T_atm=${state.Tatm}°C)</text>`);
+  }
+
+  // Assemble SVG
+  const Htotal = H + 175 + 80;
+  const svg = [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${Htotal}" viewBox="0 0 ${W} ${Htotal}">`,
+    `  <title>Radiation spectrum — SymulatorPirometru</title>`,
+    `  <desc>${esc(info)}</desc>`,
+    `  <rect x="0" y="0" width="${W}" height="${Htotal}" fill="${col('--bg')}"/>`,
+    `  <defs>`,
+    `    <clipPath id="rzone"><rect x="${pL}" y="${pT}" width="${W2}" height="${Rz}"/></clipPath>`,
+    `    <clipPath id="spec"><rect x="${pL}" y="${specTop}" width="${W2}" height="${specH}"/></clipPath>`,
+    ...defs.map(d=>'    '+d),
+    `  </defs>`,
+    ...els,
+    `</svg>`
+  ].join('\n');
+
+  const fname = `spectrum_pyrometry_${ts.slice(0,10)}_T${Math.round(res.Tobj_C)}.svg`;
+  const blob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'),{href:url,download:fname});
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+}
+
 window.addEventListener('resize', ()=>scheduleUpdate());
 function renderDocsKatex(){
   const el = document.getElementById('docsBody');
@@ -4858,7 +5934,11 @@ window.addEventListener('load', ()=>{
   if(bnum) bnum.value=Math.round(state.Tobj-273.15);
   scheduleUpdate();
   initChainInteraction();
-  // KaTeX — próba przy window.load (jeśli defer już gotowy)
+  drawPolarPlot();      // initialise Fresnel polar diagram
+  drawCavityDiagram();
+  initPolarHover();     // hover tooltip on polar diagram
+  initCollapsiblePanels();
+  // KaTeX renders via onload on auto-render.min.js
 });
 </script>
 </body>
