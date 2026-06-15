@@ -5,6 +5,25 @@ Repozytorium: https://github.com/Mirek-Socha/SymulatorPirometru
 
 ---
 
+## [v3.4.0-en] — 2026-06-15 · gałąź `en/english-translation`
+
+Aktualizacja wersji angielskiej z v3.1.1-en do v3.4.0-en — pełna synchronizacja z gałęzią `main`.
+
+### Dodano (synchronizacja z v3.2.0–v3.4.0)
+- **Model Fresnela ε(θ,λ,T)** — emisyjność kierunkowa; funkcje `fresnelNK`, `fresnelEps`, `fresnelEmissivity`; stała Drudego `DRUDE_A=2997.91`; diagram biegunowy `drawPolarPlot()` z hover tooltip i porównaniem 2 materiałów
+- **Efekt wnękowy** — `cavityBoost()` (model Gouffé); suwak s/S; diagram przekroju `drawCavityDiagram()`
+- **Zwijane panele** — CSS `.collapsed` + `initCollapsiblePanels()`
+- **Eksport CSV/PNG/SVG** — `exportCSV()`, `exportSpectrum()`, `exportSVG()`, `downloadBlob()`; przyciski ⬇ CSV / ⬇ PNG / ⬇ SVG w nagłówku
+
+### Poprawki bugów (z v3.2.x)
+- `p.Tatm+273.15` → `Tatm_K` w pętli `sig_atm` (fix dla środowisk pozaziemskich)
+- brakujący parametr `env` w wywołaniu `atmTau()` w bloku sig_atm
+
+### Tłumaczenie
+- Pełny audit: UI, dokumentacja s1–s12, tabele materiałów, KaTeX (`\text{}`), komentarze JS, dane środowisk i materiałów — zero polskich ciągów poza danymi autora/instytucji
+
+---
+
 ## [v3.4.0] — 2026-06-14 ✅ bieżąca
 
 ### Dodano — eksport danych (CSV, PNG, SVG)

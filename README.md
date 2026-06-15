@@ -146,14 +146,14 @@ Dla osób analizujących projekt od strony implementacyjnej dostępny jest osobn
 
 - **[Przewodnik programistyczny](docs/PRZEWODNIK_PROGRAMISTYCZNY.md)** — opis architektury aplikacji, zarządzania stanem, silnika obliczeniowego, renderowania Canvas/SVG, eksportu danych oraz zastosowanych wzorców projektowych.
 
-> Wersja angielska przewodnika zostanie dodana po aktualizacji gałęzi `en/english-translation` do bieżącej wersji projektu.
+> Wersja angielska gałęzi `en/english-translation` jest zsynchronizowana z `main` (v3.4.0-en): Fresnel, efekt wnękowy, zwijane panele, eksport CSV/PNG/SVG, pełny audit tłumaczenia.
 
 ## Gałęzie
 
 | Gałąź | Język | Wersja |
 |---|---|---|
 | `main` | 🇵🇱 Polski | **v3.4.0** |
-| `en/english-translation` | 🇬🇧 English | **v3.1.1-en** (nieaktualna) |
+| `en/english-translation` | 🇬🇧 English | **v3.4.0-en** ✅ |
 
 ---
 
